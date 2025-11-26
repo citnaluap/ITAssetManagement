@@ -1,0 +1,1697 @@
+import React, { useState, useMemo, useEffect, Fragment } from 'react';
+import {
+  Laptop,
+  Server,
+  Monitor,
+  HardDrive,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  Edit2,
+  Trash2,
+  AlertTriangle,
+  Download,
+  Key,
+  History,
+  ArrowRightLeft,
+  Wrench,
+  X,
+  Check,
+  RefreshCw,
+  Share2,
+  ShieldCheck,
+  Bell,
+  CalendarClock,
+  Tag,
+  MapPin,
+  Sparkles,
+} from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  LineChart,
+  Line,
+} from 'recharts';
+import assetSheetData from './data/assets.json';
+import employeeSheetData from './data/employees.json';
+
+const STORAGE_KEYS = {
+  assets: 'uds_assets',
+  licenses: 'uds_licenses',
+  maintenance: 'uds_maintenance',
+  history: 'uds_history',
+};
+
+const assetTypeIcons = {
+  Laptop,
+  Desktop: Monitor,
+  Server,
+  Storage: HardDrive,
+};
+
+const defaultAsset = {
+  id: null,
+  type: 'Laptop',
+  brand: '',
+  model: '',
+  serialNumber: '',
+  assignedTo: '',
+  department: '',
+  location: '',
+  status: 'Active',
+  purchaseDate: '',
+  warrantyExpiry: '',
+  cost: 0,
+  checkedOut: false,
+  checkOutDate: '',
+  qrCode: '',
+};
+
+const NAV_LINKS = ['Overview', 'Hardware', 'Software', 'Vendors'];
+
+const PUBLIC_URL = process.env.PUBLIC_URL || '';
+const MEDIA = {
+  hero: `${PUBLIC_URL}/assets/hero.png`,
+  logo: `${PUBLIC_URL}/assets/uds-logo.png`,
+  devices: {
+    computer: `${PUBLIC_URL}/assets/devices/laptop.jpg`,
+    monitor: `${PUBLIC_URL}/assets/devices/monitor.jpg`,
+    printer: `${PUBLIC_URL}/assets/devices/printer.jpg`,
+    dock: `${PUBLIC_URL}/assets/devices/dock.jpg`,
+  },
+};
+const EXCEL_EXPORTS = {
+  assets: `${PUBLIC_URL}/tables/${encodeURIComponent('Asset List 11-18-25.xlsx')}`,
+  employees: `${PUBLIC_URL}/tables/${encodeURIComponent('Employee Information Hub.xlsx')}`,
+};
+const EMPLOYEE_PHOTOS = {
+  2937: `${PUBLIC_URL}/assets/employees/adrian-pope.png`,
+  3622: `${PUBLIC_URL}/assets/employees/aimsley-shoffstall.jpg`,
+  3633: `${PUBLIC_URL}/assets/employees/aracelis-alamo.jpg`,
+  2956: `${PUBLIC_URL}/assets/employees/ashley-poff.png`,
+  3440: `${PUBLIC_URL}/assets/employees/courtney-hudson.jpg`,
+  1778: `${PUBLIC_URL}/assets/employees/denise-jones.png`,
+  2165: `${PUBLIC_URL}/assets/employees/fernanda-gordillo-rivera.png`,
+};
+
+const formatPersonName = (value = '') =>
+  value
+    .split(' ')
+    .map((segment) =>
+      segment
+        .split('-')
+        .map((piece) => (piece ? piece[0].toUpperCase() + piece.slice(1).toLowerCase() : ''))
+        .join('-'),
+    )
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const formatRosterName = (value = '') => {
+  if (!value) {
+    return 'Unassigned';
+  }
+  if (value.includes(',')) {
+    const [last, first] = value.split(',').map((segment) => segment.trim());
+    return `${formatPersonName(first)} ${formatPersonName(last)}`.trim();
+  }
+  return formatPersonName(value);
+};
+
+const getInitials = (value = '') =>
+  value
+    .split(' ')
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'UDS';
+
+const DEVICE_COST_BY_TYPE = {
+  Phone: 650,
+  Computer: 1450,
+  Monitor: 280,
+  Printer: 520,
+  Dock: 180,
+  Tablet: 720,
+  'Key Fob': 45,
+};
+
+const buildEmployeeDirectory = () =>
+  employeeSheetData.reduce((directory, row) => {
+    const fullName = `${formatPersonName(row['First Name'])} ${formatPersonName(row['Last Name'] || '')}`.trim();
+    if (!fullName) {
+      return directory;
+    }
+
+    directory[fullName] = {
+      id: row['Employee ID'],
+      department: row['Department'] || row['Company'] || 'UDS',
+      location: row['Location'] || row['Company'] || 'Field',
+      title: row['Job Title'] || '',
+      email: row['E-mail Address'] || '',
+      phone: row['Mobile Phone'] || '',
+      startDate: row['Start Date'] || '',
+    };
+    return directory;
+  }, {});
+
+const EMPLOYEE_DIRECTORY = buildEmployeeDirectory();
+
+const determineAssetStatus = (row) => {
+  if (row['Retired Date']) {
+    return 'Retired';
+  }
+  const warrantyDate = row['Warranty End Date'];
+  if (!warrantyDate) {
+    return 'Active';
+  }
+  return new Date(warrantyDate) < new Date() ? 'Maintenance' : 'Active';
+};
+
+const estimateCost = (type) => DEVICE_COST_BY_TYPE[type] || 450;
+
+const buildAssetsFromSheet = () =>
+  assetSheetData
+    .filter((row) => row['Device Name'])
+    .map((row, index) => {
+      const assignedName = formatRosterName(row.ContactID);
+      const person = EMPLOYEE_DIRECTORY[assignedName] || null;
+      const type = row['Device Type'] || 'Hardware';
+      const purchaseDate = row['Purchase Date'] || '';
+      const warrantyExpiry = row['Warranty End Date'] || '';
+
+      return {
+        id: index + 1,
+        sheetId: row['Device Name'],
+        type,
+        brand: row.Model ? row.Model.split(' ')[0] : type,
+        model: row.Model || row['Device Type'] || 'Device',
+        serialNumber: row['Serial Num'] || row['Product Num'] || row['Device Name'],
+        assignedTo: assignedName === 'Unassigned' ? '' : assignedName,
+        department: person?.department || row.Combo445 || 'UDS',
+        location: row.Combo445 || person?.location || 'Field',
+        status: determineAssetStatus(row),
+        purchaseDate,
+        warrantyExpiry,
+        cost: estimateCost(type),
+        checkedOut: Boolean(assignedName && assignedName !== 'Unassigned'),
+        checkOutDate: purchaseDate,
+        qrCode: row['Serial Num'] ? `QR-${row['Serial Num']}` : row['Device Name'],
+      };
+    });
+
+const buildHistoryFromAssets = (assets) =>
+  assets
+    .filter((asset) => asset.purchaseDate)
+    .slice(0, 25)
+    .map((asset, index) => ({
+      id: index + 1,
+      assetId: asset.id,
+      action: asset.checkedOut ? 'Check Out' : 'Check In',
+      user: asset.assignedTo || 'Operations',
+      date: asset.checkOutDate || asset.purchaseDate,
+      notes: asset.location,
+    }));
+
+const buildMaintenanceFromAssets = (assets) => {
+  const today = new Date();
+
+  return assets
+    .filter((asset) => asset.warrantyExpiry)
+    .sort((a, b) => new Date(a.warrantyExpiry) - new Date(b.warrantyExpiry))
+    .slice(0, 8)
+    .map((asset, index) => {
+      const expiry = new Date(asset.warrantyExpiry);
+      const completed = expiry < today;
+
+      return {
+        id: index + 1,
+        assetId: asset.id,
+        date: asset.warrantyExpiry,
+        type: completed ? 'Warranty serviced' : 'Warranty alert',
+        description: `${asset.brand} ${asset.model} (${asset.serialNumber})`,
+        cost: Math.max(50, Math.round(asset.cost * 0.08)),
+        technician: asset.assignedTo || 'UDS Ops',
+        status: completed ? 'Completed' : 'Scheduled',
+      };
+    });
+};
+
+const buildLicensePools = (assets) => {
+  const totals = assets.reduce((acc, asset) => {
+    acc[asset.type] = (acc[asset.type] || 0) + 1;
+    return acc;
+  }, {});
+
+  return Object.entries(totals).map(([type, count], index) => ({
+    id: index + 1,
+    software: `${type} allocation`,
+    licenseKey: type.toUpperCase(),
+    seats: count,
+    used: count,
+    expiryDate: '',
+    cost: estimateCost(type) * count,
+    vendor: 'Asset List',
+  }));
+};
+
+const buildTeamSpotlight = () =>
+  employeeSheetData
+    .filter((row) => row['First Name'] && row['Department'])
+    .slice(0, 8)
+    .map((row) => {
+      const name = `${formatPersonName(row['First Name'])} ${formatPersonName(row['Last Name'] || '')}`.trim();
+      const id = row['Employee ID'];
+
+      return {
+        id: id || name,
+        name,
+        title: row['Job Title'] || 'Team member',
+        department: row['Department'] || row['Company'] || 'UDS',
+        location: row['Location'] || row['Company'] || 'Field',
+        email: row['E-mail Address'] || '',
+        phone: row['Mobile Phone'] || '',
+        startDate: row['Start Date'] || '',
+        avatar: id && EMPLOYEE_PHOTOS[id] ? EMPLOYEE_PHOTOS[id] : undefined,
+      };
+    });
+
+const BASE_ASSETS = buildAssetsFromSheet();
+const BASE_HISTORY = buildHistoryFromAssets(BASE_ASSETS);
+const BASE_TEAM = buildTeamSpotlight();
+const computeSheetInsights = (assets) => {
+  const locationCounts = {};
+  let remoteAssignments = 0;
+  const counts = assets.reduce((acc, asset) => {
+    acc[asset.type] = (acc[asset.type] || 0) + 1;
+    const key = asset.location || 'Unassigned';
+    locationCounts[key] = (locationCounts[key] || 0) + 1;
+    if (key.toLowerCase().includes('remote')) {
+      remoteAssignments += 1;
+    }
+    return acc;
+  }, {});
+
+  const topLocations = Object.entries(locationCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([location, count]) => ({ location, count }));
+
+  const remoteShare = assets.length ? Math.round((remoteAssignments / assets.length) * 100) : 0;
+
+  return { counts, topLocations, remoteShare };
+};
+
+const isBrowser = typeof window !== 'undefined';
+
+const usePersistentState = (key, initialValue) => {
+  const [state, setState] = useState(() => {
+    if (!isBrowser) {
+      return initialValue;
+    }
+
+    try {
+      const saved = window.localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : initialValue;
+    } catch {
+      return initialValue;
+    }
+  });
+
+  useEffect(() => {
+    if (!isBrowser) {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(key, JSON.stringify(state));
+    } catch {
+      // Ignore quota errors so the dashboard still works offline.
+    }
+  }, [key, state]);
+
+  return [state, setState];
+};
+
+const formatCurrency = (value) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(value);
+
+const formatDate = (value) => {
+  if (!value) {
+    return '—';
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  return parsed.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
+const statusClasses = {
+  Active: 'bg-emerald-50 text-emerald-700',
+  Maintenance: 'bg-amber-50 text-amber-700',
+  Retired: 'bg-slate-100 text-slate-500',
+};
+
+const StatCard = ({ icon: Icon, label, value, subline }) => (
+  <div className="rounded-2xl border border-slate-100 bg-white/80 p-5 shadow-sm backdrop-blur">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm font-medium text-slate-500">{label}</p>
+        <p className="mt-2 text-3xl font-semibold text-slate-900">{value}</p>
+      </div>
+      <div className="rounded-full bg-slate-900/5 p-3 text-slate-700">
+        <Icon className="h-5 w-5" />
+      </div>
+    </div>
+    {subline && <p className="mt-4 text-xs text-slate-500">{subline}</p>}
+  </div>
+);
+
+const CardShell = ({ title, icon: Icon, action, children }) => (
+  <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+    <div className="mb-4 flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        {Icon && <Icon className="h-5 w-5 text-slate-500" />}
+        <p className="text-sm font-semibold text-slate-800">{title}</p>
+      </div>
+      {action}
+    </div>
+    {children}
+  </div>
+);
+
+const PrimaryNav = ({ onAdd, onExport }) => (
+  <nav className="mb-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-white/70 px-5 py-4 backdrop-blur">
+    <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3">
+        <img
+          src={MEDIA.logo}
+          alt="United Disabilities Services logo"
+          className="h-11 w-11 rounded-2xl border border-slate-100 bg-white object-contain p-1.5 shadow-sm"
+        />
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">United Disabilities Services</p>
+          <p className="text-base font-semibold text-slate-900">Asset Control Studio</p>
+        </div>
+      </div>
+      <span className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 sm:inline-flex">
+        <ShieldCheck className="h-3.5 w-3.5" />
+        Live sync
+      </span>
+    </div>
+    <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-slate-500">
+      {NAV_LINKS.map((item, index) => (
+        <button
+          key={item}
+          className={`transition hover:text-slate-900 ${index === 0 ? 'text-slate-900' : ''}`}
+          type="button"
+        >
+          {item}
+        </button>
+      ))}
+    </div>
+    <div className="flex items-center gap-2">
+      <button
+        onClick={onExport}
+        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:border-slate-300"
+      >
+        <Download className="h-4 w-4" />
+        Export
+      </button>
+      <button
+        onClick={onAdd}
+        className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+      >
+        <Plus className="h-4 w-4" />
+        New asset
+      </button>
+      <button className="rounded-full border border-slate-200 p-2 text-slate-500 hover:border-slate-300" type="button">
+        <Bell className="h-4 w-4" />
+      </button>
+      <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-1.5">
+        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500" />
+        <div>
+          <p className="text-xs font-semibold text-slate-700">Operations</p>
+          <p className="text-[11px] text-slate-400">udsithelpdesk@keynettech.com</p>
+        </div>
+      </div>
+    </div>
+  </nav>
+);
+
+const QuickActionCard = ({ title, description, icon: Icon, actionLabel, onAction }) => (
+  <div className="rounded-2xl border border-slate-100 bg-white/70 p-5 shadow-sm backdrop-blur">
+    <div className="flex items-start gap-3">
+      <div className="rounded-2xl bg-blue-50 p-3 text-blue-500">
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="flex-1">
+        <p className="text-sm font-semibold text-slate-900">{title}</p>
+        <p className="mt-1 text-sm text-slate-500">{description}</p>
+      </div>
+    </div>
+    <button
+      onClick={onAction}
+      className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700"
+      type="button"
+    >
+      {actionLabel}
+      <ArrowRightLeft className="h-4 w-4" />
+    </button>
+  </div>
+);
+
+const DeviceSpotlightCard = ({ title, stats = [], stat, description, image, meta, onStatClick }) => {
+  const displayStats = stats.length ? stats : stat ? [{ label: stat }] : [];
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-slate-900 text-white shadow-sm">
+      {image && <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-45" />}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-slate-900/70 to-blue-900/50" />
+      <div className="relative flex h-full flex-col justify-between p-5">
+        <div>
+          {meta && <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/60">{meta}</p>}
+          <p className="text-lg font-semibold">{title}</p>
+          <p className="mt-1 text-sm text-white/70">{description}</p>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {displayStats.map((item, index) => {
+            const key = `${item.type || item.label}-${index}`;
+            const isClickable = Boolean(onStatClick && item.type);
+            const content = isClickable ? (
+              <button
+                type="button"
+                onClick={() => onStatClick(item.type)}
+                className="text-left text-2xl font-semibold text-white underline decoration-white/60 underline-offset-4 transition hover:text-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+              >
+                {item.label}
+              </button>
+            ) : (
+              <span className="text-2xl font-semibold">{item.label}</span>
+            );
+
+            return (
+              <Fragment key={key}>
+                {content}
+                {index < displayStats.length - 1 && <span className="text-2xl font-semibold text-white/50">/</span>}
+              </Fragment>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SheetAssetTable = ({ rows, topLocations = [], downloadHref, totalRows }) => (
+  <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 p-5">
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Tables folder</p>
+        <p className="text-lg font-semibold text-slate-900">Asset List 11-18-25.xlsx</p>
+        <p className="text-sm text-slate-500">
+          Showing {rows.length} of {totalRows} synced rows
+        </p>
+      </div>
+      <a
+        href={downloadHref}
+        download
+        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300"
+      >
+        <Download className="h-4 w-4" />
+        Download
+      </a>
+    </div>
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
+        <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <tr>
+            <th className="px-4 py-3">Asset ID</th>
+            <th className="px-4 py-3">Owner</th>
+            <th className="px-4 py-3">Type</th>
+            <th className="px-4 py-3">Model</th>
+            <th className="px-4 py-3">Location</th>
+            <th className="px-4 py-3">Purchased</th>
+            <th className="px-4 py-3">Warranty</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100 text-slate-700">
+          {rows.map((row) => (
+            <tr key={row.id} className="hover:bg-slate-50/70">
+              <td className="px-4 py-3 font-mono text-xs text-slate-500">{row.assetId}</td>
+              <td className="px-4 py-3">
+                <p className="text-sm font-semibold text-slate-900">{row.owner}</p>
+                <p className="text-xs text-slate-500">{row.serial}</p>
+              </td>
+              <td className="px-4 py-3 text-sm">{row.type}</td>
+              <td className="px-4 py-3 text-sm">{row.model}</td>
+              <td className="px-4 py-3 text-sm">{row.location}</td>
+              <td className="px-4 py-3 text-sm">{row.purchaseDate ? formatDate(row.purchaseDate) : '—'}</td>
+              <td className="px-4 py-3 text-sm">{row.warranty ? formatDate(row.warranty) : '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    {topLocations.length > 0 && (
+      <div className="grid gap-4 border-t border-slate-100 p-5 text-sm text-slate-600 sm:grid-cols-3">
+        {topLocations.map((item) => (
+          <div key={item.location}>
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">{item.location}</p>
+            <p className="mt-1 text-xl font-semibold text-slate-900">{item.count}</p>
+            <p className="text-xs text-slate-500">assets tracked</p>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+);
+
+const TeamSpotlightPanel = ({ team = [], remoteShare, downloadHref }) => (
+  <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 p-5">
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Employee Information Hub.xlsx</p>
+        <p className="text-lg font-semibold text-slate-900">Team spotlight</p>
+        <p className="text-sm text-slate-500">{remoteShare}% remote assignments</p>
+      </div>
+      <a
+        href={downloadHref}
+        download
+        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300"
+      >
+        <Download className="h-4 w-4" />
+        Roster
+      </a>
+    </div>
+    <ul className="divide-y divide-slate-100">
+      {team.map((member) => (
+        <li key={member.id} className="flex items-start gap-3 p-5">
+          {member.avatar ? (
+            <img src={member.avatar} alt={`${member.name} avatar`} className="h-12 w-12 rounded-2xl object-cover" />
+          ) : (
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-600">
+              {getInitials(member.name)}
+            </div>
+          )}
+          <div className="flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">{member.name}</p>
+                <p className="text-xs text-slate-500">{member.title}</p>
+              </div>
+              {member.startDate && <p className="text-[11px] text-slate-400">Since {formatDate(member.startDate)}</p>}
+            </div>
+            <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5" />
+                {member.location}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Tag className="h-3.5 w-3.5" />
+                {member.department}
+              </span>
+            </div>
+            <div className="mt-2 text-xs text-blue-600">
+              {member.email && (
+                <a href={`mailto:${member.email}`} className="hover:underline">
+                  {member.email}
+                </a>
+              )}
+              {!member.email && member.phone && <span>{member.phone}</span>}
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
+const AssetFilters = ({ filters, onChange, onReset, types }) => (
+  <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="relative flex-1 min-w-[220px]">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <input
+          value={filters.search}
+          onChange={(event) => onChange('search', event.target.value)}
+          placeholder="Search by brand, serial, or user"
+          className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        />
+      </div>
+      <select
+        value={filters.type}
+        onChange={(event) => onChange('type', event.target.value)}
+        className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+      >
+        <option value="all">All types</option>
+        {types.map((type) => (
+          <option key={type} value={type}>
+            {type}
+          </option>
+        ))}
+      </select>
+      <select
+        value={filters.status}
+        onChange={(event) => onChange('status', event.target.value)}
+        className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+      >
+        <option value="all">All statuses</option>
+        <option value="Active">Active</option>
+        <option value="Maintenance">Maintenance</option>
+        <option value="Retired">Retired</option>
+      </select>
+      <button
+        onClick={onReset}
+        className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+      >
+        <SlidersHorizontal className="h-4 w-4" />
+        Reset filters
+      </button>
+    </div>
+  </div>
+);
+const AssetTable = ({ assets, onEdit, onDelete, onAction, onSelect = () => {}, selectedId }) => {
+  if (assets.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-slate-200 bg-white/80 p-12 text-center text-sm text-slate-500">
+        No assets match the selected filters.
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-slate-100 text-sm">
+          <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-6 py-3">Asset</th>
+              <th className="px-6 py-3">Owner</th>
+              <th className="px-6 py-3">Department</th>
+              <th className="px-6 py-3">Status</th>
+              <th className="px-6 py-3">Cost</th>
+              <th className="px-6 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 text-slate-600">
+            {assets.map((asset) => {
+              const Icon = assetTypeIcons[asset.type] || Monitor;
+              const isSelected = selectedId === asset.id;
+              return (
+                <tr
+                  key={asset.id}
+                  onClick={() => onSelect(asset)}
+                  className={`cursor-pointer transition ${
+                    isSelected ? 'bg-blue-50/80 shadow-inner ring-1 ring-blue-100' : 'hover:bg-slate-50/70'
+                  }`}
+                >
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-xl bg-slate-100 p-2 text-slate-600">
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900">
+                          {asset.brand} {asset.model}
+                        </p>
+                        <p className="text-xs text-slate-500">{asset.serialNumber}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-slate-600">{asset.assignedTo || 'Unassigned'}</td>
+                  <td className="px-6 py-4">
+                    <div className="text-slate-700">{asset.department}</div>
+                    <div className="text-xs text-slate-400">{asset.location}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClasses[asset.status] || 'bg-slate-100 text-slate-500'}`}>
+                      {asset.checkedOut ? 'Checked Out' : asset.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 font-semibold text-slate-900">{formatCurrency(asset.cost)}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onAction(asset, asset.checkedOut ? 'checkin' : 'checkout');
+                        }}
+                        className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-600"
+                      >
+                        {asset.checkedOut ? 'Check In' : 'Check Out'}
+                      </button>
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onEdit(asset);
+                        }}
+                        className="rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-blue-200 hover:text-blue-600"
+                        title="Edit asset"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onDelete(asset);
+                        }}
+                        className="rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-rose-200 hover:text-rose-600"
+                        title="Remove asset"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+const LicenseUsage = ({ licenses }) => {
+  const usage = useMemo(
+    () =>
+      licenses.map((license) => ({
+        name: license.software,
+        used: license.used,
+        available: license.seats - license.used,
+      })),
+    [licenses],
+  );
+
+  return (
+    <CardShell title="License usage" icon={Key}>
+      <div className="h-60">
+        <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
+          <BarChart data={usage} margin={{ top: 8, right: 8, bottom: 0, left: -10 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="used" stackId="a" fill="#2563eb" name="Used seats" />
+            <Bar dataKey="available" stackId="a" fill="#94a3b8" name="Available" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </CardShell>
+  );
+};
+
+const MaintenanceList = ({ records, getAssetName }) => (
+  <CardShell title="Recent maintenance" icon={Wrench}>
+    <div className="space-y-4">
+      {records.map((record) => (
+        <div key={record.id} className="rounded-xl border border-slate-100 p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-slate-800">{record.type}</p>
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                record.status === 'Completed'
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : 'bg-amber-50 text-amber-700'
+              }`}
+            >
+              {record.status}
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">{record.date}</p>
+          <p className="mt-3 text-sm text-slate-600">{record.description}</p>
+          <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+            <span>{getAssetName(record.assetId)}</span>
+            <span>${record.cost}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </CardShell>
+);
+
+const ActivityPanel = ({ history, lookupAsset }) => (
+  <CardShell title="Check-in/out activity" icon={History}>
+    <div className="space-y-4">
+      {history.map((entry) => (
+        <div key={entry.id} className="flex items-start gap-3 rounded-2xl border border-slate-100 p-4">
+          <div
+            className={`rounded-full p-2 ${
+              entry.action === 'Check Out' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'
+            }`}
+          >
+            <ArrowRightLeft className="h-4 w-4" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-800">
+              {entry.action} - {lookupAsset(entry.assetId)}
+            </p>
+            <p className="text-xs text-slate-500">
+              {entry.date} | {entry.user}
+            </p>
+            {entry.notes && <p className="mt-1 text-sm text-slate-600">{entry.notes}</p>}
+          </div>
+        </div>
+      ))}
+    </div>
+  </CardShell>
+);
+
+const AssetSpotlight = ({ asset, onEdit }) => {
+  const Icon = asset ? assetTypeIcons[asset.type] || Monitor : Monitor;
+
+  return (
+    <div className="sticky top-6 rounded-3xl border border-slate-100 bg-white/80 p-6 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Asset spotlight</p>
+          <p className="text-base font-semibold text-slate-900">{asset ? 'Live snapshot' : 'Choose a device'}</p>
+        </div>
+        {asset && (
+          <button
+            onClick={() => onEdit(asset)}
+            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-slate-300"
+            type="button"
+          >
+            <Edit2 className="h-3.5 w-3.5" />
+            Update
+          </button>
+        )}
+      </div>
+
+      {asset ? (
+        <>
+          <div className="mt-6 rounded-2xl bg-slate-900 p-5 text-white">
+            <div className="flex items-center gap-3">
+              <div className="rounded-2xl bg-white/10 p-3">
+                <Icon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm text-white/60">{asset.type}</p>
+                <p className="text-lg font-semibold">{asset.brand} {asset.model}</p>
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2 text-xs">
+              <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-3 py-1">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                {asset.status}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-3 py-1">
+                <Sparkles className="h-3.5 w-3.5" />
+                {formatCurrency(asset.cost)}
+              </span>
+            </div>
+          </div>
+          <dl className="mt-6 space-y-4 text-sm">
+            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+              <div>
+                <dt className="text-xs uppercase tracking-widest text-slate-400">Assigned to</dt>
+                <dd className="text-base font-semibold text-slate-900">{asset.assignedTo || 'Unassigned'}</dd>
+              </div>
+              <div className="text-right text-xs text-slate-400">
+                {asset.checkedOut ? `Checked out ${formatDate(asset.checkOutDate)}` : 'Available'}
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-slate-600">
+                <MapPin className="h-4 w-4 text-slate-400" />
+                <span>{asset.location || 'Not set'}</span>
+              </div>
+              <div className="flex items-center gap-2 text-slate-600">
+                <Tag className="h-4 w-4 text-slate-400" />
+                <span>{asset.qrCode || 'Not generated'}</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-slate-600">
+                <CalendarClock className="h-4 w-4 text-slate-400" />
+                <span>Purchased {formatDate(asset.purchaseDate)}</span>
+              </div>
+              <div className="text-slate-600">
+                Warranty ends {formatDate(asset.warrantyExpiry)}
+              </div>
+            </div>
+          </dl>
+        </>
+      ) : (
+        <div className="mt-6 rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+          Select an asset from the table to view a friendly summary of ownership, warranty, and deployment details.
+        </div>
+      )}
+    </div>
+  );
+};
+const ModalShell = ({ title, onClose, children }) => (
+  <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/70 px-4 py-8">
+    <div className="w-full max-w-3xl rounded-3xl bg-white shadow-2xl">
+      <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+        <p className="text-lg font-semibold text-slate-900">{title}</p>
+        <button onClick={onClose} className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+      <div className="max-h-[70vh] overflow-y-auto px-6 py-4">{children}</div>
+    </div>
+  </div>
+);
+
+const AssetFormModal = ({ asset, onSubmit, onCancel }) => {
+  const [form, setForm] = useState(asset || defaultAsset);
+
+  useEffect(() => {
+    setForm(asset || defaultAsset);
+  }, [asset]);
+
+  const update = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    onSubmit(form);
+  };
+
+  return (
+    <ModalShell title={asset?.id ? 'Edit asset' : 'New asset'} onClose={onCancel}>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label className="text-sm font-medium text-slate-700">
+            Asset type
+            <select
+              value={form.type}
+              onChange={(event) => update('type', event.target.value)}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="Laptop">Laptop</option>
+              <option value="Desktop">Desktop</option>
+              <option value="Server">Server</option>
+              <option value="Storage">Storage</option>
+            </select>
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Brand
+            <input
+              value={form.brand}
+              onChange={(event) => update('brand', event.target.value)}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Model
+            <input
+              value={form.model}
+              onChange={(event) => update('model', event.target.value)}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Serial number
+            <input
+              value={form.serialNumber}
+              onChange={(event) => update('serialNumber', event.target.value)}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Department
+            <input
+              value={form.department}
+              onChange={(event) => update('department', event.target.value)}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Location
+            <input
+              value={form.location}
+              onChange={(event) => update('location', event.target.value)}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Assigned to
+            <input
+              value={form.assignedTo}
+              onChange={(event) => update('assignedTo', event.target.value)}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Status
+            <select
+              value={form.status}
+              onChange={(event) => update('status', event.target.value)}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="Active">Active</option>
+              <option value="Maintenance">Maintenance</option>
+              <option value="Retired">Retired</option>
+            </select>
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Purchase date
+            <input
+              type="date"
+              value={form.purchaseDate}
+              onChange={(event) => update('purchaseDate', event.target.value)}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Warranty expiry
+            <input
+              type="date"
+              value={form.warrantyExpiry}
+              onChange={(event) => update('warrantyExpiry', event.target.value)}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Cost
+            <input
+              type="number"
+              value={form.cost}
+              onChange={(event) => update('cost', Number(event.target.value))}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            QR code value
+            <input
+              value={form.qrCode}
+              onChange={(event) => update('qrCode', event.target.value)}
+              placeholder="QR-XXXXXX"
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+        </div>
+        <div className="flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="inline-flex items-center rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:border-slate-300"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+          >
+            <Check className="h-4 w-4" />
+            Save asset
+          </button>
+        </div>
+      </form>
+    </ModalShell>
+  );
+};
+
+const CheckActionModal = ({ asset, mode, onSubmit, onCancel }) => {
+  const [form, setForm] = useState({
+    user: asset?.assignedTo || '',
+    notes: '',
+    date: new Date().toISOString().slice(0, 10),
+  });
+
+  useEffect(() => {
+    setForm({
+      user: asset?.assignedTo || '',
+      notes: '',
+      date: new Date().toISOString().slice(0, 10),
+    });
+  }, [asset, mode]);
+
+  const update = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    onSubmit({
+      assetId: asset.id,
+      mode,
+      user: form.user || 'Unassigned',
+      notes: form.notes,
+      date: form.date,
+    });
+  };
+
+  return (
+    <ModalShell title={mode === 'checkout' ? 'Check out asset' : 'Check in asset'} onClose={onCancel}>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">
+            {asset.brand} {asset.model}
+          </p>
+          <p className="text-xs text-slate-500">{asset.serialNumber}</p>
+        </div>
+        <label className="text-sm font-medium text-slate-700">
+          User
+          <input
+            value={form.user}
+            onChange={(event) => update('user', event.target.value)}
+            placeholder="Person receiving the asset"
+            className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          />
+        </label>
+        <label className="text-sm font-medium text-slate-700">
+          Date
+          <input
+            type="date"
+            value={form.date}
+            onChange={(event) => update('date', event.target.value)}
+            className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          />
+        </label>
+        <label className="text-sm font-medium text-slate-700">
+          Notes
+          <textarea
+            rows={3}
+            value={form.notes}
+            onChange={(event) => update('notes', event.target.value)}
+            className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          />
+        </label>
+        <div className="flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="inline-flex items-center rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:border-slate-300"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+          >
+            <ArrowRightLeft className="h-4 w-4" />
+            {mode === 'checkout' ? 'Check out' : 'Check in'}
+          </button>
+        </div>
+      </form>
+    </ModalShell>
+  );
+};
+const App = () => {
+  const [assets, setAssets] = usePersistentState(STORAGE_KEYS.assets, BASE_ASSETS);
+  const [history, setHistory] = usePersistentState(STORAGE_KEYS.history, BASE_HISTORY);
+
+  const licenseBuckets = useMemo(() => buildLicensePools(assets), [assets]);
+  const maintenanceRecords = useMemo(() => buildMaintenanceFromAssets(assets), [assets]);
+  const sheetInsights = useMemo(() => computeSheetInsights(assets), [assets]);
+  const teamSpotlight = useMemo(() => BASE_TEAM, []);
+  const sheetAssetRows = useMemo(
+    () =>
+      assets
+        .filter((asset) => asset.type !== 'Key Fob')
+        .sort((a, b) => new Date(b.purchaseDate || 0) - new Date(a.purchaseDate || 0))
+        .slice(0, 18)
+        .map((asset) => ({
+          id: asset.id,
+          assetId: asset.sheetId,
+          owner: asset.assignedTo || 'Unassigned',
+          type: asset.type,
+          model: `${asset.brand} ${asset.model}`.trim(),
+          location: asset.location,
+          purchaseDate: asset.purchaseDate,
+          warranty: asset.warrantyExpiry,
+          serial: asset.serialNumber,
+        })),
+    [assets],
+  );
+  const hardwareSpotlights = useMemo(() => {
+    const counts = sheetInsights.counts || {};
+    const formatLabel = (count = 0, noun) => `${count} ${count === 1 ? noun : `${noun}s`}`;
+
+    return [
+      {
+        title: 'Compute fleet',
+        stats: [{ label: formatLabel(counts.Computer || 0, 'computer'), type: 'Computer' }],
+        description: 'Live pull from the Asset List workbook keeps your laptops and desktops current.',
+        image: MEDIA.devices.computer,
+        meta: 'Hardware pulse',
+      },
+      {
+        title: 'Displays & docks',
+        stats: [
+          { label: formatLabel(counts.Monitor || 0, 'display'), type: 'Monitor' },
+          { label: formatLabel(counts.Dock || 0, 'dock'), type: 'Dock' },
+        ],
+        description: 'Conference rooms and hoteling desks stay paired with procurement.',
+        image: MEDIA.devices.monitor,
+        meta: 'Peripherals',
+      },
+      {
+        title: 'Print backbone',
+        stats: [{ label: formatLabel(counts.Printer || 0, 'printer'), type: 'Printer' }],
+        description: 'Brother + HP devices mirrored from the Asset List for compliance.',
+        image: MEDIA.devices.printer,
+        meta: 'Facilities',
+      },
+    ];
+  }, [sheetInsights]);
+
+  const [filters, setFilters] = useState({ search: '', type: 'all', status: 'all' });
+  const [assetForm, setAssetForm] = useState(null);
+  const [actionState, setActionState] = useState(null);
+  const [selectedAssetId, setSelectedAssetId] = useState(null);
+
+  const filteredAssets = useMemo(() => {
+    const query = filters.search.toLowerCase();
+
+    return assets.filter((asset) => {
+      const matchesSearch =
+        !query ||
+        asset.brand.toLowerCase().includes(query) ||
+        asset.model.toLowerCase().includes(query) ||
+        asset.serialNumber.toLowerCase().includes(query) ||
+        asset.assignedTo.toLowerCase().includes(query);
+      const matchesType = filters.type === 'all' || asset.type === filters.type;
+      const matchesStatus =
+        filters.status === 'all' ||
+        (filters.status === 'Active' && !asset.checkedOut && asset.status === 'Active') ||
+        (filters.status === 'Maintenance' && asset.status === 'Maintenance') ||
+        (filters.status === 'Retired' && asset.status === 'Retired');
+
+      return matchesSearch && matchesType && matchesStatus;
+    });
+  }, [assets, filters]);
+
+  useEffect(() => {
+    if (filteredAssets.length === 0) {
+      setSelectedAssetId(null);
+      return;
+    }
+    if (!filteredAssets.some((asset) => asset.id === selectedAssetId)) {
+      setSelectedAssetId(filteredAssets[0].id);
+    }
+  }, [filteredAssets, selectedAssetId]);
+
+  const stats = useMemo(() => {
+    const totalValue = assets.reduce((sum, asset) => sum + Number(asset.cost || 0), 0);
+    const checkedOut = assets.filter((asset) => asset.checkedOut).length;
+    const available = assets.length - checkedOut;
+    const expiringSoon = assets.filter((asset) => {
+      if (!asset.warrantyExpiry) {
+        return false;
+      }
+      const diff = new Date(asset.warrantyExpiry) - new Date();
+      return diff > 0 && diff / (1000 * 60 * 60 * 24) <= 90;
+    }).length;
+    const newThisYear = assets.filter((asset) => new Date(asset.purchaseDate).getFullYear() === new Date().getFullYear()).length;
+
+    return {
+      total: assets.length,
+      totalValue,
+      checkedOut,
+      available,
+      expiringSoon,
+      newThisYear,
+    };
+  }, [assets]);
+
+  const selectedAsset = useMemo(
+    () => assets.find((asset) => asset.id === selectedAssetId) || null,
+    [assets, selectedAssetId],
+  );
+
+  const typeDistribution = useMemo(() => {
+    const map = assets.reduce((acc, asset) => {
+      acc[asset.type] = (acc[asset.type] || 0) + 1;
+      return acc;
+    }, {});
+    return Object.entries(map).map(([name, value]) => ({ name, value }));
+  }, [assets]);
+
+  const recentMaintenance = useMemo(
+    () =>
+      maintenanceRecords
+        .slice()
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 4),
+    [maintenanceRecords],
+  );
+
+  const recentHistory = useMemo(
+    () =>
+      history
+        .slice()
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 5),
+    [history],
+  );
+
+  const assetAcquisitionTrend = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 6 }).map((_, index) => {
+      const temp = new Date(now);
+      temp.setMonth(now.getMonth() - (5 - index));
+      const label = temp.toLocaleString('default', { month: 'short' });
+      const count = assets.filter(
+        (asset) => new Date(asset.purchaseDate).getMonth() === temp.getMonth() && new Date(asset.purchaseDate).getFullYear() === temp.getFullYear(),
+      ).length;
+
+      return { name: label, assets: count };
+    });
+  }, [assets]);
+
+  const typeColors = ['#2563eb', '#a855f7', '#f97316', '#10b981'];
+
+  const typeOptions = useMemo(() => Array.from(new Set(assets.map((asset) => asset.type))), [assets]);
+
+  const licenseInsights = useMemo(() => {
+    const totals = licenseBuckets.reduce(
+      (acc, license) => {
+        acc.used += license.used;
+        acc.seats += license.seats;
+        return acc;
+      },
+      { used: 0, seats: 0 },
+    );
+    const percent = totals.seats ? Math.round((totals.used / totals.seats) * 100) : 0;
+    return { ...totals, percent };
+  }, [licenseBuckets]);
+
+  const utilization = stats.total ? Math.round((stats.checkedOut / stats.total) * 100) : 0;
+  const handleFilterChange = (field, value) => {
+    setFilters((prev) => ({ ...prev, [field]: value }));
+  };
+  const handleSpotlightFilter = (type) => {
+    setFilters({ search: '', type: type || 'all', status: 'all' });
+    if (!isBrowser) {
+      return;
+    }
+    const section = document.getElementById('asset-table');
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleRowSelect = (asset) => {
+    setSelectedAssetId(asset.id);
+  };
+
+  const handleSaveAsset = (payload) => {
+    const normalized = {
+      ...payload,
+      id: payload.id ?? Date.now(),
+      cost: Number(payload.cost) || 0,
+      qrCode: payload.qrCode || `QR-${payload.serialNumber || payload.id}`,
+    };
+
+    setAssets((prev) => {
+      const exists = prev.some((asset) => asset.id === normalized.id);
+      if (exists) {
+        return prev.map((asset) => (asset.id === normalized.id ? normalized : asset));
+      }
+      return [...prev, normalized];
+    });
+
+    setAssetForm(null);
+  };
+
+  const handleDeleteAsset = (asset) => {
+    if (window.confirm(`Delete ${asset.brand} ${asset.model}?`)) {
+      setAssets((prev) => prev.filter((item) => item.id !== asset.id));
+    }
+  };
+
+  const handleActionSubmit = ({ assetId, mode, user, notes, date }) => {
+    setAssets((prev) =>
+      prev.map((asset) => {
+        if (asset.id !== assetId) {
+          return asset;
+        }
+        if (mode === 'checkout') {
+          return { ...asset, assignedTo: user, checkedOut: true, checkOutDate: date };
+        }
+        return { ...asset, assignedTo: '', checkedOut: false, checkOutDate: '' };
+      }),
+    );
+
+    setHistory((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        assetId,
+        action: mode === 'checkout' ? 'Check Out' : 'Check In',
+        user,
+        notes,
+        date,
+      },
+    ]);
+
+    setActionState(null);
+  };
+
+  const handleResetData = () => {
+    if (window.confirm('This will replace your data with the starter set. Continue?')) {
+      const workbookAssets = buildAssetsFromSheet();
+      setAssets(workbookAssets);
+      setHistory(buildHistoryFromAssets(workbookAssets));
+    }
+  };
+
+  const handleExport = () => {
+    const blob = new Blob([JSON.stringify({ assets, licenses: licenseBuckets, maintenanceRecords, history }, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'asset-management-data.json';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const quickActions = [
+    {
+      title: 'Register new hardware',
+      description: 'Log laptops, peripherals, or sensors and auto-assign to teams.',
+      icon: Plus,
+      actionLabel: 'Add asset',
+      onAction: () => setAssetForm(defaultAsset),
+    },
+    {
+      title: 'Share executive snapshot',
+      description: 'Export JSON for finance, compliance, or reporting workflows.',
+      icon: Share2,
+      actionLabel: 'Export data',
+      onAction: handleExport,
+    },
+    {
+      title: 'Refresh the sandbox',
+      description: 'Reset demo content to explore workflows from a clean slate.',
+      icon: RefreshCw,
+      actionLabel: 'Reset sample data',
+      onAction: handleResetData,
+    },
+  ];
+
+  const getAssetName = (id) => {
+    const asset = assets.find((item) => item.id === id);
+    return asset ? `${asset.brand} ${asset.model}` : 'Unknown asset';
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-slate-100 to-slate-50 pb-16">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <PrimaryNav onAdd={() => setAssetForm(defaultAsset)} onExport={handleExport} />
+
+        <section className="mb-8 grid gap-6 lg:grid-cols-[2fr,1fr]">
+          <div className="relative overflow-hidden rounded-3xl bg-slate-900 p-8 text-white shadow-lg">
+            <img src={MEDIA.hero} alt="UDS operations" className="absolute inset-0 h-full w-full object-cover opacity-40" />
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-blue-900/70" />
+            <div className="relative">
+              <p className="text-sm font-semibold uppercase tracking-[0.3rem] text-white/60">Intelligent operations</p>
+              <h1 className="mt-3 text-3xl font-semibold leading-tight">One command center for every asset lifecycle</h1>
+              <p className="mt-3 text-sm text-white/70">
+                Monitor procurement, deployment, and renewals from a single, human-friendly surface. Everything updates in real time so you can make confident decisions.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3 text-xs font-semibold">
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  Compliance ready
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1">
+                  <ArrowRightLeft className="h-3.5 w-3.5" />
+                  Live audit logs
+                </span>
+              </div>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <button
+                  onClick={() => setAssetForm(defaultAsset)}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add hardware
+                </button>
+                <button
+                  onClick={handleExport}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  <Share2 className="h-4 w-4" />
+                  Share snapshot
+                </button>
+              </div>
+              <div className="mt-8 grid gap-4 sm:grid-cols-3">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-white/50">Assets tracked</p>
+                  <p className="mt-1 text-2xl font-semibold">{stats.total}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-white/50">Inventory value</p>
+                  <p className="mt-1 text-2xl font-semibold">{formatCurrency(stats.totalValue)}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-white/50">Warranty alerts</p>
+                  <p className="mt-1 text-2xl font-semibold">{stats.expiringSoon}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-3xl border border-slate-900/60 bg-slate-900 p-6 text-white shadow-inner">
+            <p className="text-xs font-semibold uppercase tracking-[0.3rem] text-white/60">Fleet health</p>
+            <p className="mt-3 text-4xl font-semibold">{utilization}%</p>
+            <p className="text-sm text-white/70">Checked out utilisation</p>
+            <div className="mt-4 h-2 w-full rounded-full bg-white/10">
+              <div
+                className="h-2 rounded-full bg-gradient-to-r from-blue-400 to-teal-300"
+                style={{ width: `${utilization}%` }}
+              />
+            </div>
+            <div className="mt-6 space-y-4 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-white/70">Active hardware</span>
+                <span className="font-semibold">{stats.available} available</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-white/70">Checked out</span>
+                <span className="font-semibold">{stats.checkedOut} devices</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-white/70">License usage</span>
+                <span className="font-semibold">{licenseInsights.percent}% of {licenseInsights.seats} seats</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mb-8 grid gap-4 md:grid-cols-3">
+          {hardwareSpotlights.map((item) => (
+            <DeviceSpotlightCard key={item.title} {...item} onStatClick={handleSpotlightFilter} />
+          ))}
+        </section>
+
+        <section className="mb-8 grid gap-4 lg:grid-cols-3">
+          {quickActions.map((action) => (
+            <QuickActionCard key={action.title} {...action} />
+          ))}
+        </section>
+
+        <section className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <StatCard icon={Laptop} label="Assets tracked" value={stats.total} subline={`${stats.newThisYear} purchased this year`} />
+          <StatCard icon={ArrowRightLeft} label="Checked out" value={stats.checkedOut} subline={`${stats.available} available`} />
+          <StatCard icon={HardDrive} label="Inventory value" value={formatCurrency(stats.totalValue)} subline="Replacement cost" />
+          <StatCard icon={AlertTriangle} label="Warranty alerts" value={stats.expiringSoon} subline="Expiring in 90 days" />
+        </section>
+
+        <section className="mb-10 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
+          <SheetAssetTable
+            rows={sheetAssetRows}
+            topLocations={sheetInsights.topLocations}
+            downloadHref={EXCEL_EXPORTS.assets}
+            totalRows={assets.length}
+          />
+          <TeamSpotlightPanel team={teamSpotlight} remoteShare={sheetInsights.remoteShare} downloadHref={EXCEL_EXPORTS.employees} />
+        </section>
+
+        <section id="asset-table" className="mb-10 grid gap-6 lg:grid-cols-[2fr,1fr]">
+          <div className="space-y-4">
+            <AssetFilters
+              filters={filters}
+              onChange={handleFilterChange}
+              onReset={() => setFilters({ search: '', type: 'all', status: 'all' })}
+              types={typeOptions}
+            />
+            <AssetTable
+              assets={filteredAssets}
+              onEdit={setAssetForm}
+              onDelete={handleDeleteAsset}
+              onAction={(asset, mode) => setActionState({ asset, mode })}
+              onSelect={handleRowSelect}
+              selectedId={selectedAssetId}
+            />
+          </div>
+          <AssetSpotlight asset={selectedAsset} onEdit={setAssetForm} />
+        </section>
+
+        <section className="mb-6 grid gap-6 lg:grid-cols-2">
+          <CardShell title="Asset mix" icon={Laptop}>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
+                <PieChart>
+                  <Tooltip />
+                  <Pie data={typeDistribution} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} label>
+                    {typeDistribution.map((entry, index) => (
+                      <Cell key={entry.name} fill={typeColors[index % typeColors.length]} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardShell>
+          <CardShell title="New assets by month" icon={HardDrive}>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
+                <LineChart data={assetAcquisitionTrend} margin={{ top: 5, right: 16, bottom: 0, left: -10 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="assets" stroke="#2563eb" strokeWidth={3} dot={{ r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardShell>
+        </section>
+
+        <section className="grid gap-6 lg:grid-cols-3">
+          <LicenseUsage licenses={licenseBuckets} />
+          <MaintenanceList records={recentMaintenance} getAssetName={getAssetName} />
+          <ActivityPanel history={recentHistory} lookupAsset={getAssetName} />
+        </section>
+      </div>
+
+      {assetForm && <AssetFormModal asset={assetForm} onSubmit={handleSaveAsset} onCancel={() => setAssetForm(null)} />}
+      {actionState && <CheckActionModal asset={actionState.asset} mode={actionState.mode} onSubmit={handleActionSubmit} onCancel={() => setActionState(null)} />}
+    </div>
+  );
+};
+
+export default App;
+
+
