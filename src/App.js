@@ -7629,8 +7629,19 @@ const App = () => {
                     onClick={() => {
                       if (!terminationProfile?.supervisorEmail) return;
                       const subject = encodeURIComponent(`Offboarding ${terminationEmployee}`);
+                      const assetLines =
+                        terminationAssets.length === 0
+                          ? ['- No assets found for this employee in the system.']
+                          : terminationAssets.map((asset) => {
+                              const name = asset.assetName || asset.model || `Asset ${asset.id}`;
+                              const type = asset.type || 'Device';
+                              const serial = asset.serialNumber || 'No serial';
+                              return `- ${name} (${type}, Serial: ${serial})`;
+                            });
                       const body = encodeURIComponent(
-                        `Hi ${terminationProfile.supervisor || ''},\n\nWe're processing offboarding for ${terminationEmployee}. Please confirm asset returns and access revocation.\n\nThank you.`,
+                        `Hi ${terminationProfile.supervisor || ''},\n\nWe're processing offboarding for ${terminationEmployee}. Please confirm return of the assets below and complete access revocation.\n\nAssets:\n${assetLines.join(
+                          '\n',
+                        )}\n\nThank you.`,
                       );
                       window.location.href = `mailto:${terminationProfile.supervisorEmail}?subject=${subject}&body=${body}`;
                     }}
