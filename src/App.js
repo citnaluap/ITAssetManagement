@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect, Fragment, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useEffect, Fragment, useCallback, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import {
   Laptop,
@@ -30,7 +30,15 @@ import {
   TrendingDown,
   ClipboardList,
   ClipboardCheck,
+  Users,
   Smartphone,
+  Navigation,
+  Filter,
+  QrCode,
+  Scan,
+  Sun,
+  Moon,
+  Menu,
 } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line } from 'recharts';
 import assetSheetData from './data/assets.json';
@@ -44,11 +52,46 @@ import {
   deleteSharePointListItem,
 } from './services/sharePointService';
 
+const DARK_MODE_STYLES = `
+  html.theme-dark body {
+    background: radial-gradient(circle at 20% 20%, rgba(59,130,246,0.08), transparent 25%),
+      radial-gradient(circle at 80% 0%, rgba(34,211,238,0.08), transparent 20%),
+      #0b1224;
+    color: #e2e8f0;
+  }
+  html.theme-dark .bg-white,
+  html.theme-dark .bg-white\\/70,
+  html.theme-dark .bg-white\\/80,
+  html.theme-dark .bg-white\\/90 {
+    background-color: #0f172a !important;
+  }
+  html.theme-dark .bg-slate-50,
+  html.theme-dark .bg-slate-50\\/60,
+  html.theme-dark .bg-slate-50\\/70,
+  html.theme-dark .bg-slate-50\\/80,
+  html.theme-dark .bg-slate-50\\/90 {
+    background-color: #0b1224 !important;
+  }
+  html.theme-dark .bg-blue-50 { background-color: rgba(59,130,246,0.12) !important; color: #bfdbfe; }
+  html.theme-dark .border-slate-100,
+  html.theme-dark .border-slate-200 {
+    border-color: #1f2937 !important;
+  }
+  html.theme-dark .text-slate-900,
+  html.theme-dark .text-slate-800,
+  html.theme-dark .text-slate-700 { color: #e2e8f0 !important; }
+  html.theme-dark .text-slate-600 { color: #cbd5e1 !important; }
+  html.theme-dark .text-slate-500 { color: #94a3b8 !important; }
+  html.theme-dark .shadow-sm { box-shadow: 0 20px 60px rgba(0,0,0,0.45) !important; }
+  html.theme-dark .shadow-inner { box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 14px 50px rgba(0,0,0,0.35) !important; }
+`;
+
 const STORAGE_KEYS = {
   assets: 'uds_assets',
   licenses: 'uds_licenses',
   maintenance: 'uds_maintenance',
   history: 'uds_history',
+  clearedWarrantyAlerts: 'uds_cleared_warranty_alerts',
 };
 const STORAGE_VERSION_KEY = 'uds_storage_version';
 const STORAGE_VERSION = '2025-11-19-refresh';
@@ -111,7 +154,7 @@ const defaultEmployeeProfile = {
   lookupKey: '',
 };
 
-const NAV_LINKS = ['Overview', 'Hardware', 'Employees', 'Reports', 'Software', 'Vendors'];
+const NAV_LINKS = ['Overview', 'Hardware', 'Audit', 'Employees', 'Reports', 'Software', 'Vendors'];
 
 const PUBLIC_URL = process.env.PUBLIC_URL || '';
 const normalizedPublicUrl = PUBLIC_URL.replace(/\/+$/, '');
@@ -287,6 +330,346 @@ const normalizeBrandName = (value = '') =>
   value
     .trim()
     .toLowerCase();
+
+const ensureKeyFobModel = (asset) => {
+  if (!asset) {
+    return asset;
+  }
+  const type = (asset.type || '').toLowerCase();
+  if (type === 'phone') {
+    return asset;
+  }
+  const assetIdentifier = String(asset.assetName || asset.sheetId || asset.id || '').trim();
+  const isSevenDigitId = /^[0-9]{7}$/.test(assetIdentifier);
+  const hasKeyFobTag = typeof asset.model === 'string' && /key\s*fob/i.test(asset.model);
+  if (!isSevenDigitId || hasKeyFobTag) {
+    return asset;
+  }
+  const nextModel = asset.model ? `${asset.model} KeyFob` : 'KeyFob';
+  return { ...asset, model: nextModel };
+};
+
+// Minimal QR code generator (based on qrcode-generator, MIT License)
+const QR8bitByte = (data) => ({
+  mode: 1,
+  getLength: () => data.length,
+  write: (buffer) => {
+    for (let i = 0; i < data.length; i += 1) {
+      buffer.put(data.charCodeAt(i), 8);
+    }
+  },
+});
+
+const QRMath = (() => {
+  const EXP_TABLE = new Array(256);
+  const LOG_TABLE = new Array(256);
+  for (let i = 0; i < 8; i += 1) {
+    EXP_TABLE[i] = 1 << i;
+  }
+  for (let i = 8; i < 256; i += 1) {
+    EXP_TABLE[i] = EXP_TABLE[i - 4] ^ EXP_TABLE[i - 5] ^ EXP_TABLE[i - 6] ^ EXP_TABLE[i - 8];
+  }
+  for (let i = 0; i < 255; i += 1) {
+    LOG_TABLE[EXP_TABLE[i]] = i;
+  }
+  const glog = (n) => {
+    if (n < 1) {
+      throw new Error('glog(' + n + ')');
+    }
+    return LOG_TABLE[n];
+  };
+  const gexp = (n) => EXP_TABLE[(n % 255 + 255) % 255];
+  return { glog, gexp };
+})();
+
+const QRPolynomial = (num, shift) => {
+  let offset = 0;
+  while (offset < num.length && num[offset] === 0) {
+    offset += 1;
+  }
+  const _num = num.slice(offset);
+  const multiply = (e) => {
+    const n = new Array(_num.length + e._num.length - 1).fill(0);
+    for (let i = 0; i < _num.length; i += 1) {
+      for (let j = 0; j < e._num.length; j += 1) {
+        n[i + j] ^= QRMath.gexp(QRMath.glog(_num[i]) + QRMath.glog(e._num[j]));
+      }
+    }
+    return QRPolynomial(n, 0);
+  };
+  const mod = (e) => {
+    if (_num.length - e._num.length < 0) {
+      return QRPolynomial([0], 0);
+    }
+    const ratio = QRMath.glog(_num[0]) - QRMath.glog(e._num[0]);
+    const num2 = _num.slice();
+    for (let i = 0; i < e._num.length; i += 1) {
+      num2[i] ^= QRMath.gexp(QRMath.glog(e._num[i]) + ratio);
+    }
+    return QRPolynomial(num2, 0).mod(e);
+  };
+  return { _num, multiply, mod };
+};
+
+const QRRSBlock = (() => {
+  const RS_BLOCK_TABLE = [
+    [1, 26, 19],
+    [1, 44, 34],
+    [1, 70, 55],
+    [1, 100, 80],
+    [1, 134, 108],
+    [2, 86, 68],
+    [2, 98, 78],
+    [2, 121, 97],
+    [2, 146, 116],
+    [2, 86, 68, 2, 87, 69],
+  ];
+  const getRSBlocks = (typeNumber) => {
+    const rsTable = RS_BLOCK_TABLE[typeNumber - 1];
+    const list = [];
+    for (let i = 0; i < rsTable.length; i += 3) {
+      const count = rsTable[i];
+      const totalCount = rsTable[i + 1];
+      const dataCount = rsTable[i + 2];
+      for (let j = 0; j < count; j += 1) {
+        list.push({ totalCount, dataCount });
+      }
+    }
+    return list;
+  };
+  return { getRSBlocks };
+})();
+
+const QRBitBuffer = () => {
+  const buffer = [];
+  let length = 0;
+  const get = (index) => (buffer[Math.floor(index / 8)] >>> (7 - (index % 8))) & 1;
+  const put = (num, lengthBits) => {
+    for (let i = 0; i < lengthBits; i += 1) {
+      putBit(((num >>> (lengthBits - i - 1)) & 1) === 1);
+    }
+  };
+  const putBit = (bit) => {
+    const bufIndex = Math.floor(length / 8);
+    if (buffer.length <= bufIndex) {
+      buffer.push(0);
+    }
+    if (bit) {
+      buffer[bufIndex] |= 0x80 >>> (length % 8);
+    }
+    length += 1;
+  };
+  return { buffer, get, put, putBit, getLengthInBits: () => length };
+};
+
+const QRMaskPattern = {
+  PATTERN000: 0,
+  getMask: (maskPattern, i, j) => {
+    switch (maskPattern) {
+      case 0:
+        return (i + j) % 2 === 0;
+      default:
+        return false;
+    }
+  },
+};
+
+const getTotalDataCount = (typeNumber) => {
+  const rsBlocks = QRRSBlock.getRSBlocks(typeNumber);
+  return rsBlocks.reduce((sum, block) => sum + block.dataCount, 0);
+};
+
+const QRCodeModel = (typeNumber) => {
+  const PAD0 = 0xec;
+  const PAD1 = 0x11;
+  let modules = null;
+  let moduleCount = 0;
+  const dataList = [];
+
+  const makeImpl = (maskPattern) => {
+    moduleCount = typeNumber * 4 + 17;
+    modules = Array.from({ length: moduleCount }, () => new Array(moduleCount));
+
+    const setupPositionProbePattern = (row, col) => {
+      for (let r = -1; r <= 7; r += 1) {
+        if (row + r <= -1 || moduleCount <= row + r) continue;
+        for (let c = -1; c <= 7; c += 1) {
+          if (col + c <= -1 || moduleCount <= col + c) continue;
+          if (
+            (0 <= r && r <= 6 && (c === 0 || c === 6)) ||
+            (0 <= c && c <= 6 && (r === 0 || r === 6)) ||
+            (2 <= r && r <= 4 && 2 <= c && c <= 4)
+          ) {
+            modules[row + r][col + c] = true;
+          } else {
+            modules[row + r][col + c] = false;
+          }
+        }
+      }
+    };
+
+    setupPositionProbePattern(0, 0);
+    setupPositionProbePattern(moduleCount - 7, 0);
+    setupPositionProbePattern(0, moduleCount - 7);
+
+    for (let i = 8; i < moduleCount - 8; i += 1) {
+      if (modules[i][6] === undefined) modules[i][6] = i % 2 === 0;
+      if (modules[6][i] === undefined) modules[6][i] = i % 2 === 0;
+    }
+
+    const mapData = (data, maskPatternValue) => {
+      let inc = -1;
+      let row = moduleCount - 1;
+      let bitIndex = 7;
+      let byteIndex = 0;
+      for (let col = moduleCount - 1; col > 0; col -= 2) {
+        if (col === 6) col -= 1;
+        while (true) {
+          for (let c = 0; c < 2; c += 1) {
+            if (modules[row][col - c] === undefined) {
+              let dark = false;
+              if (byteIndex < data.length) {
+                dark = ((data[byteIndex] >>> bitIndex) & 1) === 1;
+              }
+              if (QRMaskPattern.getMask(maskPatternValue, row, col - c)) {
+                dark = !dark;
+              }
+              modules[row][col - c] = dark;
+              bitIndex -= 1;
+              if (bitIndex === -1) {
+                byteIndex += 1;
+                bitIndex = 7;
+              }
+            }
+          }
+          row += inc;
+          if (row < 0 || moduleCount <= row) {
+            row -= inc;
+            inc = -inc;
+            break;
+          }
+        }
+      }
+    };
+
+    const totalDataCount = getTotalDataCount(typeNumber);
+    const buffer = QRBitBuffer();
+    for (let i = 0; i < dataList.length; i += 1) {
+      buffer.put(4, 4);
+      buffer.put(dataList[i].getLength(), 8);
+      dataList[i].write(buffer);
+    }
+    let totalBits = buffer.getLengthInBits();
+    if (totalBits > totalDataCount * 8) {
+      throw new Error('data overflow');
+    }
+    if (totalBits + 4 <= totalDataCount * 8) {
+      buffer.put(0, 4);
+    }
+    while (buffer.getLengthInBits() % 8 !== 0) {
+      buffer.putBit(false);
+    }
+    while (buffer.getLengthInBits() < totalDataCount * 8) {
+      buffer.put(buffer.getLengthInBits() % 16 === 0 ? PAD0 : PAD1, 8);
+    }
+
+    const data = createBytes(buffer, typeNumber);
+    mapData(data, maskPattern);
+  };
+
+  const make = () => {
+    makeImpl(0);
+  };
+
+  const addData = (data) => {
+    dataList.push(QR8bitByte(data));
+  };
+
+  const isDark = (row, col) => modules[row][col];
+
+  return {
+    addData,
+    isDark,
+    getModuleCount: () => moduleCount,
+    make,
+  };
+};
+
+const QRPolynomialGenerate = (degree) => {
+  const poly = [1];
+  for (let i = 0; i < degree; i += 1) {
+    poly.push(0);
+    for (let j = poly.length - 1; j > 0; j -= 1) {
+      poly[j] = poly[j] ^ QRMath.gexp(i + QRMath.glog(poly[j - 1] || 1));
+    }
+    poly[0] = QRMath.gexp(i + QRMath.glog(poly[0]));
+  }
+  return poly;
+};
+
+const createBytes = (buffer, typeNumber) => {
+  const rsBlocks = QRRSBlock.getRSBlocks(typeNumber);
+  let offset = 0;
+  const maxDcCount = rsBlocks.reduce((acc, block) => Math.max(acc, block.dataCount), 0);
+  const dcdata = rsBlocks.map(() => []);
+  const ecdata = rsBlocks.map(() => []);
+
+  for (let r = 0; r < rsBlocks.length; r += 1) {
+    const dcCount = rsBlocks[r].dataCount;
+    const ecCount = rsBlocks[r].totalCount - dcCount;
+    for (let i = 0; i < dcCount; i += 1) {
+      dcdata[r][i] = buffer.buffer[i + offset];
+    }
+    offset += dcCount;
+    const rsPoly = QRPolynomialGenerate(ecCount);
+    const rawPoly = QRPolynomial(dcdata[r], 0);
+    const modPoly = rawPoly.mod(QRPolynomial(rsPoly, 0));
+    for (let i = 0; i < ecCount; i += 1) {
+      const modIndex = i + modPoly._num.length - ecCount;
+      ecdata[r][i] = modIndex >= 0 ? modPoly._num[modIndex] : 0;
+    }
+  }
+  const totalCodeCount = rsBlocks.reduce((sum, block) => sum + block.totalCount, 0);
+  const data = [];
+  for (let i = 0; i < totalCodeCount; i += 1) {
+    if (i < maxDcCount) {
+      for (let r = 0; r < rsBlocks.length; r += 1) {
+        if (i < dcdata[r].length) data.push(dcdata[r][i]);
+      }
+    } else {
+      for (let r = 0; r < rsBlocks.length; r += 1) {
+        if (i - maxDcCount < ecdata[r].length) data.push(ecdata[r][i - maxDcCount]);
+      }
+    }
+  }
+  return data;
+};
+
+const generateQrDataUrl = (text, size = 240) => {
+  const qr = QRCodeModel(2);
+  qr.addData(text || '');
+  qr.make();
+  const count = qr.getModuleCount();
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const tileW = size / count;
+  const tileH = size / count;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = '#0f172a';
+  for (let r = 0; r < count; r += 1) {
+    for (let c = 0; c < count; c += 1) {
+      if (qr.isDark(r, c)) {
+        const w = Math.ceil((c + 1) * tileW) - Math.floor(c * tileW);
+        const h = Math.ceil((r + 1) * tileH) - Math.floor(r * tileH);
+        ctx.fillRect(Math.round(c * tileW), Math.round(r * tileH), w, h);
+      }
+    }
+  }
+  return canvas.toDataURL('image/png');
+};
 
 const MODEL_PRICE_RULES = [
   { match: ({ model }) => /iphone\s?15\s?pro/.test(model), price: 1099 },
@@ -464,9 +847,9 @@ const normalizeAssetStatus = (asset) => {
   if (status === 'Retired' || status === 'Maintenance') {
     const hasChanges = owner !== rawOwner || status !== asset.status || checkoutFlag !== false;
     if (!hasChanges) {
-      return asset;
+      return ensureKeyFobModel(asset);
     }
-    return { ...asset, assignedTo: owner, status, checkedOut: false };
+    return ensureKeyFobModel({ ...asset, assignedTo: owner, status, checkedOut: false });
   }
 
   if (!status) {
@@ -487,10 +870,10 @@ const normalizeAssetStatus = (asset) => {
   const checkoutChanged = checkoutFlag !== checkedOut;
 
   if (!ownerChanged && !statusChanged && !checkoutChanged) {
-    return asset;
+    return ensureKeyFobModel(asset);
   }
 
-  return { ...asset, assignedTo: owner, status, checkedOut };
+  return ensureKeyFobModel({ ...asset, assignedTo: owner, status, checkedOut });
 };
 
 const EMPLOYEE_PHOTOS = {
@@ -1196,6 +1579,12 @@ const computeLifecycleReminders = (assets) => {
     });
 };
 
+const buildWarrantyAlertKey = (alert = {}) => {
+  const assetKey = alert.assetId || alert.assetName || alert.model || 'unknown';
+  const expiryKey = alert.warrantyExpiry || 'none';
+  return `${assetKey}::${expiryKey}`;
+};
+
 const buildMaintenanceWorkOrders = (assets) => {
   const statuses = ['Planned', 'In Progress', 'Awaiting Parts', 'Completed'];
   const severities = ['Normal', 'High', 'Urgent'];
@@ -1342,33 +1731,31 @@ const getAssetQualityIssues = (asset = {}) => {
   if (status === 'Retired') {
     return issues;
   }
+  if (!asset.type) {
+    issues.push('Asset type missing');
+  }
+  const assetIdentifier = asset.assetName || asset.sheetId || asset.id;
+  if (!assetIdentifier) {
+    issues.push('Asset ID missing');
+  }
   if (!asset.serialNumber) {
     issues.push('Serial number missing');
   }
-  if (!asset.location) {
-    issues.push('Location missing');
-  }
-  if (!asset.assignedTo) {
-    issues.push('Owner missing');
-  }
-  if (!asset.warrantyExpiry) {
-    issues.push('Warranty date missing');
-  }
-  if (!asset.qrCode) {
-    issues.push('QR label missing');
-  }
-  if (!asset.purchaseDate) {
-    issues.push('Purchase date missing');
+  if (!asset.model) {
+    issues.push('Model missing');
   }
   return issues;
 };
 
 const getAssetQualityScore = (asset = {}) => {
-  const total = 5;
-  const missing = ['serialNumber', 'location', 'assignedTo', 'warrantyExpiry', 'qrCode'].reduce(
-    (acc, key) => acc + (asset[key] ? 0 : 1),
-    0,
-  );
+  const fields = [
+    asset.type,
+    asset.assetName || asset.sheetId || asset.id,
+    asset.serialNumber,
+    asset.model,
+  ];
+  const total = fields.length;
+  const missing = fields.reduce((acc, value) => acc + (value ? 0 : 1), 0);
   return Math.max(0, Math.round(((total - missing) / total) * 100));
 };
 
@@ -1755,8 +2142,12 @@ const CardShell = ({ title, icon: Icon, action, children }) => (
   </div>
 );
 
-const PrimaryNav = ({ onAdd, onExport, activePage, onNavigate }) => (
-  <nav className="mb-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-white/70 px-5 py-4 backdrop-blur">
+const PrimaryNav = ({ onAdd, onExport, activePage, onNavigate, onToggleTheme, isDarkMode, onOpenMenu }) => (
+  <nav
+    className={`mb-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl px-5 py-4 backdrop-blur ${
+      isDarkMode ? 'border border-slate-800 bg-slate-900/70 text-slate-100' : 'border border-slate-100 bg-white/70 text-slate-500'
+    }`}
+  >
     <div className="flex items-center gap-3">
       <div className="flex items-center gap-3">
         <img
@@ -1774,12 +2165,14 @@ const PrimaryNav = ({ onAdd, onExport, activePage, onNavigate }) => (
         Live sync
       </span>
     </div>
-    <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-slate-500">
+    <div className={`flex flex-wrap items-center gap-4 text-sm font-medium ${isDarkMode ? 'text-slate-200' : 'text-slate-500'}`}>
       {NAV_LINKS.map((item) => (
         <button
           key={item}
           onClick={() => onNavigate?.(item)}
-          className={`transition hover:text-slate-900 ${activePage === item ? 'text-slate-900' : ''}`}
+          className={`transition ${isDarkMode ? 'hover:text-white' : 'hover:text-slate-900'} ${
+            activePage === item ? (isDarkMode ? 'text-white' : 'text-slate-900') : ''
+          }`}
           type="button"
           aria-current={activePage === item ? 'page' : undefined}
         >
@@ -1790,7 +2183,11 @@ const PrimaryNav = ({ onAdd, onExport, activePage, onNavigate }) => (
     <div className="flex items-center gap-2">
       <button
         onClick={onExport}
-        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:border-slate-300"
+        className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold transition ${
+          isDarkMode
+            ? 'border border-slate-700 text-slate-100 hover:border-slate-500'
+            : 'border border-slate-200 text-slate-600 hover:border-slate-300'
+        }`}
       >
         <Download className="h-4 w-4" />
         Export
@@ -1802,8 +2199,22 @@ const PrimaryNav = ({ onAdd, onExport, activePage, onNavigate }) => (
         <Plus className="h-4 w-4" />
         New asset
       </button>
-      <button className="rounded-full border border-slate-200 p-2 text-slate-500 hover:border-slate-300" type="button">
-        <Bell className="h-4 w-4" />
+      <button
+        className="rounded-full border border-slate-200 p-2 text-slate-500 hover:border-slate-300 lg:hidden"
+        type="button"
+        onClick={onOpenMenu}
+        aria-label="Open menu"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+      <button
+        className={`rounded-full border p-2 ${isDarkMode ? 'border-slate-700 text-slate-200 hover:border-slate-500' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}
+        type="button"
+        onClick={onToggleTheme}
+        title="Toggle theme"
+        aria-label="Toggle theme"
+      >
+        {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
       </button>
       <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-1.5">
         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500" />
@@ -1835,6 +2246,34 @@ const QuickActionCard = ({ title, description, icon: Icon, actionLabel, onAction
       {actionLabel}
       <ArrowRightLeft className="h-4 w-4" />
     </button>
+  </div>
+);
+
+const EmployeeSummaryCard = ({ total = 0, departments = 0, onAdd }) => (
+  <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-400">Employees</p>
+        <p className="mt-2 text-2xl font-semibold text-slate-900">{total}</p>
+        <p className="text-sm text-slate-500">{departments} departments</p>
+      </div>
+      <div className="flex items-center gap-2 text-slate-500">
+        <span className="h-10 w-10 rounded-2xl bg-blue-50 p-2 text-blue-600">
+          <Users className="h-full w-full" />
+        </span>
+      </div>
+    </div>
+    <div className="mt-4 flex flex-wrap gap-2">
+      <button
+        type="button"
+        onClick={onAdd}
+        className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-500"
+      >
+        <Plus className="h-4 w-4" />
+        Add employee
+      </button>
+      <p className="text-xs text-slate-500">Keep records current before checkouts and audits.</p>
+    </div>
   </div>
 );
 
@@ -1914,7 +2353,7 @@ const PaginationControls = ({ page, totalPages, onPageChange, align = 'between' 
 const SnapshotMetricsRow = ({ metrics = [] }) => (
   <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
     <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Daily signals</p>
-    <div className="mt-4 grid gap-4 sm:grid-cols-3">
+    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {metrics.map((metric) => (
         <div key={metric.label} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
           <p className="text-xs uppercase tracking-widest text-slate-400">{metric.label}</p>
@@ -1926,6 +2365,176 @@ const SnapshotMetricsRow = ({ metrics = [] }) => (
     </div>
   </div>
 );
+
+const OverviewAttentionPanel = ({ overdue = [], dueSoon = [], maintenance = [], software = [], reminderPreview = [], onOpenAlerts }) => {
+  const summary = [
+    { label: 'Overdue', value: overdue.length, tone: 'bg-rose-50 text-rose-700' },
+    { label: 'Due soon', value: dueSoon.length, tone: 'bg-amber-50 text-amber-700' },
+    { label: 'Work orders', value: maintenance.length, tone: 'bg-blue-50 text-blue-700' },
+  ];
+  const reminders = reminderPreview.slice(0, 4);
+
+  return (
+    <CardShell
+      title="Needs attention"
+      icon={Bell}
+      action={
+        <button
+          type="button"
+          onClick={onOpenAlerts}
+          className="rounded-2xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600"
+        >
+          Open alerts
+        </button>
+      }
+    >
+      <div className="grid gap-3 sm:grid-cols-3">
+        {summary.map((item) => (
+          <div key={item.label} className={`rounded-2xl border border-slate-100 p-3 text-sm font-semibold ${item.tone}`}>
+            <p className="text-xs uppercase tracking-wide text-slate-500">{item.label}</p>
+            <p className="text-lg">{item.value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 space-y-3">
+        {reminders.length === 0 && <p className="text-sm text-slate-600">No upcoming lifecycle tasks. Keep shipping.</p>}
+        {reminders.map((reminder) => (
+          <div key={`${reminder.assetId}-${reminder.warrantyExpiry}`} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">{reminder.assetName || reminder.model}</p>
+                <p className="text-xs text-slate-500">
+                  {reminder.type} • {reminder.overdue ? 'Overdue' : `${reminder.daysRemaining} days`}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {reminder.location || 'Location TBD'} • {reminder.assignedTo || 'Unassigned'}
+                </p>
+              </div>
+              <span
+                className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${
+                  reminder.overdue ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'
+                }`}
+              >
+                {reminder.overdue ? 'Overdue' : `Due in ${reminder.daysRemaining}d`}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+      {software.length > 0 && (
+        <div className="mt-4 rounded-xl border border-slate-200 bg-white/70 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-500">Software watch</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {software.slice(0, 4).map((suite) => (
+              <span
+                key={suite.id}
+                className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200"
+              >
+                {suite.software}
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${
+                    suite.status === 'Overused' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'
+                  }`}
+                >
+                  {suite.status}
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </CardShell>
+  );
+};
+
+const OverviewActivityCard = ({ history = [], maintenance = [], lookupAsset }) => {
+  const activity = history.slice(0, 4);
+  const maintenanceByStatus = maintenance.reduce((acc, item) => {
+    acc[item.status] = (acc[item.status] || 0) + 1;
+    return acc;
+  }, {});
+
+  return (
+    <CardShell title="Ops feed" icon={History}>
+      <div className="space-y-3">
+        {activity.length === 0 && <p className="text-sm text-slate-600">No recent check-ins or check-outs.</p>}
+        {activity.map((entry) => (
+          <div key={entry.id} className="flex items-start gap-3 rounded-2xl border border-slate-100 p-3">
+            <div
+              className={`rounded-full p-2 ${
+                entry.action === 'Check Out' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'
+              }`}
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-800">
+                {entry.action} • {lookupAsset ? lookupAsset(entry.assetId) : entry.assetId}
+              </p>
+              <p className="text-xs text-slate-500">
+                {entry.date} | {entry.user}
+              </p>
+              {entry.notes && <p className="mt-1 text-sm text-slate-600">{entry.notes}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+      {maintenance.length > 0 && (
+        <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-500">Maintenance queue</p>
+          <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+            {Object.entries(maintenanceByStatus).map(([status, count]) => (
+              <div key={status} className="rounded-lg bg-white px-3 py-2 font-semibold text-slate-700 ring-1 ring-slate-100">
+                <p className="text-[10px] uppercase tracking-wide text-slate-500">{status}</p>
+                <p className="text-sm">{count}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </CardShell>
+  );
+};
+
+const SpendHotspotsCard = ({ costByDepartment = [], topLocations = [] }) => {
+  const total = costByDepartment.reduce((sum, item) => sum + Number(item.value || 0), 0);
+  return (
+    <CardShell title="Spend hotspots" icon={Tag}>
+      {costByDepartment.length === 0 && <p className="text-sm text-slate-600">Add cost data to surface spend outliers.</p>}
+      {costByDepartment.length > 0 && (
+        <div className="space-y-3">
+          {costByDepartment.map((dept) => {
+            const percent = total ? Math.round((Number(dept.value || 0) / total) * 100) : 0;
+            return (
+              <div key={dept.name} className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+                <div className="flex items-center justify-between text-sm font-semibold text-slate-800">
+                  <span>{dept.name}</span>
+                  <span>{formatCurrency(dept.value)}</span>
+                </div>
+                <div className="mt-2 h-2 rounded-full bg-white">
+                  <div className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-teal-400" style={{ width: `${percent}%` }} />
+                </div>
+                <p className="mt-1 text-[11px] uppercase tracking-wide text-slate-500">{percent}% of tracked spend</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {topLocations?.length > 0 && (
+        <div className="mt-4 rounded-xl border border-slate-100 bg-white/70 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-500">Top locations</p>
+          <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-slate-700">
+            {topLocations.slice(0, 3).map((location) => (
+              <span key={location.location} className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-100">
+                {location.location} ({location.count})
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </CardShell>
+  );
+};
 
 const TeamSpotlightPanel = ({ team = [], remoteShare, downloadHref }) => (
   <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
@@ -2270,63 +2879,7 @@ const SoftwareSuiteCard = ({ suite, onEdit, onDelete }) => {
   );
 };
 
-const LifecycleReminderBoard = ({ reminders = [], preferences, onToggle, onViewAllWarranty, warrantyCount = 0 }) => (
-  <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
-    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 px-6 py-5">
-      <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Lifecycle</p>
-        <p className="text-lg font-semibold text-slate-900">Upcoming reminders</p>
-        <p className="text-sm text-slate-500">Warranty expirations, lease returns, and compliance deadlines in one glance.</p>
-      </div>
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        {['email', 'zoom'].map((channel) => (
-          <button
-            key={channel}
-            onClick={() => onToggle(channel)}
-            className={`rounded-full border px-3 py-1 font-semibold capitalize transition ${
-              preferences[channel]
-                ? 'border-blue-200 bg-blue-50 text-blue-600'
-                : 'border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700'
-            }`}
-            type="button"
-          >
-            {channel} alerts
-          </button>
-        ))}
-        {warrantyCount > 0 && typeof onViewAllWarranty === 'function' && (
-          <button
-            type="button"
-            onClick={onViewAllWarranty}
-            className="rounded-full border border-slate-200 px-3 py-1 font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-600"
-          >
-            View all warranty alerts
-          </button>
-        )}
-      </div>
-    </div>
-    <ul className="divide-y divide-slate-100">
-      {reminders.map((item) => (
-        <li key={`${item.assetId}-${item.type}`} className="flex items-center justify-between px-6 py-4">
-          <div>
-            <p className="text-sm font-semibold text-slate-900">{item.assetName}</p>
-            <p className="text-xs text-slate-500">{item.description}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs uppercase tracking-widest text-slate-400">{item.type}</p>
-            <p className={`text-sm font-semibold ${item.overdue ? 'text-rose-600' : 'text-slate-900'}`}>
-              {item.overdue ? `${Math.abs(item.daysRemaining)} days overdue` : `in ${item.daysRemaining} days`}
-            </p>
-          </div>
-        </li>
-      ))}
-      {reminders.length === 0 && (
-        <li className="px-6 py-6 text-sm text-slate-500">All clear! No lifecycle events are due within the next 90 days.</li>
-      )}
-    </ul>
-  </div>
-);
-
-const WarrantyAlertStrip = ({ alerts = [], onViewAll }) => {
+const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll }) => {
   if (!alerts.length) {
     return null;
   }
@@ -2339,15 +2892,26 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll }) => {
           <p className="text-lg font-semibold text-amber-900">Expiring within 30 days</p>
           <p className="text-sm text-amber-800/80">{alerts.length} device{alerts.length === 1 ? '' : 's'} need attention.</p>
         </div>
-        {typeof onViewAll === 'function' && (
-          <button
-            type="button"
-            className="rounded-2xl border border-amber-200 px-4 py-1.5 text-xs font-semibold text-amber-800 transition hover:border-amber-300 hover:text-amber-900"
-            onClick={onViewAll}
-          >
-            View all
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {typeof onClearAll === 'function' && (
+            <button
+              type="button"
+              className="rounded-2xl border border-amber-200 bg-white/60 px-4 py-1.5 text-xs font-semibold text-amber-800 transition hover:border-amber-300 hover:text-amber-900"
+              onClick={() => onClearAll(alerts)}
+            >
+              Clear all
+            </button>
+          )}
+          {typeof onViewAll === 'function' && (
+            <button
+              type="button"
+              className="rounded-2xl border border-amber-200 px-4 py-1.5 text-xs font-semibold text-amber-800 transition hover:border-amber-300 hover:text-amber-900"
+              onClick={onViewAll}
+            >
+              View all
+            </button>
+          )}
+        </div>
       </div>
       <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold text-amber-900">
         {highlight.map((alert) => (
@@ -2906,7 +3470,6 @@ const EmployeeDirectoryGrid = ({
                     {assignments.map((asset) => {
                       const deviceLabel = asset.deviceName || asset.assetName || `Asset ${asset.id}`;
                       const assetId = asset.sheetId || asset.assetName || `Asset-${asset.id}`;
-                      const brandLabel = asset.brand || 'Unknown brand';
                       const modelLabel = asset.model || 'Unknown model';
                       const serialLabel = asset.serialNumber || 'N/A';
                       const showDeviceLabel =
@@ -2918,9 +3481,6 @@ const EmployeeDirectoryGrid = ({
                             {showDeviceLabel && (
                               <span className="text-xs font-normal text-slate-500"> Â· {deviceLabel}</span>
                             )}
-                          </p>
-                          <p className="mt-1 text-[11px] text-slate-600">
-                            <span className="font-semibold text-slate-700">Brand:</span> {brandLabel}
                           </p>
                           <p className="text-[11px] text-slate-600">
                             <span className="font-semibold text-slate-700">Model:</span> {modelLabel}
@@ -3134,7 +3694,7 @@ const LaptopRefreshReport = ({ data, selectedDate, onDateChange, onExport }) => 
                   <span className="text-xs font-semibold text-slate-500">{row.ageYears.toFixed(1)} yrs</span>
                 </div>
                 <p className="text-xs text-slate-500">
-                  {row.brand} {row.model} Â· Purchased {formatDate(row.purchaseDate)}
+                  {row.model} · Purchased {formatDate(row.purchaseDate)}
                 </p>
                 <p className="text-xs text-slate-500">
                   Assigned to <span className="font-semibold text-slate-900">{row.assignedTo}</span> Â· {row.location}
@@ -3307,7 +3867,7 @@ const AssetFilters = ({ filters, onChange, onReset, types }) => (
         <input
           value={filters.search}
           onChange={(event) => onChange('search', event.target.value)}
-          placeholder="Search by brand, serial, or user"
+          placeholder="Search by model, serial, or user"
           className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
         />
       </div>
@@ -3353,11 +3913,24 @@ const AssetTable = ({
   selectedId,
   sharePointMode = false,
   qualityLookup = {},
+  sortConfig,
+  onSortChange,
 }) => {
+  const toggleSort = (key) => {
+    if (!onSortChange) return;
+    onSortChange(key);
+  };
+  const sortIcon = (key) => {
+    if (sortConfig?.key !== key) {
+      return '';
+    }
+    return sortConfig.direction === 'asc' ? '^' : 'v';
+  };
+
   if (assets.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-200 bg-white/80 p-12 text-center text-sm text-slate-500">
-        No assets match the selected filters.
+        No assets match the selected filters. Try clearing filters or adjusting search.
       </div>
     );
   }
@@ -3368,12 +3941,36 @@ const AssetTable = ({
         <table className="min-w-full divide-y divide-slate-100 text-sm">
           <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-6 py-3">Asset</th>
-              <th className="px-6 py-3">Owner</th>
-              <th className="px-6 py-3">Department</th>
-              <th className="px-6 py-3">Status</th>
-              <th className="px-6 py-3">Lifecycle</th>
-              <th className="px-6 py-3">Cost</th>
+              <th className="px-6 py-3">
+                <button className="flex items-center gap-1 font-semibold" type="button" onClick={() => toggleSort('assetName')}>
+                  Asset <span className="text-[10px]">{sortIcon('assetName')}</span>
+                </button>
+              </th>
+              <th className="px-6 py-3">
+                <button className="flex items-center gap-1 font-semibold" type="button" onClick={() => toggleSort('assignedTo')}>
+                  Owner <span className="text-[10px]">{sortIcon('assignedTo')}</span>
+                </button>
+              </th>
+              <th className="px-6 py-3">
+                <button className="flex items-center gap-1 font-semibold" type="button" onClick={() => toggleSort('department')}>
+                  Department <span className="text-[10px]">{sortIcon('department')}</span>
+                </button>
+              </th>
+              <th className="px-6 py-3">
+                <button className="flex items-center gap-1 font-semibold" type="button" onClick={() => toggleSort('status')}>
+                  Status <span className="text-[10px]">{sortIcon('status')}</span>
+                </button>
+              </th>
+              <th className="px-6 py-3">
+                <button className="flex items-center gap-1 font-semibold" type="button" onClick={() => toggleSort('warrantyExpiry')}>
+                  Lifecycle <span className="text-[10px]">{sortIcon('warrantyExpiry')}</span>
+                </button>
+              </th>
+              <th className="px-6 py-3">
+                <button className="flex items-center gap-1 font-semibold" type="button" onClick={() => toggleSort('cost')}>
+                  Cost <span className="text-[10px]">{sortIcon('cost')}</span>
+                </button>
+              </th>
               <th className="px-6 py-3 text-right">Actions</th>
             </tr>
           </thead>
@@ -3572,7 +4169,6 @@ const InventoryHealthPanel = ({ health, onStartAudit }) => {
     { label: 'QR needed', value: health?.qrMissing || 0 },
     { label: 'Maint/retired', value: `${health?.maintenanceCount || 0}/${health?.retiredCount || 0}` },
   ];
-  const focusItems = (health?.auditCandidates || []).slice(0, 4);
 
   return (
     <CardShell
@@ -3602,27 +4198,6 @@ const InventoryHealthPanel = ({ health, onStartAudit }) => {
               <span>Audit-ready devices</span>
               <span className="font-semibold text-white">{auditReady}% ready</span>
             </div>
-          </div>
-          <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500">Audit focus</p>
-            {focusItems.length === 0 ? (
-              <p className="mt-2 text-sm text-slate-600">All assets look healthy. Continue with spot checks.</p>
-            ) : (
-              <div className="mt-3 space-y-3">
-                {focusItems.map((item) => (
-                  <div key={`focus-${item.id}`} className="rounded-2xl bg-white p-3 text-sm shadow-sm ring-1 ring-slate-100">
-                    <div className="flex items-center justify-between">
-                      <p className="font-semibold text-slate-800">{item.name}</p>
-                      <span className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-700">
-                        {item.status}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500">{item.location}</p>
-                    <p className="mt-1 text-xs font-medium text-slate-700">{item.issue}</p>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
         <div className="space-y-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
@@ -3751,6 +4326,172 @@ const MobileAuditCard = ({ inventoryHealth, onStartAudit }) => (
   </div>
 );
 
+const QrToolingPanel = ({
+  qrInput,
+  onQrInput,
+  qrDataUrl,
+  onCopy,
+  scanResult,
+  scannerActive,
+  onStartScanner,
+  onStopScanner,
+  onUseScanResult,
+  onManualInput,
+  manualScanInput,
+  scanMessage,
+  scannerError,
+  videoRef,
+}) => (
+  <div className="grid gap-4 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm md:grid-cols-2">
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <QrCode className="h-4 w-4 text-blue-600" />
+        <p className="text-sm font-semibold text-slate-900">Generate QR</p>
+      </div>
+      <input
+        value={qrInput}
+        onChange={(event) => onQrInput(event.target.value)}
+        placeholder="Text, asset ID, or URL"
+        className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+      />
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onCopy}
+          disabled={!qrDataUrl}
+          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Copy QR
+        </button>
+        <p className="text-xs text-slate-500">Share labels or onboarding links quickly.</p>
+      </div>
+      <div className="flex h-48 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/70">
+        {qrDataUrl ? (
+          <img src={qrDataUrl} alt="QR code preview" className="h-40 w-40 object-contain" />
+        ) : (
+          <p className="text-xs text-slate-500">Enter text to generate a QR code.</p>
+        )}
+      </div>
+    </div>
+
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Scan className="h-4 w-4 text-emerald-600" />
+          <p className="text-sm font-semibold text-slate-900">Scan QR</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={scannerActive ? onStopScanner : onStartScanner}
+            className={`rounded-2xl px-3 py-1.5 text-xs font-semibold ${
+              scannerActive
+                ? 'border border-rose-200 bg-rose-50 text-rose-700'
+                : 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+            }`}
+          >
+            {scannerActive ? 'Stop' : 'Start'}
+          </button>
+          <button
+            type="button"
+            onClick={onUseScanResult}
+            className="rounded-2xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700"
+          >
+            Use result
+          </button>
+        </div>
+      </div>
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+        {scannerActive ? (
+          <video ref={videoRef} className="h-48 w-full object-cover" playsInline muted />
+        ) : (
+          <div className="flex h-48 items-center justify-center text-xs text-slate-500">
+            Camera preview appears here when scanner is active.
+          </div>
+        )}
+      </div>
+      {scannerError && <p className="text-xs text-rose-600">{scannerError}</p>}
+      {scanMessage && <p className="text-xs text-amber-600">{scanMessage}</p>}
+      <div className="space-y-2">
+        <label className="text-xs font-semibold text-slate-700">Enter code manually</label>
+        <div className="flex items-center gap-2">
+          <input
+            value={manualScanInput}
+            onChange={(event) => onManualInput(event.target.value)}
+            placeholder="Asset ID, serial, or QR value"
+            className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          />
+          <button
+            type="button"
+            onClick={onUseScanResult}
+            className="rounded-2xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-500"
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Last scan</p>
+        <p className="mt-1 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800">
+          {scanResult || 'No code detected yet.'}
+        </p>
+      </div>
+      <p className="text-[11px] text-slate-500">
+        Tip: scan to auto-select an asset for check in/out or audit confirmation, even while the desktop view stays on the table.
+      </p>
+    </div>
+  </div>
+);
+
+const MobileActionBar = ({ onAdd, onAudit, onWarranty, onFilters, onScan, mobileAuditMode }) => (
+  <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-slate-200 bg-white/95 shadow-2xl backdrop-blur">
+    <div className="mx-auto grid max-w-5xl grid-cols-2 items-center gap-2 px-4 py-3 text-sm font-semibold text-slate-700 sm:flex sm:flex-wrap sm:justify-between">
+      <button
+        type="button"
+        onClick={onAdd}
+        className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-3 py-2 text-white shadow-sm"
+      >
+        <Plus className="h-4 w-4" />
+        Add
+      </button>
+      <button
+        type="button"
+        onClick={onAudit}
+        className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-3 py-2 ${
+          mobileAuditMode ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-700'
+        }`}
+      >
+        <Wrench className="h-4 w-4" />
+        {mobileAuditMode ? 'Audit on' : 'Audit'}
+      </button>
+      <button
+        type="button"
+        onClick={onScan}
+        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-slate-700"
+      >
+        <Scan className="h-4 w-4" />
+        Scan
+      </button>
+      <button
+        type="button"
+        onClick={onWarranty}
+        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 text-amber-800"
+      >
+        <CalendarClock className="h-4 w-4" />
+        Warranty
+      </button>
+      <button
+        type="button"
+        onClick={onFilters}
+        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-slate-700"
+      >
+        <Filter className="h-4 w-4" />
+        Filters
+      </button>
+    </div>
+  </div>
+);
+
 const AssetSpotlight = ({ asset, onEdit, sharePointMode = false, onApproveIntake }) => {
   const Icon = asset ? assetTypeIcons[asset.type] || Monitor : Monitor;
   const statusLabel = asset ? getAssetDisplayStatus(asset) : 'Available';
@@ -3800,7 +4541,7 @@ const AssetSpotlight = ({ asset, onEdit, sharePointMode = false, onApproveIntake
               <div>
                 <p className="text-sm text-white/60">{asset.type}</p>
                 <p className="text-lg font-semibold">{asset.assetName}</p>
-                <p className="text-xs text-white/60">{`${asset.brand} ${asset.model}`.trim()}</p>
+                <p className="text-xs text-white/60">{asset.model || 'Model not set'}</p>
               </div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
@@ -3942,16 +4683,6 @@ const AssetFormModal = ({ asset, onSubmit, onCancel, sharePointMode = false, sug
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
-          {!sharePointMode && (
-            <label className="text-sm font-medium text-slate-700">
-              Brand
-              <input
-                value={form.brand}
-                onChange={(event) => update('brand', event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              />
-            </label>
-          )}
           <label className="text-sm font-medium text-slate-700">
             Model
             <input
@@ -4129,7 +4860,7 @@ const CheckActionModal = ({ asset, mode, onSubmit, onCancel, suggestionListId })
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <p className="text-sm font-semibold text-slate-900">{asset.assetName}</p>
-          <p className="text-xs text-slate-500">{`${asset.brand} ${asset.model}`.trim()}</p>
+          <p className="text-xs text-slate-500">{asset.model}</p>
           <p className="text-xs text-slate-400">{asset.serialNumber}</p>
         </div>
         <label className="text-sm font-medium text-slate-700">
@@ -4332,55 +5063,103 @@ const EmployeeFormModal = ({ employee, onSubmit, onCancel }) => {
     </ModalShell>
   );
 };
-const WarrantyAlertModal = ({ alerts = [], onClose }) => (
-  <ModalShell title="Warranty alerts" onClose={onClose}>
-    {alerts.length === 0 ? (
-      <p className="text-sm text-slate-500">All tracked hardware is within its warranty window.</p>
-    ) : (
-      <div className="max-h-[70vh] overflow-y-auto rounded-2xl border border-slate-100">
-        <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
-          <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-4 py-3">Asset</th>
-              <th className="px-4 py-3">Owner</th>
-              <th className="px-4 py-3">Location</th>
-              <th className="px-4 py-3">Warranty ends</th>
-              <th className="px-4 py-3">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 bg-white">
-            {alerts.map((alert) => {
-              const statusLabel = alert.overdue
-                ? `${Math.abs(alert.daysRemaining)} days overdue`
-                : `In ${alert.daysRemaining} days`;
-              return (
-                <tr key={`warranty-${alert.assetId}-${alert.warrantyExpiry || 'none'}`}>
-                  <td className="px-4 py-3 align-top">
-                    <p className="font-semibold text-slate-900">{alert.assetName}</p>
-                    <p className="text-xs text-slate-500">{alert.model}</p>
-                  </td>
-                  <td className="px-4 py-3 align-top text-slate-600">{alert.assignedTo}</td>
-                  <td className="px-4 py-3 align-top text-slate-600">{alert.location}</td>
-                  <td className="px-4 py-3 align-top">{alert.warrantyExpiry ? formatDate(alert.warrantyExpiry) : 'â€”'}</td>
-                  <td className="px-4 py-3 align-top">
-                    <span className={`text-sm font-semibold ${alert.overdue ? 'text-rose-600' : 'text-amber-600'}`}>{statusLabel}</span>
-                  </td>
+const WarrantyAlertModal = ({ alerts = [], onClose, onClear, onClearAll }) => {
+  const canClear = typeof onClear === 'function';
+  const handleClearAll = () => {
+    if (!alerts.length) {
+      return;
+    }
+    if (typeof onClearAll === 'function') {
+      onClearAll(alerts);
+      return;
+    }
+    if (canClear) {
+      alerts.forEach((alert) => onClear(alert));
+    }
+  };
+
+  return (
+    <ModalShell title="Warranty alerts" onClose={onClose}>
+      {alerts.length === 0 ? (
+        <p className="text-sm text-slate-500">All tracked hardware is within its warranty window.</p>
+      ) : (
+        <>
+          {canClear && (
+            <div className="mb-3 flex justify-end">
+              <button
+                type="button"
+                onClick={handleClearAll}
+                className="rounded-2xl border border-amber-200 bg-white px-4 py-1.5 text-xs font-semibold text-amber-800 transition hover:border-amber-300 hover:text-amber-900"
+              >
+                Clear all alerts
+              </button>
+            </div>
+          )}
+          <div className="max-h-[70vh] overflow-y-auto rounded-2xl border border-slate-100">
+            <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
+              <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">Asset</th>
+                  <th className="px-4 py-3">Owner</th>
+                  <th className="px-4 py-3">Location</th>
+                  <th className="px-4 py-3">Warranty ends</th>
+                  <th className="px-4 py-3">Status</th>
+                  {canClear && <th className="px-4 py-3 text-right">Actions</th>}
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    )}
-  </ModalShell>
-);
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {alerts.map((alert) => {
+                  const statusLabel = alert.overdue
+                    ? `${Math.abs(alert.daysRemaining)} days overdue`
+                    : `In ${alert.daysRemaining} days`;
+                  return (
+                    <tr key={`warranty-${alert.assetId}-${alert.warrantyExpiry || 'none'}`}>
+                      <td className="px-4 py-3 align-top">
+                        <p className="font-semibold text-slate-900">{alert.assetName}</p>
+                        <p className="text-xs text-slate-500">{alert.model}</p>
+                      </td>
+                      <td className="px-4 py-3 align-top text-slate-600">{alert.assignedTo}</td>
+                      <td className="px-4 py-3 align-top text-slate-600">{alert.location}</td>
+                      <td className="px-4 py-3 align-top">
+                        {alert.warrantyExpiry ? formatDate(alert.warrantyExpiry) : 'Not set'}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        <span className={`text-sm font-semibold ${alert.overdue ? 'text-rose-600' : 'text-amber-600'}`}>{statusLabel}</span>
+                      </td>
+                      {canClear && (
+                        <td className="px-4 py-3 align-top text-right">
+                          <button
+                            type="button"
+                            onClick={() => onClear(alert)}
+                            className="rounded-full px-3 py-1 text-xs font-semibold text-amber-800 transition hover:text-rose-600"
+                          >
+                            Clear
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </ModalShell>
+  );
+};
 
 const App = () => {
   const [assets, setAssets] = usePersistentState(STORAGE_KEYS.assets, BASE_ASSETS);
   const [history, setHistory] = usePersistentState(STORAGE_KEYS.history, BASE_HISTORY);
   const [softwareSuites, setSoftwareSuites] = usePersistentState(STORAGE_KEYS.licenses, BASE_LICENSES);
+  const [isMobile, setIsMobile] = useState(false);
+  const [clearedWarrantyAlerts, setClearedWarrantyAlerts] = usePersistentState(
+    STORAGE_KEYS.clearedWarrantyAlerts,
+    [],
+  );
   const [activePage, setActivePage] = useState('Overview');
-  const [reminderPrefs, setReminderPrefs] = useState({ email: true, zoom: true });
+  const reminderPrefs = useMemo(() => ({ email: true, zoom: true }), []);
   const [softwareForm, setSoftwareForm] = useState(null);
   const [warrantyModalOpen, setWarrantyModalOpen] = useState(false);
   const [laptopRefreshDate, setLaptopRefreshDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -4539,8 +5318,27 @@ const App = () => {
     setEmployeeGallery,
     setSharePointError,
   ]);
+  useEffect(() => {
+    if (keyFobNormalizedRef.current) {
+      return;
+    }
+    const updated = assets.map((asset) => ensureKeyFobModel(asset));
+    const changed = updated.some((asset, index) => asset !== assets[index]);
+    if (changed) {
+      setAssets(updated);
+    }
+    keyFobNormalizedRef.current = true;
+  }, [assets, setAssets]);
   const employeeDepartmentCount = useMemo(() => new Set(employeeGallery.map((member) => member.department)).size, [employeeGallery]);
-  const lifecycleReminders = useMemo(() => computeLifecycleReminders(assets), [assets]);
+  const clearedWarrantyAlertSet = useMemo(() => new Set(clearedWarrantyAlerts), [clearedWarrantyAlerts]);
+  const rawLifecycleReminders = useMemo(() => computeLifecycleReminders(assets), [assets]);
+  const lifecycleReminders = useMemo(
+    () =>
+      rawLifecycleReminders.filter(
+        (item) => item.type !== 'Warranty' || !clearedWarrantyAlertSet.has(buildWarrantyAlertKey(item)),
+      ),
+    [clearedWarrantyAlertSet, rawLifecycleReminders],
+  );
   const reminderPreview = useMemo(() => lifecycleReminders.slice(0, 6), [lifecycleReminders]);
   const warrantyReminders = useMemo(
     () => lifecycleReminders.filter((item) => item.type === 'Warranty'),
@@ -4673,6 +5471,33 @@ const App = () => {
   const [employeeForm, setEmployeeForm] = useState(null);
   const [expandedEmployeeId, setExpandedEmployeeId] = useState(null);
   const [mobileAuditMode, setMobileAuditMode] = useState(false);
+  const [assetSort, setAssetSort] = useState({ key: 'assetName', direction: 'asc' });
+  const [assetPageSize, setAssetPageSize] = useState(() => {
+    if (typeof window === 'undefined') {
+      return 15;
+    }
+    const saved = Number(window.localStorage.getItem('uds_asset_page_size'));
+    return Number.isFinite(saved) && saved > 0 ? saved : 15;
+  });
+  const [qrInput, setQrInput] = useState('');
+  const [qrDataUrl, setQrDataUrl] = useState('');
+  const [scannerActive, setScannerActive] = useState(false);
+  const [scanResult, setScanResult] = useState('');
+  const [manualScanInput, setManualScanInput] = useState('');
+  const [scanMessage, setScanMessage] = useState('');
+  const [scannerError, setScannerError] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    const saved = window.localStorage.getItem('uds_theme_dark');
+    return saved === 'true';
+  });
+  const videoRef = useRef(null);
+  const scanLoopRef = useRef(null);
+  const streamRef = useRef(null);
+  const keyFobNormalizedRef = useRef(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const employeeSuggestionListId = 'employee-name-suggestions';
 
   const assetQualityMap = useMemo(
@@ -4698,7 +5523,7 @@ const App = () => {
   const filteredAssets = useMemo(() => {
     const query = filters.search.toLowerCase();
 
-    let result = assets.filter((asset) => {
+    const filtered = assets.filter((asset) => {
       const statusLabel = getAssetDisplayStatus(asset);
       const matchesSearch =
         !query ||
@@ -4713,26 +5538,42 @@ const App = () => {
       return matchesSearch && matchesType && matchesStatus;
     });
 
-    if (mobileAuditMode) {
-      result = result.filter((asset) => {
-        const qualityIssues = assetQualityMap[asset.id]?.issues?.length || 0;
-        const soonWarranty =
-          asset.warrantyExpiry &&
-          (() => {
-            const diff = new Date(asset.warrantyExpiry) - new Date();
-            return diff >= 0 && diff / (1000 * 60 * 60 * 24) <= 60;
-          })();
-        return qualityIssues > 0 || soonWarranty;
-      });
+    const sorted = filtered.slice().sort((a, b) => {
+      const dir = assetSort.direction === 'asc' ? 1 : -1;
+      const key = assetSort.key;
+      if (key === 'cost') {
+        return (Number(a.cost) - Number(b.cost)) * dir;
+      }
+      if (key === 'warrantyExpiry') {
+        return (new Date(a.warrantyExpiry || 0) - new Date(b.warrantyExpiry || 0)) * dir;
+      }
+      const valA = (a[key] || '').toString().toLowerCase();
+      const valB = (b[key] || '').toString().toLowerCase();
+      if (valA < valB) return -1 * dir;
+      if (valA > valB) return 1 * dir;
+      return 0;
+    });
+
+    if (!mobileAuditMode) {
+      return sorted;
     }
 
-    return result;
-  }, [assetQualityMap, assets, filters, mobileAuditMode]);
-  const ASSET_PAGE_SIZE = 15;
+    return sorted.filter((asset) => {
+      const qualityIssues = assetQualityMap[asset.id]?.issues?.length || 0;
+      const soonWarranty =
+        asset.warrantyExpiry &&
+        (() => {
+          const diff = new Date(asset.warrantyExpiry) - new Date();
+          return diff >= 0 && diff / (1000 * 60 * 60 * 24) <= 60;
+        })();
+      return qualityIssues > 0 || soonWarranty;
+    });
+  }, [assetQualityMap, assetSort.direction, assetSort.key, assets, filters, mobileAuditMode]);
+  const ASSET_PAGE_SIZE = assetPageSize;
   const totalAssetPages = Math.max(1, Math.ceil(filteredAssets.length / ASSET_PAGE_SIZE));
   useEffect(() => {
     setAssetPage(1);
-  }, [filters.search, filters.type, filters.status]);
+  }, [filters.search, filters.type, filters.status, assetSort.key, assetSort.direction, assetPageSize]);
   useEffect(() => {
     if (assetPage > totalAssetPages) {
       setAssetPage(totalAssetPages);
@@ -4740,7 +5581,7 @@ const App = () => {
   }, [assetPage, totalAssetPages]);
   const pagedAssets = useMemo(
     () => filteredAssets.slice((assetPage - 1) * ASSET_PAGE_SIZE, assetPage * ASSET_PAGE_SIZE),
-    [filteredAssets, assetPage],
+    [ASSET_PAGE_SIZE, assetPage, filteredAssets],
   );
 
   const EMPLOYEE_PAGE_SIZE = 36;
@@ -4820,6 +5661,165 @@ const App = () => {
   }, [displayedEmployees, expandedEmployeeId]);
 
   useEffect(() => {
+    const syncViewport = () => {
+      if (typeof window === 'undefined') {
+        return;
+      }
+      setIsMobile(window.innerWidth <= 768);
+    };
+    syncViewport();
+    window.addEventListener('resize', syncViewport);
+    return () => window.removeEventListener('resize', syncViewport);
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    const styleId = 'uds-theme-dark-overrides';
+    let styleEl = document.getElementById(styleId);
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = styleId;
+      styleEl.innerHTML = `
+        .theme-dark {
+          background-color: #0f172a;
+          color: #e2e8f0;
+        }
+        .theme-dark .bg-white,
+        .theme-dark .bg-white\\/70,
+        .theme-dark .bg-white\\/80,
+        .theme-dark .bg-white\\/90,
+        .theme-dark .bg-slate-50,
+        .theme-dark .bg-slate-100 {
+          background-color: #111827 !important;
+        }
+        .theme-dark .bg-slate-900,
+        .theme-dark .bg-slate-800 {
+          background-color: #0b1224 !important;
+        }
+        .theme-dark .text-slate-900,
+        .theme-dark .text-slate-800,
+        .theme-dark .text-slate-700 {
+          color: #e2e8f0 !important;
+        }
+        .theme-dark .text-slate-600,
+        .theme-dark .text-slate-500,
+        .theme-dark .text-slate-400 {
+          color: #cbd5e1 !important;
+        }
+        .theme-dark .border-slate-100,
+        .theme-dark .border-slate-200 {
+          border-color: #1f2937 !important;
+        }
+        .theme-dark .shadow-sm,
+        .theme-dark .shadow,
+        .theme-dark .shadow-lg {
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+        }
+        .theme-dark input,
+        .theme-dark select,
+        .theme-dark textarea {
+          background-color: #0f172a !important;
+          color: #e2e8f0 !important;
+          border-color: #1f2937 !important;
+        }
+      `;
+      document.head.appendChild(styleEl);
+    }
+    document.documentElement.classList.toggle('theme-dark', isDarkMode);
+    window.localStorage.setItem('uds_theme_dark', String(isDarkMode));
+  }, [isDarkMode]);
+
+  useEffect(() => {
+    if (isMobile) {
+      setMobileAuditMode(true);
+      setActivePage('Hardware');
+    }
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (scannerActive) {
+      setScannerActive(false);
+    }
+    setScanMessage('');
+  }, [activePage, scannerActive]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    window.localStorage.setItem('uds_asset_page_size', String(assetPageSize));
+  }, [assetPageSize]);
+
+  useEffect(() => {
+    if (!qrInput) {
+      setQrDataUrl('');
+      return;
+    }
+    try {
+      const url = generateQrDataUrl(qrInput, 260);
+      setQrDataUrl(url);
+    } catch (error) {
+      console.error('QR generation failed', error);
+      setQrDataUrl('');
+    }
+  }, [qrInput]);
+
+  useEffect(() => {
+    if (!scannerActive || typeof window === 'undefined') {
+      return;
+    }
+    let cancelled = false;
+    const start = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+        }
+        if (!('BarcodeDetector' in window)) {
+          setScannerError('BarcodeDetector is not available in this browser. Enter codes manually if needed.');
+          setScanMessage('Use manual entry below or try a device with camera scanning support.');
+          return;
+        }
+        const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+        const tick = async () => {
+          if (cancelled || !videoRef.current) {
+            return;
+          }
+          try {
+            const barcodes = await detector.detect(videoRef.current);
+            if (barcodes.length > 0) {
+              setScanResult(barcodes[0].rawValue || '');
+            }
+          } catch (err) {
+            console.warn('Barcode detection failed', err);
+          }
+          scanLoopRef.current = requestAnimationFrame(tick);
+        };
+        tick();
+      } catch (error) {
+        console.error('Scanner failed', error);
+        setScannerError(error?.message || 'Unable to access camera');
+        setScannerActive(false);
+      }
+    };
+    start();
+    return () => {
+      cancelled = true;
+      if (scanLoopRef.current) {
+        cancelAnimationFrame(scanLoopRef.current);
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+    };
+  }, [scannerActive]);
+
+  useEffect(() => {
     if (filteredAssets.length === 0) {
       setSelectedAssetId(null);
       return;
@@ -4894,9 +5894,26 @@ const App = () => {
   const handleFilterChange = (field, value) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
-  const handleToggleReminder = (channel) => {
-    setReminderPrefs((prev) => ({ ...prev, [channel]: !prev[channel] }));
-  };
+  const handleClearWarrantyAlert = useCallback(
+    (alert) => {
+      if (!alert) {
+        return;
+      }
+      const key = buildWarrantyAlertKey(alert);
+      setClearedWarrantyAlerts((prev) => (prev.includes(key) ? prev : [...prev, key]));
+    },
+    [setClearedWarrantyAlerts],
+  );
+  const handleClearAllWarrantyAlerts = useCallback(
+    (alertsToClear = []) => {
+      setClearedWarrantyAlerts((prev) => {
+        const next = new Set(prev);
+        alertsToClear.forEach((alert) => next.add(buildWarrantyAlertKey(alert)));
+        return Array.from(next);
+      });
+    },
+    [setClearedWarrantyAlerts],
+  );
   const parseStackInput = (value) => {
     if (Array.isArray(value)) {
       return value.map((item) => String(item).trim()).filter(Boolean);
@@ -4961,6 +5978,13 @@ const App = () => {
   const handleToggleMobileAudit = useCallback(() => {
     setMobileAuditMode((prev) => !prev);
     setActivePage('Hardware');
+    if (!isBrowser) {
+      return;
+    }
+    const section = document.getElementById('asset-table');
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }, []);
   const handleApproveIntake = useCallback(
     (asset) => {
@@ -4991,7 +6015,8 @@ const App = () => {
   };
 
   const handleSaveAsset = async (payload) => {
-    const estimatedCost = estimateCost(payload.type, payload.model, payload.brand);
+    const derivedBrand = payload.brand || (payload.model ? payload.model.split(' ')[0] : '');
+    const estimatedCost = estimateCost(payload.type, payload.model, derivedBrand);
     const phoneType = (payload.type || '').toLowerCase() === 'phone';
     const normalizedAssetName = phoneType
       ? payload.assetName || payload.deviceName || payload.serialNumber || payload.sheetId || `Phone-${payload.id ?? Date.now()}`
@@ -5002,6 +6027,7 @@ const App = () => {
     const providedCost = Number(payload.cost);
     const basePayload = {
       ...payload,
+      brand: derivedBrand,
       assetName: normalizedAssetName,
       deviceName: normalizedDeviceName,
       id: sharePointEnabled ? payload.id ?? null : payload.id ?? Date.now(),
@@ -5059,6 +6085,84 @@ const App = () => {
     upsertLocalAsset(enrichedPayload);
     setAssetForm(null);
   };
+
+  const handleStartScanner = () => {
+    setScannerError('');
+    setScanMessage('');
+    setScannerActive(true);
+    setActivePage('Hardware');
+  };
+
+  const handleStopScanner = () => {
+    setScannerActive(false);
+    setScanMessage('');
+  };
+
+  const handleUseScanResult = () => {
+    const value = (manualScanInput || scanResult || '').trim();
+    if (!value) {
+      setScanMessage('Enter or scan a code first.');
+      return;
+    }
+    setScanResult(value);
+    const normalized = value.toLowerCase();
+    const matchedAsset =
+      assets.find(
+        (asset) =>
+          (asset.qrCode && asset.qrCode.toLowerCase() === normalized) ||
+          (asset.serialNumber && asset.serialNumber.toLowerCase() === normalized) ||
+          (asset.assetName && asset.assetName.toLowerCase() === normalized) ||
+          (asset.sheetId && asset.sheetId.toLowerCase() === normalized),
+      ) || null;
+    setFilters((prev) => ({ ...prev, search: value }));
+    setActivePage('Hardware');
+    if (matchedAsset) {
+      setSelectedAssetId(matchedAsset.id);
+      setMobileAuditMode(true);
+      setActionState({
+        asset: matchedAsset,
+        mode: matchedAsset.checkedOut ? 'checkin' : 'checkout',
+      });
+      setScanMessage(`Matched ${matchedAsset.assetName || matchedAsset.serialNumber || 'asset'}`);
+      setManualScanInput('');
+    } else {
+      setScanMessage('No asset matched this code.');
+    }
+    if (!isBrowser) {
+      return;
+    }
+    const section = document.getElementById('asset-table');
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleToggleTheme = useCallback(() => {
+    setIsDarkMode((prev) => !prev);
+  }, []);
+
+  const handleAddEmployee = useCallback(() => {
+    setEmployeeForm({ ...defaultEmployeeProfile });
+    setActivePage('Employees');
+  }, []);
+
+  const handleSortChange = useCallback((keyOrConfig) => {
+    setAssetSort((prev) => {
+      const isObject = typeof keyOrConfig === 'object' && keyOrConfig !== null;
+      const key = isObject ? keyOrConfig.key : keyOrConfig;
+      if (!key) {
+        return prev;
+      }
+      if (isObject && keyOrConfig.direction) {
+        return { key, direction: keyOrConfig.direction };
+      }
+      if (prev.key === key) {
+        const nextDir = prev.direction === 'asc' ? 'desc' : 'asc';
+        return { key, direction: nextDir };
+      }
+      return { key, direction: 'asc' };
+    });
+  }, []);
 
   const handleDeleteAsset = async (asset) => {
     if (!window.confirm(`Delete ${asset.assetName || `${asset.brand} ${asset.model}`}?`)) {
@@ -5403,8 +6507,39 @@ const App = () => {
         value: overdueAlerts.length + dueSoonAlerts.length,
         subline: `${overdueAlerts.length} overdue / ${dueSoonAlerts.length} due soon`,
       },
+      {
+        label: 'Expires in 30d',
+        value: warrantyAlerts30.length,
+        subline: 'Warranty or renewal checks queued',
+      },
+      {
+        label: 'License coverage',
+        value: `${licenseInsights.percent || 0}%`,
+        subline: `${licenseInsights.used || 0}/${licenseInsights.seats || 0} seats in use`,
+      },
+      {
+        label: 'New this year',
+        value: stats.newThisYear || 0,
+        subline: 'Fresh hardware added to the fleet',
+      },
+      {
+        label: 'Work orders',
+        value: maintenanceWorkOrders.length,
+        subline: 'Active maintenance tickets',
+      },
     ],
-    [dueSoonAlerts.length, laptopServiceSummary.loanerAvailableCount, laptopServiceSummary.loanerTotal, overdueAlerts.length],
+    [
+      dueSoonAlerts.length,
+      laptopServiceSummary.loanerAvailableCount,
+      laptopServiceSummary.loanerTotal,
+      licenseInsights.percent,
+      licenseInsights.seats,
+      licenseInsights.used,
+      maintenanceWorkOrders.length,
+      overdueAlerts.length,
+      stats.newThisYear,
+      warrantyAlerts30.length,
+    ],
   );
 
   const reportCatalog = useMemo(
@@ -5476,9 +6611,22 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-slate-100 to-slate-50 pb-16">
+    <div
+      className={`min-h-screen pb-16 ${
+        isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-gradient-to-b from-slate-50 via-slate-100 to-slate-50 text-slate-900'
+      }`}
+    >
+      <style>{DARK_MODE_STYLES}</style>
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <PrimaryNav onAdd={() => setAssetForm(defaultAsset)} onExport={handleExport} activePage={activePage} onNavigate={setActivePage} />
+      <PrimaryNav
+        onAdd={() => setAssetForm(defaultAsset)}
+        onExport={handleExport}
+        activePage={activePage}
+        onNavigate={setActivePage}
+        onToggleTheme={handleToggleTheme}
+        isDarkMode={isDarkMode}
+        onOpenMenu={() => setMenuOpen(true)}
+      />
         <datalist id={employeeSuggestionListId}>
           {employeeNames.map((name) => (
             <option key={`employee-suggestion-${name}`} value={name} />
@@ -5583,20 +6731,31 @@ const App = () => {
           <SnapshotMetricsRow metrics={snapshotMetrics} />
         </section>
 
+        <section className="mb-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
+          <OverviewAttentionPanel
+            overdue={overdueAlerts}
+            dueSoon={dueSoonAlerts}
+            maintenance={maintenanceWorkOrders}
+            software={softwareAtRisk}
+            reminderPreview={reminderPreview}
+            onOpenAlerts={() => setWarrantyModalOpen(true)}
+          />
+          <OverviewActivityCard history={recentHistory} maintenance={maintenanceWorkOrders} lookupAsset={getAssetName} />
+        </section>
+
         {warrantyAlerts30.length > 0 && (
           <section className="mb-8">
-            <WarrantyAlertStrip alerts={warrantyAlerts30} onViewAll={() => setWarrantyModalOpen(true)} />
+            <WarrantyAlertStrip
+              alerts={warrantyAlerts30}
+              onViewAll={() => setWarrantyModalOpen(true)}
+              onClearAll={() => handleClearAllWarrantyAlerts(warrantyAlerts30)}
+            />
           </section>
         )}
 
-        <section className="mb-8 grid gap-4 lg:grid-cols-[1.5fr,1fr]">
-          <LifecycleReminderBoard
-            reminders={reminderPreview}
-            preferences={reminderPrefs}
-            onToggle={handleToggleReminder}
-            onViewAllWarranty={() => setWarrantyModalOpen(true)}
-            warrantyCount={warrantyReminders.length}
-          />
+        <section className="mb-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
+          <SpendHotspotsCard costByDepartment={costByDepartment} topLocations={sheetInsights.topLocations} />
+          <EmployeeSummaryCard total={employeeGallery.length} departments={employeeDepartmentCount} onAdd={handleAddEmployee} />
         </section>
 
         <section className="mb-8 grid gap-6 lg:grid-cols-[2fr,1fr]">
@@ -5608,15 +6767,22 @@ const App = () => {
           <WhatsNewCard />
         </section>
 
-        <section className="mb-8 grid gap-6 xl:grid-cols-[1.6fr,1fr]">
-          <InventoryHealthPanel health={inventoryHealth} onStartAudit={handleStartAudit} />
-          <AuditRunBoard runs={auditRuns} onStartAudit={handleStartAudit} />
-        </section>
-
-        <section className="mb-10">
-          <MobileAuditCard inventoryHealth={inventoryHealth} onStartAudit={handleStartAudit} />
-        </section>
-          </>
+        {isMobile && (
+          <div className="mb-20">
+            <div className="rounded-3xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-700 shadow-sm">
+              <div className="flex items-center gap-3">
+                <Navigation className="h-4 w-4 text-blue-600" />
+                <div>
+                  <p className="font-semibold text-slate-900">Mobile-ready dashboard</p>
+                  <p className="text-xs text-slate-500">
+                    Tap the action bar to add hardware, toggle audit mode, or jump to warranty alerts.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
         )}
 
         {activePage === 'Hardware' && (
@@ -5668,12 +6834,6 @@ const App = () => {
               </div>
             )}
 
-            {warrantyAlerts30.length > 0 && (
-              <section className="mb-8">
-                <WarrantyAlertStrip alerts={warrantyAlerts30} onViewAll={() => setWarrantyModalOpen(true)} />
-              </section>
-            )}
-
             <section className="mb-8 grid gap-4 md:grid-cols-3">
               {hardwareSpotlights.map((item) => (
                 <DeviceSpotlightCard key={`hardware-${item.title}`} {...item} onStatClick={handleSpotlightFilter} />
@@ -5688,9 +6848,26 @@ const App = () => {
               />
             </section>
 
-            <section className="mb-8 grid gap-6 xl:grid-cols-[1.6fr,1fr]">
-              <InventoryHealthPanel health={inventoryHealth} onStartAudit={handleStartAudit} />
-              <AuditRunBoard runs={auditRuns} onStartAudit={handleStartAudit} />
+            <section className="mb-8">
+              <QrToolingPanel
+                qrInput={qrInput}
+                onQrInput={setQrInput}
+                qrDataUrl={qrDataUrl}
+                onCopy={() => {
+                  if (!qrDataUrl) return;
+                  navigator.clipboard?.writeText(qrDataUrl);
+                }}
+                scanResult={scanResult}
+                scannerActive={scannerActive}
+                onStartScanner={handleStartScanner}
+                onStopScanner={handleStopScanner}
+                onUseScanResult={handleUseScanResult}
+                onManualInput={setManualScanInput}
+                manualScanInput={manualScanInput}
+                scanMessage={scanMessage}
+                scannerError={scannerError}
+                videoRef={videoRef}
+              />
             </section>
 
             <section id="asset-table" className="mb-10 grid gap-6 lg:grid-cols-[2fr,1fr]">
@@ -5701,6 +6878,21 @@ const App = () => {
                   onReset={() => setFilters({ search: '', type: 'all', status: 'all' })}
                   types={typeOptions}
                 />
+                {(filters.search || filters.type !== 'all' || filters.status !== 'all') && (
+                  <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50/70 px-3 py-2 text-xs text-slate-700">
+                    <span className="font-semibold text-slate-600">Active filters:</span>
+                    {filters.search && <span className="rounded-full bg-white px-2 py-1">Search: {filters.search}</span>}
+                    {filters.type !== 'all' && <span className="rounded-full bg-white px-2 py-1">Type: {filters.type}</span>}
+                    {filters.status !== 'all' && <span className="rounded-full bg-white px-2 py-1">Status: {filters.status}</span>}
+                    <button
+                      type="button"
+                      onClick={() => setFilters({ search: '', type: 'all', status: 'all' })}
+                      className="rounded-full bg-slate-200 px-2 py-1 font-semibold text-slate-700 hover:bg-slate-300"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
                 <div className="flex justify-end">
                   <button
                     type="button"
@@ -5721,17 +6913,30 @@ const App = () => {
                     selectedId={selectedAssetId}
                     sharePointMode={sharePointEnabled}
                     qualityLookup={assetQualityMap}
+                    sortConfig={assetSort}
+                    onSortChange={handleSortChange}
                   />
-                  <div className="flex items-center justify-end rounded-2xl border border-slate-100 bg-white/70 px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white/70 px-4 py-3 text-sm text-slate-700">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-slate-500">Page size</span>
+                      <select
+                        value={assetPageSize}
+                        onChange={(event) => setAssetPageSize(Number(event.target.value) || 15)}
+                        className="h-9 rounded-xl border border-slate-200 bg-white px-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      >
+                        {[10, 15, 25, 50].map((size) => (
+                          <option key={size} value={size}>
+                            {size}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="text-xs text-slate-500">Total: {filteredAssets.length}</span>
+                    </div>
                     <PaginationControls align="end" page={assetPage} totalPages={totalAssetPages} onPageChange={setAssetPage} />
                   </div>
                 </div>
               </div>
               <AssetSpotlight asset={selectedAsset} onEdit={setAssetForm} sharePointMode={sharePointEnabled} onApproveIntake={handleApproveIntake} />
-            </section>
-
-            <section className="mb-10">
-              <LicenseUsage licenses={licenseBuckets} />
             </section>
 
             <section className="mb-10 grid gap-6 xl:grid-cols-[1.6fr,1fr]">
@@ -5746,6 +6951,67 @@ const App = () => {
             <section className="grid gap-6 lg:grid-cols-2">
               <MaintenanceList records={recentMaintenance} getAssetName={getAssetName} />
               <ActivityPanel history={recentHistory} lookupAsset={getAssetName} />
+            </section>
+          </>
+        )}
+
+        {activePage === 'Audit' && (
+          <>
+            <section className="mb-8 rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Audit</p>
+              <h2 className="mt-2 text-3xl font-semibold text-slate-900">Mobile-ready audit lane</h2>
+              <p className="mt-2 text-sm text-slate-600">
+                Use this page on your phone to scan QR codes, confirm assets, and open the hardware table for quick check in/out.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold">
+                <button
+                  type="button"
+                  onClick={handleStartAudit}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-white shadow-sm transition hover:bg-blue-500"
+                >
+                  <Wrench className="h-4 w-4" />
+                  Start mobile audit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWarrantyModalOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-amber-800 transition hover:border-amber-300"
+                >
+                  <CalendarClock className="h-4 w-4" />
+                  Warranty alerts
+                </button>
+              </div>
+            </section>
+
+            <section className="mb-8 grid gap-6 xl:grid-cols-[1.6fr,1fr]">
+              <InventoryHealthPanel health={inventoryHealth} onStartAudit={handleStartAudit} />
+              <AuditRunBoard runs={auditRuns} onStartAudit={handleStartAudit} />
+            </section>
+
+            <section className="mb-8">
+              <MobileAuditCard inventoryHealth={inventoryHealth} onStartAudit={handleStartAudit} />
+            </section>
+
+            <section className="mb-8">
+              <QrToolingPanel
+                qrInput={qrInput}
+                onQrInput={setQrInput}
+                qrDataUrl={qrDataUrl}
+                onCopy={() => {
+                  if (!qrDataUrl) return;
+                  navigator.clipboard?.writeText(qrDataUrl);
+                }}
+                scanResult={scanResult}
+                scannerActive={scannerActive}
+                onStartScanner={handleStartScanner}
+                onStopScanner={handleStopScanner}
+                onUseScanResult={handleUseScanResult}
+                onManualInput={setManualScanInput}
+                manualScanInput={manualScanInput}
+                scanMessage={scanMessage}
+                scannerError={scannerError}
+                videoRef={videoRef}
+              />
             </section>
           </>
         )}
@@ -6151,7 +7417,152 @@ const App = () => {
       )}
       {softwareForm && <SoftwareFormModal suite={softwareForm} onSubmit={handleSaveSoftware} onCancel={() => setSoftwareForm(null)} />}
       {warrantyModalOpen && (
-        <WarrantyAlertModal alerts={warrantyReminders} onClose={() => setWarrantyModalOpen(false)} />
+        <WarrantyAlertModal
+          alerts={warrantyReminders}
+          onClose={() => setWarrantyModalOpen(false)}
+          onClear={handleClearWarrantyAlert}
+          onClearAll={handleClearAllWarrantyAlerts}
+        />
+      )}
+      {menuOpen && (
+        <div className="fixed inset-0 z-40 flex">
+          <div className="w-full flex-1 bg-slate-900/60" onClick={() => setMenuOpen(false)} />
+          <div className="relative h-full w-full max-w-sm bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+              <p className="text-sm font-semibold text-slate-900">Quick menu</p>
+              <button
+                type="button"
+                onClick={() => setMenuOpen(false)}
+                className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
+                aria-label="Close menu"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="max-h-[calc(100vh-56px)] overflow-y-auto p-4 space-y-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-500">Navigate</p>
+                <div className="mt-2 flex flex-col gap-2">
+                  {NAV_LINKS.map((item) => (
+                    <button
+                      key={`menu-${item}`}
+                      type="button"
+                      onClick={() => {
+                        setActivePage(item);
+                        setMenuOpen(false);
+                      }}
+                      className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-sm font-semibold ${
+                        activePage === item
+                          ? 'border-blue-200 bg-blue-50 text-blue-700'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200'
+                      }`}
+                    >
+                      {item}
+                      <ArrowRightLeft className="h-4 w-4" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-500">Actions</p>
+                <div className="mt-2 grid grid-cols-1 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAssetForm(defaultAsset);
+                      setActivePage('Hardware');
+                      setMenuOpen(false);
+                    }}
+                    className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
+                  >
+                    New asset <Plus className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmployeeForm({ ...defaultEmployeeProfile });
+                      setActivePage('Employees');
+                      setMenuOpen(false);
+                    }}
+                    className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
+                  >
+                    Add employee <Users className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setWarrantyModalOpen(true);
+                      setMenuOpen(false);
+                    }}
+                    className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
+                  >
+                    Warranty alerts <CalendarClock className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActivePage('Audit');
+                      setMenuOpen(false);
+                      handleStartAudit();
+                    }}
+                    className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
+                  >
+                    Start audit <Wrench className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleStartScanner();
+                      setMenuOpen(false);
+                    }}
+                    className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
+                  >
+                    Scan QR <Scan className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleExport();
+                      setMenuOpen(false);
+                    }}
+                    className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
+                  >
+                    Export data <Download className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleToggleTheme();
+                    }}
+                    className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
+                  >
+                    Toggle theme {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {isMobile && (
+        <MobileActionBar
+          mobileAuditMode={mobileAuditMode}
+          onAdd={() => {
+            setAssetForm(defaultAsset);
+            setActivePage('Hardware');
+          }}
+          onAudit={handleToggleMobileAudit}
+          onScan={handleStartScanner}
+          onWarranty={() => setWarrantyModalOpen(true)}
+          onFilters={() => {
+            setActivePage('Hardware');
+            setFilters({ search: '', type: 'all', status: 'all' });
+            const section = document.getElementById('asset-table');
+            if (section) {
+              section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }}
+        />
       )}
     </div>
   );
