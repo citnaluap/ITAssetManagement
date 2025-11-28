@@ -40,6 +40,7 @@ import {
   Sun,
   Moon,
   Menu,
+  Mail,
 } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line } from 'recharts';
 import assetSheetData from './data/assets.json';
@@ -149,6 +150,8 @@ const defaultEmployeeProfile = {
   department: 'UDS',
   location: 'Onsite',
   email: '',
+  supervisor: '',
+  supervisorEmail: '',
   phone: '',
   startDate: '',
   avatar: '',
@@ -1484,6 +1487,8 @@ const buildTeamSpotlight = (rows = employeeSheetData, limit = 8) =>
         department: row['Department'] || row['Company'] || 'UDS',
         location: row['Location'] || row['Company'] || 'Field',
         email: row['E-mail Address'] || '',
+        supervisor: row['Supervisor'] || row['Manager'] || '',
+        supervisorEmail: row['Supervisor Email'] || '',
       phone: row['Mobile Phone'] || '',
       startDate: row['Start Date'] || '',
       avatar: EMPLOYEE_PHOTOS[avatarKey],
@@ -3398,6 +3403,7 @@ const EmployeeDirectoryGrid = ({
         const licenses = getLicenses(member);
         const assignmentCount = assignments.length;
         const licenseCount = licenses.length;
+        const supervisorLabel = member.supervisor || 'Not set';
         const cardClasses = [
           'rounded-2xl border p-4 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50',
           'cursor-pointer select-none',
@@ -3446,6 +3452,9 @@ const EmployeeDirectoryGrid = ({
                 )}
                 <p className="mt-2 text-xs text-slate-500">{member.department}</p>
                 <p className="text-xs text-slate-400">{member.location}</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Supervisor: <span className="font-semibold text-slate-800">{supervisorLabel}</span>
+                </p>
                 {member.phone && <p className="mt-1 text-[11px] text-slate-400">{member.phone}</p>}
               </div>
               <div className="flex items-center gap-1">
@@ -5306,6 +5315,54 @@ const App = () => {
   }, [vendorProfiles]);
   const teamSpotlight = useMemo(() => BASE_TEAM, []);
   const [employeeGallery, setEmployeeGallery] = useState(() => BASE_EMPLOYEE_GALLERY);
+  useEffect(() => {
+    let cancelled = false;
+    const loadOrgChart = async () => {
+      try {
+        const fileName = encodeURIComponent('HUB and Org Chart 11-25.xlsx');
+        const response = await fetch(`${PUBLIC_URL}/tables/${fileName}`);
+        if (!response.ok) {
+          return;
+        }
+        const buffer = await response.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        const supervisorMap = rows.reduce((acc, row) => {
+          const first = formatPersonName(row['First Name'] || '');
+          const last = formatPersonName(row['Last Name'] || '');
+          const name = `${first} ${last}`.trim();
+          const key = normalizeKey(name);
+          if (!key) return acc;
+          const managerName = (row['Manager Name'] || '').trim();
+          const managerEmail = (row['Manager E-Mail Address'] || row['Manager Email Address'] || '').trim();
+          if (managerName || managerEmail) {
+            acc[key] = { supervisor: managerName, supervisorEmail: managerEmail };
+          }
+          return acc;
+        }, {});
+        if (cancelled) return;
+        setEmployeeGallery((prev) =>
+          prev.map((member) => {
+            const key = normalizeKey(member.lookupKey || member.name || '');
+            const sup = supervisorMap[key];
+            if (!sup) return member;
+            return {
+              ...member,
+              supervisor: member.supervisor || sup.supervisor,
+              supervisorEmail: member.supervisorEmail || sup.supervisorEmail,
+            };
+          }),
+        );
+      } catch (error) {
+        console.warn('Failed to load org chart', error);
+      }
+    };
+    loadOrgChart();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const sharePointEnabled = SHAREPOINT_CONFIG.enabled;
   const sharePointAssetList = SHAREPOINT_CONFIG.assetListTitle;
   const sharePointEmployeeList = SHAREPOINT_CONFIG.employeeListTitle;
@@ -5567,6 +5624,12 @@ const App = () => {
       ),
     [employeeGallery],
   );
+  const employeeLookupByName = useMemo(() => {
+    return employeeGallery.reduce((acc, member) => {
+      acc[normalizeKey(member.name || '')] = member;
+      return acc;
+    }, {});
+  }, [employeeGallery]);
   const employeeLicenseMap = useMemo(() => {
     const normalizedEmployees = employeeGallery
       .map((member) => ({ name: member.name, key: normalizeKey(member.lookupKey || member.name || '') }))
@@ -5804,6 +5867,13 @@ const App = () => {
     }
     return employeeAssignments[normalized] || [];
   }, [employeeAssignments, terminationEmployee]);
+  const terminationProfile = useMemo(() => {
+    const normalized = normalizeKey(terminationEmployee || '');
+    if (!normalized) {
+      return null;
+    }
+    return employeeLookupByName[normalized] || null;
+  }, [employeeLookupByName, terminationEmployee]);
   const handleEmployeeCardToggle = useCallback(
     (memberId) => {
       setExpandedEmployeeId((prev) => (prev === memberId ? null : memberId));
@@ -7539,7 +7609,32 @@ const App = () => {
                     </div>
                   ))}
                 </div>
-                <p className="mt-4 text-xs text-slate-500">
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                  <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">
+                    Supervisor: {terminationProfile?.supervisor || 'Not set'}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={!terminationProfile?.supervisorEmail}
+                    onClick={() => {
+                      if (!terminationProfile?.supervisorEmail) return;
+                      const subject = encodeURIComponent(`Offboarding ${terminationEmployee}`);
+                      const body = encodeURIComponent(
+                        `Hi ${terminationProfile.supervisor || ''},\n\nWe're processing offboarding for ${terminationEmployee}. Please confirm asset returns and access revocation.\n\nThank you.`,
+                      );
+                      window.location.href = `mailto:${terminationProfile.supervisorEmail}?subject=${subject}&body=${body}`;
+                    }}
+                    className={`inline-flex items-center gap-2 rounded-2xl px-3 py-1 font-semibold transition ${
+                      terminationProfile?.supervisorEmail
+                        ? 'border border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300'
+                        : 'border border-slate-200 bg-slate-100 text-slate-400'
+                    }`}
+                  >
+                    <Mail className="h-4 w-4" />
+                    Email Supervisor
+                  </button>
+                </div>
+                <p className="mt-3 text-xs text-slate-500">
                   Remind IT to revoke software access and retrieve badges, accessories, and loaners during offboarding.
                 </p>
               </div>
