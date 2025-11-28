@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HelpDesk Portal Redirect</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 24px;
+      }
+      .card {
+        max-width: 540px;
+        width: 100%;
+        background: #111827;
+        border: 1px solid #1f2937;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      }
+      .title {
+        font-size: 20px;
+        font-weight: 700;
+        margin: 0 0 8px;
+      }
+      .muted {
+        color: #9ca3af;
+        font-size: 14px;
+      }
+      .button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 16px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: 1px solid #60a5fa;
+        background: #1d4ed8;
+        color: white;
+        text-decoration: none;
+        font-weight: 700;
+        transition: transform 120ms ease, box-shadow 120ms ease;
+      }
+      .button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 30px rgba(59, 130, 246, 0.35);
+      }
+      .note {
+        margin-top: 12px;
+        font-size: 13px;
+        color: #cbd5e1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <p class="title">Opening HelpDesk Portal…</p>
+      <p class="muted" id="status">Attempting to open the portal in a new tab.</p>
+      <a id="cta" class="button" href="#" target="_blank" rel="noopener noreferrer">Open portal</a>
+      <p class="note">
+        If the portal does not load automatically, click the button above. Set <code>REACT_APP_HELPDESK_PORTAL_URL</code>
+        to point to your deployment or run the portal locally on <code>http://localhost:3001</code>.
+      </p>
+    </div>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const target = params.get('target') || 'http://localhost:3001';
+      const status = document.getElementById('status');
+      const cta = document.getElementById('cta');
+      cta.href = target;
+      status.textContent = `Opening ${target} in a new tab…`;
+      // Try opening immediately; some browsers may block, but the CTA remains.
+      window.location.replace(target);
+    </script>
+  </body>
+</html>

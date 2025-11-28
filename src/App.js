@@ -163,18 +163,15 @@ const NAV_LINKS = ['Overview', 'Hardware', 'Audit', 'Employees', 'Reports', 'Sof
 const PUBLIC_URL = process.env.PUBLIC_URL || '';
 const normalizedPublicUrl = PUBLIC_URL.replace(/\/+$/, '');
 const deriveHelpDeskFallback = () => {
-  const defaultPath = normalizedPublicUrl
-    ? `${normalizedPublicUrl}/helpdesk-portal/index.html`
-    : '/helpdesk-portal/index.html';
   if (typeof window !== 'undefined') {
-    const { origin, port } = window.location;
+    const { port } = window.location;
     if (port === '3000') {
-      // In local dev, assume helpdesk portal runs on a sibling dev server.
+      // Local dev: assume the portal runs separately on 3001.
       return 'http://localhost:3001';
     }
-    return `${origin}${defaultPath.startsWith('/') ? defaultPath : `/${defaultPath}`}`;
   }
-  return defaultPath;
+  // Production: allow a static redirect helper page to handle the target.
+  return `${normalizedPublicUrl || ''}/helpdesk-portal`;
 };
 const HELP_DESK_PORTAL_FALLBACK = deriveHelpDeskFallback();
 const HELP_DESK_PORTAL_URL = process.env.REACT_APP_HELPDESK_PORTAL_URL || HELP_DESK_PORTAL_FALLBACK;
@@ -6609,7 +6606,9 @@ const App = () => {
     if (!isBrowser) {
       return;
     }
-    window.open(HELP_DESK_PORTAL_URL, '_blank', 'noopener,noreferrer');
+    const target = HELP_DESK_PORTAL_URL;
+    const helperPage = `${PUBLIC_URL || ''}/helpdesk-portal/index.html?target=${encodeURIComponent(target)}`;
+    window.open(helperPage, '_blank', 'noopener,noreferrer');
   }, []);
 
   const vendorQuickActions = useMemo(
