@@ -5505,6 +5505,10 @@ const App = () => {
     () => (isMobile ? { maxWidth: '480px', minWidth: '360px', margin: '0 auto' } : undefined),
     [isMobile],
   );
+  const [newHireRole, setNewHireRole] = useState('Engineer');
+  const [newHireLocation, setNewHireLocation] = useState('HQ');
+  const [newHireRemote, setNewHireRemote] = useState(true);
+  const [terminationEmployee, setTerminationEmployee] = useState('');
 
   const assetQualityMap = useMemo(
     () =>
@@ -5525,6 +5529,13 @@ const App = () => {
       ),
     [employeeGallery],
   );
+  useEffect(() => {
+    if (!terminationEmployee && employeeNames.length > 0) {
+      setTerminationEmployee(employeeNames[0]);
+    } else if (terminationEmployee && !employeeNames.includes(terminationEmployee) && employeeNames.length > 0) {
+      setTerminationEmployee(employeeNames[0]);
+    }
+  }, [employeeNames, terminationEmployee]);
 
   const filteredAssets = useMemo(() => {
     const query = filters.search.toLowerCase();
@@ -5651,6 +5662,63 @@ const App = () => {
     },
     [employeeAssignments],
   );
+  const availableByType = useMemo(() => {
+    return assets.reduce((acc, asset) => {
+      const key = asset.type || 'Other';
+      const isAvailable = !asset.checkedOut && asset.status !== 'Retired';
+      acc[key] = (acc[key] || 0) + (isAvailable ? 1 : 0);
+      return acc;
+    }, {});
+  }, [assets]);
+  const recommendedKit = useMemo(() => {
+    const baseKit = [
+      { label: 'Primary laptop', type: 'Laptop', reason: 'Standard issue for all hires' },
+      { label: 'Monitor', type: 'Monitor', reason: newHireRemote ? 'Extra monitor for remote setup' : 'Desk monitor' },
+      { label: 'Dock + power', type: 'Accessory', reason: 'Connectivity and charging' },
+      { label: 'Headset', type: 'Accessory', reason: 'Meetings and calls' },
+      { label: 'Keyboard + mouse', type: 'Accessory', reason: 'Ergonomic bundle' },
+      { label: 'Backpack/Case', type: 'Accessory', reason: 'Carry kit' },
+      { label: 'Productivity suite', type: 'Software', reason: 'Email, calendar, docs' },
+    ];
+    const roleExtras = {
+      Engineer: [
+        { label: 'High-spec laptop (32GB/1TB)', type: 'Laptop', reason: 'Builds and VMs' },
+        { label: 'Second monitor', type: 'Monitor', reason: 'Multi-screen workflows' },
+        { label: 'Admin access request', type: 'Access', reason: 'Dev tools and repos' },
+      ],
+      Designer: [
+        { label: 'Color-accurate monitor', type: 'Monitor', reason: 'Visual work' },
+        { label: 'iPad/Tablet (optional)', type: 'Tablet', reason: 'Reviews and sketching' },
+        { label: 'Figma/Adobe licenses', type: 'Software', reason: 'Creative suite' },
+      ],
+      Support: [
+        { label: 'Rugged laptop', type: 'Laptop', reason: 'Field durability' },
+        { label: 'Spare battery/charger', type: 'Accessory', reason: 'On-call shifts' },
+      ],
+      Sales: [
+        { label: 'Lightweight laptop', type: 'Laptop', reason: 'Travel-friendly' },
+        { label: 'Mobile hotspot', type: 'Accessory', reason: 'Reliable connectivity' },
+        { label: 'CRM license', type: 'Software', reason: 'Pipeline management' },
+      ],
+      Ops: [{ label: 'Label/QR printer access', type: 'Accessory', reason: 'Inventory processing' }],
+      Finance: [{ label: 'Secure token', type: 'Accessory', reason: 'Payment approvals' }],
+      HR: [{ label: 'HRIS license', type: 'Software', reason: 'On/Offboarding tasks' }],
+      IT: [{ label: 'Spare loaner', type: 'Laptop', reason: 'Hot-swap support' }],
+    };
+    const extras = roleExtras[newHireRole] || [];
+    const kit = [...baseKit, ...extras];
+    return kit.map((item) => ({
+      ...item,
+      available: item.type && availableByType[item.type] !== undefined ? availableByType[item.type] : null,
+    }));
+  }, [availableByType, newHireRemote, newHireRole]);
+  const terminationAssets = useMemo(() => {
+    const normalized = normalizeKey(terminationEmployee || '');
+    if (!normalized) {
+      return [];
+    }
+    return employeeAssignments[normalized] || [];
+  }, [employeeAssignments, terminationEmployee]);
   const handleEmployeeCardToggle = useCallback(
     (memberId) => {
       setExpandedEmployeeId((prev) => (prev === memberId ? null : memberId));
@@ -6573,6 +6641,118 @@ const App = () => {
     ],
   );
 
+  const lifecycleAgingReport = useMemo(() => {
+    const buckets = [
+      { label: '< 1 year', min: 0, max: 1, assets: [] },
+      { label: '1-3 years', min: 1, max: 3, assets: [] },
+      { label: '3-5 years', min: 3, max: 5, assets: [] },
+      { label: '5+ years', min: 5, max: Infinity, assets: [] },
+    ];
+    const unknown = [];
+    const now = Date.now();
+    assets.forEach((asset) => {
+      const purchaseDate = asset.purchaseDate ? new Date(asset.purchaseDate) : null;
+      if (!purchaseDate || Number.isNaN(purchaseDate.getTime())) {
+        unknown.push(asset);
+        return;
+      }
+      const ageYears = (now - purchaseDate.getTime()) / (1000 * 60 * 60 * 24 * 365);
+      const bucket = buckets.find((b) => ageYears >= b.min && ageYears < b.max);
+      if (bucket) {
+        bucket.assets.push({ ...asset, ageYears: Math.round(ageYears * 10) / 10 });
+      } else {
+        unknown.push(asset);
+      }
+    });
+    const summary = buckets.map((bucket) => ({ label: bucket.label, count: bucket.assets.length }));
+    return { buckets, unknown, summary };
+  }, [assets]);
+
+  const auditReadinessReport = useMemo(() => {
+    const issues = assets
+      .map((asset) => ({ asset, issues: assetQualityMap[asset.id]?.issues || [] }))
+      .filter((entry) => entry.issues.length > 0);
+    const counts = issues.reduce((acc, entry) => {
+      entry.issues.forEach((issue) => {
+        acc[issue] = (acc[issue] || 0) + 1;
+      });
+      return acc;
+    }, {});
+    return { issues, counts };
+  }, [assetQualityMap, assets]);
+
+  const utilizationReport = useMemo(() => {
+    const byType = assets.reduce((acc, asset) => {
+      const key = asset.type || 'Other';
+      if (!acc[key]) acc[key] = { total: 0, checkedOut: 0 };
+      acc[key].total += 1;
+      acc[key].checkedOut += asset.checkedOut ? 1 : 0;
+      return acc;
+    }, {});
+    const idleAssets = assets.filter((asset) => !asset.checkedOut && asset.status !== 'Retired').slice(0, 15);
+    return { byType, idleAssets };
+  }, [assets]);
+
+  const maintenanceSlaReport = useMemo(() => {
+    const byStatus = maintenanceWorkOrders.reduce((acc, order) => {
+      acc[order.status] = (acc[order.status] || 0) + 1;
+      return acc;
+    }, {});
+    const bySeverity = maintenanceWorkOrders.reduce((acc, order) => {
+      acc[order.severity] = (acc[order.severity] || 0) + 1;
+      return acc;
+    }, {});
+    return { byStatus, bySeverity, workOrders: maintenanceWorkOrders };
+  }, [maintenanceWorkOrders]);
+
+  const softwareComplianceReport = useMemo(
+    () => ({ suites: licenseCompliance, summary: licenseInsights }),
+    [licenseCompliance, licenseInsights],
+  );
+
+  const riskReport = useMemo(() => {
+    const overdueWarranty = lifecycleReminders.filter((reminder) => reminder.overdue);
+    const criticalMaintenance = maintenanceWorkOrders.filter((order) => /high|urgent/i.test(order.severity || ''));
+    return { overdueWarranty, criticalMaintenance };
+  }, [lifecycleReminders, maintenanceWorkOrders]);
+
+  const financialRollupReport = useMemo(
+    () => ({
+      depreciationForecast,
+      spendByDepartment: costByDepartment,
+      licenseSpend: licenseCompliance,
+    }),
+    [costByDepartment, depreciationForecast, licenseCompliance],
+  );
+
+  const procurementReport = useMemo(() => {
+    const unassigned = assets.filter((asset) => !asset.assignedTo || asset.assignedTo === 'Unassigned');
+    const readyToDeploy = unassigned.filter((asset) => asset.status !== 'Retired' && !asset.checkedOut).slice(0, 20);
+    return { readyToDeploy, total: readyToDeploy.length };
+  }, [assets]);
+
+  const sustainabilityReport = useMemo(() => {
+    const now = Date.now();
+    const recycleCandidates = assets.filter((asset) => {
+      if (asset.status === 'Retired') return true;
+      const purchaseDate = asset.purchaseDate ? new Date(asset.purchaseDate) : null;
+      if (!purchaseDate || Number.isNaN(purchaseDate.getTime())) return false;
+      const ageYears = (now - purchaseDate.getTime()) / (1000 * 60 * 60 * 24 * 365);
+      return ageYears >= 5;
+    });
+    return { recycleCandidates };
+  }, [assets]);
+
+  const executiveSnapshotReport = useMemo(
+    () => ({
+      totals: stats,
+      license: licenseInsights,
+      maintenance: { open: maintenanceWorkOrders.length },
+      audit: { gaps: Object.keys(assetQualityMap).length },
+    }),
+    [assetQualityMap, licenseInsights, maintenanceWorkOrders.length, stats],
+  );
+
   const reportCatalog = useMemo(
     () => [
       {
@@ -6604,8 +6784,74 @@ const App = () => {
         description: 'Top hardware cost centers based on asset values.',
         payload: { departments: costByDepartment },
       },
+      {
+        title: 'Lifecycle aging',
+        description: 'Devices grouped by age to plan refresh and budget.',
+        payload: lifecycleAgingReport,
+      },
+      {
+        title: 'Audit readiness gaps',
+        description: 'Assets missing serials, locations, owners, or models.',
+        payload: auditReadinessReport,
+      },
+      {
+        title: 'Utilization and idle pool',
+        description: 'Checkout vs available by type plus idle device list.',
+        payload: utilizationReport,
+      },
+      {
+        title: 'Maintenance SLA',
+        description: 'Open work orders by status and severity.',
+        payload: maintenanceSlaReport,
+      },
+      {
+        title: 'Software compliance',
+        description: 'License risks and utilization by suite.',
+        payload: softwareComplianceReport,
+      },
+      {
+        title: 'Risk and incidents',
+        description: 'Overdue warranties and high-severity maintenance tickets.',
+        payload: riskReport,
+      },
+      {
+        title: 'Financial rollup',
+        description: 'Depreciation forecast and spend by department.',
+        payload: financialRollupReport,
+      },
+      {
+        title: 'Procurement pipeline',
+        description: 'Unassigned inventory ready to deploy.',
+        payload: procurementReport,
+      },
+      {
+        title: 'Sustainability',
+        description: 'Retired or 5+ year devices eligible for recycling.',
+        payload: sustainabilityReport,
+      },
+      {
+        title: 'Executive snapshot',
+        description: 'One-page KPI rollup for leadership.',
+        payload: executiveSnapshotReport,
+      },
     ],
-    [costByDepartment, laptopRefreshReport, laptopServiceSummary, licenseCompliance, lifecycleReminders],
+    [
+      auditReadinessReport,
+      costByDepartment,
+      executiveSnapshotReport,
+      financialRollupReport,
+      laptopRefreshReport,
+      laptopServiceSummary,
+      licenseCompliance,
+      lifecycleAgingReport,
+      lifecycleReminders,
+      maintenanceSlaReport,
+      procurementReport,
+      riskReport,
+      sustainabilityReport,
+      utilizationReport,
+      softwareComplianceReport,
+    ],
   );
 
   const getAssetName = (id) => {
@@ -7105,6 +7351,112 @@ const App = () => {
                 </div>
               </div>
               <TeamSpotlightPanel team={teamSpotlight} remoteShare={sheetInsights.remoteShare} downloadHref={EXCEL_EXPORTS.employees} />
+            </section>
+
+            <section className="mb-8 grid gap-6 lg:grid-cols-2">
+              <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">New hire wizard</p>
+                <h3 className="mt-2 text-xl font-semibold text-slate-900">Recommend gear and licenses</h3>
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500">Role</p>
+                    <select
+                      value={newHireRole}
+                      onChange={(event) => setNewHireRole(event.target.value)}
+                      className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    >
+                      {['Engineer', 'Designer', 'Support', 'Sales', 'Ops', 'Finance', 'HR', 'IT'].map((role) => (
+                        <option key={role}>{role}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500">Location</p>
+                    <input
+                      value={newHireLocation}
+                      onChange={(event) => setNewHireLocation(event.target.value)}
+                      className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      placeholder="HQ, Remote, Field"
+                    />
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <input
+                      id="new-hire-remote"
+                      type="checkbox"
+                      checked={newHireRemote}
+                      onChange={(event) => setNewHireRemote(event.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label htmlFor="new-hire-remote" className="text-sm font-semibold text-slate-600">
+                      Remote
+                    </label>
+                  </div>
+                </div>
+                <div className="mt-4 space-y-2">
+                  {recommendedKit.map((item) => (
+                    <div
+                      key={`${item.label}-${item.type}`}
+                      className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-2 text-sm text-slate-700"
+                    >
+                      <div>
+                        <p className="font-semibold text-slate-900">{item.label}</p>
+                        <p className="text-xs text-slate-500">{item.reason}</p>
+                      </div>
+                      {item.available !== null && (
+                        <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+                          {item.available} available
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-4 text-xs text-slate-500">
+                  Location: {newHireLocation || 'Unspecified'} • Mode: {newHireRemote ? 'Remote/Hybrid' : 'On-site'}
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Termination wizard</p>
+                <h3 className="mt-2 text-xl font-semibold text-slate-900">Expect returns and closeout</h3>
+                <div className="mt-4">
+                  <p className="text-xs font-semibold text-slate-500">Employee</p>
+                  <select
+                    value={terminationEmployee}
+                    onChange={(event) => setTerminationEmployee(event.target.value)}
+                    className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  >
+                    {employeeNames.map((name) => (
+                      <option key={`term-${name}`}>{name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mt-4 space-y-2">
+                  {terminationAssets.length === 0 && (
+                    <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-3 text-sm text-slate-500">
+                      No assigned assets found for this employee.
+                    </p>
+                  )}
+                  {terminationAssets.map((asset) => (
+                    <div
+                      key={`term-asset-${asset.id}`}
+                      className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-2 text-sm text-slate-700"
+                    >
+                      <div>
+                        <p className="font-semibold text-slate-900">{asset.assetName || asset.model || 'Asset'}</p>
+                        <p className="text-xs text-slate-500">
+                          {asset.type || 'Device'} • {asset.serialNumber || 'No serial'}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+                        Status: {getAssetDisplayStatus(asset)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-4 text-xs text-slate-500">
+                  Remind IT to revoke software access and retrieve badges, accessories, and loaners during offboarding.
+                </p>
+              </div>
             </section>
           </>
         )}
