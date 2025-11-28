@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, Fragment, useCallback, useRef } from 'react';
+import jsQR from 'jsqr';
 import * as XLSX from 'xlsx';
 import {
   Laptop,
@@ -5494,6 +5495,7 @@ const App = () => {
     return saved === 'true';
   });
   const videoRef = useRef(null);
+  const fallbackCanvasRef = useRef(null);
   const scanLoopRef = useRef(null);
   const streamRef = useRef(null);
   const keyFobNormalizedRef = useRef(false);
@@ -5779,20 +5781,45 @@ const App = () => {
           videoRef.current.srcObject = stream;
           await videoRef.current.play();
         }
-        if (!('BarcodeDetector' in window)) {
-          setScannerError('BarcodeDetector is not available in this browser. Enter codes manually if needed.');
-          setScanMessage('Use manual entry below or try a device with camera scanning support.');
-          return;
+        const hasNativeDetector = typeof window.BarcodeDetector !== 'undefined';
+        const detector = hasNativeDetector ? new window.BarcodeDetector({ formats: ['qr_code'] }) : null;
+        if (!hasNativeDetector) {
+          setScannerError('BarcodeDetector is not available in this browser. Using fallback decoder (slower).');
+          setScanMessage('Fallback scanner active. Keep the QR code centered and well-lit.');
+          if (!fallbackCanvasRef.current) {
+            fallbackCanvasRef.current = document.createElement('canvas');
+          }
+        } else {
+          setScannerError('');
         }
-        const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
         const tick = async () => {
           if (cancelled || !videoRef.current) {
             return;
           }
           try {
-            const barcodes = await detector.detect(videoRef.current);
-            if (barcodes.length > 0) {
-              setScanResult(barcodes[0].rawValue || '');
+            if (detector) {
+              const barcodes = await detector.detect(videoRef.current);
+              if (barcodes.length > 0) {
+                setScanResult(barcodes[0].rawValue || '');
+              }
+            } else {
+              const videoEl = videoRef.current;
+              const width = videoEl.videoWidth || videoEl.clientWidth;
+              const height = videoEl.videoHeight || videoEl.clientHeight;
+              if (width && height) {
+                const canvas = fallbackCanvasRef.current || document.createElement('canvas');
+                fallbackCanvasRef.current = canvas;
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(videoEl, 0, 0, width, height);
+                const imageData = ctx.getImageData(0, 0, width, height);
+                const code = jsQR(imageData.data, width, height, { inversionAttempts: 'dontInvert' });
+                if (code?.data) {
+                  setScanResult(code.data);
+                  setScanMessage('QR detected via fallback scanner.');
+                }
+              }
             }
           } catch (err) {
             console.warn('Barcode detection failed', err);
