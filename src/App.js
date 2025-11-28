@@ -5325,14 +5325,25 @@ const App = () => {
         const workbook = XLSX.read(buffer, { type: 'array' });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        const getField = (row, key) => {
+          const target = key.toLowerCase();
+          const match = Object.entries(row).find(([k]) => k.toLowerCase() === target);
+          return match ? match[1] : '';
+        };
         const supervisorMap = rows.reduce((acc, row) => {
-          const first = formatPersonName(row['First Name'] || '');
-          const last = formatPersonName(row['Last Name'] || '');
+          const first = formatPersonName(getField(row, 'First Name'));
+          const last = formatPersonName(getField(row, 'Last Name'));
           const name = `${first} ${last}`.trim();
           const key = normalizeKey(name);
           if (!key) return acc;
-          const managerName = (row['Manager Name'] || '').trim();
-          const managerEmail = (row['Manager E-Mail Address'] || row['Manager Email Address'] || '').trim();
+          const managerName = (getField(row, 'Manager Name') || '').toString().trim();
+          const managerEmail = (
+            getField(row, 'Manager E-Mail Address') ||
+            getField(row, 'Manager Email Address') ||
+            ''
+          )
+            .toString()
+            .trim();
           if (managerName || managerEmail) {
             acc[key] = { supervisor: managerName, supervisorEmail: managerEmail };
           }
