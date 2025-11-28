@@ -3304,7 +3304,7 @@ const MaintenanceWorkflowBoard = ({ workOrders = [] }) => {
         </div>
       </div>
 
-      <div className="grid gap-6 p-6 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-6 p-6 md:grid-cols-2">
         {columns.map((status) => {
           const items = workOrders.filter((order) => order.status === status.key);
           return (
