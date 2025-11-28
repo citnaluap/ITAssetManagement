@@ -3367,6 +3367,7 @@ const EmployeeDirectoryGrid = ({
   expandedId = null,
   onToggle = () => {},
   getAssignments = () => [],
+  getLicenses = () => [],
   onEdit = () => {},
   onDelete = () => {},
 }) => (
@@ -3382,7 +3383,9 @@ const EmployeeDirectoryGrid = ({
       {members.map((member) => {
         const isExpanded = expandedId === member.id;
         const assignments = getAssignments(member);
+        const licenses = getLicenses(member);
         const assignmentCount = assignments.length;
+        const licenseCount = licenses.length;
         const cardClasses = [
           'rounded-2xl border p-4 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50',
           'cursor-pointer select-none',
@@ -3492,6 +3495,29 @@ const EmployeeDirectoryGrid = ({
                         </li>
                       );
                     })}
+                  </ul>
+                )}
+                <div className="mt-5 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-500">
+                  <span>Assigned software</span>
+                  <span>{licenseCount}</span>
+                </div>
+                {licenseCount === 0 ? (
+                  <p className="mt-3 text-xs text-slate-500">No software licenses found for this employee.</p>
+                ) : (
+                  <ul className="mt-3 space-y-2">
+                    {licenses.map((suite) => (
+                      <li key={`${suite.suiteId || suite.name}-${suite.licenseKey || ''}-${member.id}`} className="rounded-2xl border border-slate-100 bg-white p-3">
+                        <p className="text-sm font-semibold text-slate-900">{suite.name}</p>
+                        <p className="text-[11px] text-slate-600">
+                          <span className="font-semibold text-slate-700">Vendor:</span> {suite.vendor || '—'}
+                        </p>
+                        {suite.licenseKey && (
+                          <p className="text-[11px] text-slate-600">
+                            <span className="font-semibold text-slate-700">Key:</span> {suite.licenseKey}
+                          </p>
+                        )}
+                      </li>
+                    ))}
                   </ul>
                 )}
               </div>
@@ -5529,6 +5555,44 @@ const App = () => {
       ),
     [employeeGallery],
   );
+  const employeeLicenseMap = useMemo(() => {
+    const normalizedEmployees = employeeGallery
+      .map((member) => ({ name: member.name, key: normalizeKey(member.lookupKey || member.name || '') }))
+      .filter((item) => item.name && item.key);
+    const seededAssignments = softwareSuites.reduce((acc, suite, index) => {
+      const assignedUsers = Array.isArray(suite.assignedUsers)
+        ? suite.assignedUsers
+        : Array.isArray(suite.assignees)
+          ? suite.assignees
+          : Array.isArray(suite.users)
+            ? suite.users
+            : [];
+      let names = assignedUsers.filter(Boolean);
+      if (names.length === 0 && normalizedEmployees.length > 0) {
+        const desired = Math.min(Math.max(Math.min(suite.used || 0, 8), 1), normalizedEmployees.length);
+        const seed = String(suite.id || suite.software || index)
+          .split('')
+          .reduce((accSeed, ch) => accSeed + ch.charCodeAt(0), 0);
+        for (let i = 0; i < desired; i += 1) {
+          const person = normalizedEmployees[(seed + i * 7) % normalizedEmployees.length];
+          names.push(person.name);
+        }
+      }
+      names.forEach((name) => {
+        const key = normalizeKey(name);
+        if (!key) return;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push({
+          suiteId: suite.id,
+          name: suite.software,
+          vendor: suite.vendor,
+          licenseKey: suite.licenseKey,
+        });
+      });
+      return acc;
+    }, {});
+    return seededAssignments;
+  }, [employeeGallery, softwareSuites]);
   useEffect(() => {
     if (!terminationEmployee && employeeNames.length > 0) {
       setTerminationEmployee(employeeNames[0]);
@@ -5661,6 +5725,15 @@ const App = () => {
       return employeeAssignments[normalizedName] || [];
     },
     [employeeAssignments],
+  );
+  const getEmployeeLicenses = useCallback(
+    (member) => {
+      if (!member) return [];
+      const normalizedName = member.lookupKey || normalizeKey(member.name || '');
+      if (!normalizedName) return [];
+      return employeeLicenseMap[normalizedName] || [];
+    },
+    [employeeLicenseMap],
   );
   const availableByType = useMemo(() => {
     return assets.reduce((acc, asset) => {
@@ -7343,6 +7416,7 @@ const App = () => {
                   expandedId={expandedEmployeeId}
                   onToggle={handleEmployeeCardToggle}
                   getAssignments={getEmployeeAssignments}
+                  getLicenses={getEmployeeLicenses}
                   onEdit={(member) => setEmployeeForm({ ...member })}
                   onDelete={handleDeleteEmployee}
                 />
