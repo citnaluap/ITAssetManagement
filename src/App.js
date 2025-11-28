@@ -5501,6 +5501,10 @@ const App = () => {
   const keyFobNormalizedRef = useRef(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const employeeSuggestionListId = 'employee-name-suggestions';
+  const containerStyle = useMemo(
+    () => (isMobile ? { maxWidth: '480px', minWidth: '360px', margin: '0 auto' } : undefined),
+    [isMobile],
+  );
 
   const assetQualityMap = useMemo(
     () =>
@@ -6644,16 +6648,16 @@ const App = () => {
       }`}
     >
       <style>{DARK_MODE_STYLES}</style>
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <PrimaryNav
-        onAdd={() => setAssetForm(defaultAsset)}
-        onExport={handleExport}
-        activePage={activePage}
-        onNavigate={setActivePage}
-        onToggleTheme={handleToggleTheme}
-        isDarkMode={isDarkMode}
-        onOpenMenu={() => setMenuOpen(true)}
-      />
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8" style={containerStyle}>
+        <PrimaryNav
+          onAdd={() => setAssetForm(defaultAsset)}
+          onExport={handleExport}
+          activePage={activePage}
+          onNavigate={setActivePage}
+          onToggleTheme={handleToggleTheme}
+          isDarkMode={isDarkMode}
+          onOpenMenu={() => setMenuOpen(true)}
+        />
         <datalist id={employeeSuggestionListId}>
           {employeeNames.map((name) => (
             <option key={`employee-suggestion-${name}`} value={name} />
