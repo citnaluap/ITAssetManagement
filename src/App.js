@@ -521,6 +521,52 @@ const QRMaskPattern = {
   },
 };
 
+const ERROR_CORRECTION_LEVEL = 1; // Level L
+const ALIGNMENT_PATTERN_POSITIONS = {
+  1: [],
+  2: [6, 18],
+  3: [6, 22],
+  4: [6, 26],
+  5: [6, 30],
+  6: [6, 34],
+  7: [6, 22, 38],
+  8: [6, 24, 42],
+  9: [6, 26, 46],
+  10: [6, 28, 50],
+};
+const G15 = 0x537;
+const G18 = 0x1f25;
+const G15_MASK = 0x5412;
+
+const getAlignmentPatternPositions = (typeNumber) => ALIGNMENT_PATTERN_POSITIONS[typeNumber] || [];
+
+const getBCHDigit = (data) => {
+  let digit = 0;
+  let value = data;
+  while (value !== 0) {
+    digit += 1;
+    value >>>= 1;
+  }
+  return digit;
+};
+
+const getFormatInfoBits = (maskPattern) => {
+  const data = (ERROR_CORRECTION_LEVEL << 3) | maskPattern;
+  let d = data << 10;
+  while (getBCHDigit(d) - getBCHDigit(G15) >= 0) {
+    d ^= G15 << (getBCHDigit(d) - getBCHDigit(G15));
+  }
+  return ((data << 10) | d) ^ G15_MASK;
+};
+
+const getVersionInfoBits = (typeNumber) => {
+  let d = typeNumber << 12;
+  while (getBCHDigit(d) - getBCHDigit(G18) >= 0) {
+    d ^= G18 << (getBCHDigit(d) - getBCHDigit(G18));
+  }
+  return (typeNumber << 12) | d;
+};
+
 const getTotalDataCount = (typeNumber) => {
   const rsBlocks = QRRSBlock.getRSBlocks(typeNumber);
   return rsBlocks.reduce((sum, block) => sum + block.dataCount, 0);
@@ -558,6 +604,72 @@ const QRCodeModel = (typeNumber) => {
     setupPositionProbePattern(0, 0);
     setupPositionProbePattern(moduleCount - 7, 0);
     setupPositionProbePattern(0, moduleCount - 7);
+
+    const setupPositionAdjustPattern = (row, col) => {
+      for (let r = -2; r <= 2; r += 1) {
+        for (let c = -2; c <= 2; c += 1) {
+          const rr = row + r;
+          const cc = col + c;
+          if (modules[rr][cc] !== undefined) continue;
+          modules[rr][cc] = Math.max(Math.abs(r), Math.abs(c)) !== 1;
+        }
+      }
+    };
+
+    const setupAlignmentPatterns = () => {
+      const positions = getAlignmentPatternPositions(typeNumber);
+      if (!positions || positions.length === 0) {
+        return;
+      }
+      positions.forEach((row) => {
+        positions.forEach((col) => {
+          if (modules[row][col] !== undefined) {
+            return;
+          }
+          setupPositionAdjustPattern(row, col);
+        });
+      });
+    };
+
+    const setupTypeInfo = (maskPatternValue) => {
+      const bits = getFormatInfoBits(maskPatternValue);
+      for (let i = 0; i < 15; i += 1) {
+        const mod = ((bits >> i) & 1) === 1;
+        if (i < 6) {
+          modules[i][8] = mod;
+        } else if (i === 6) {
+          modules[7][8] = mod;
+        } else if (i === 7) {
+          modules[8][8] = mod;
+        } else if (i === 8) {
+          modules[8][7] = mod;
+        } else {
+          modules[8][14 - i] = mod;
+        }
+      }
+      for (let i = 0; i < 15; i += 1) {
+        const mod = ((bits >> i) & 1) === 1;
+        if (i < 8) {
+          modules[8][moduleCount - 1 - i] = mod;
+        } else {
+          modules[moduleCount - 15 + i][8] = mod;
+        }
+      }
+    };
+
+    const setupTypeNumber = () => {
+      if (typeNumber < 7) {
+        return;
+      }
+      const bits = getVersionInfoBits(typeNumber);
+      for (let i = 0; i < 18; i += 1) {
+        const mod = ((bits >> i) & 1) === 1;
+        const row = Math.floor(i / 3);
+        const col = i % 3;
+        modules[row][moduleCount - 11 + col] = mod;
+        modules[moduleCount - 11 + col][row] = mod;
+      }
+    };
 
     for (let i = 8; i < moduleCount - 8; i += 1) {
       if (modules[i][6] === undefined) modules[i][6] = i % 2 === 0;
@@ -619,6 +731,11 @@ const QRCodeModel = (typeNumber) => {
     while (buffer.getLengthInBits() < totalDataCount * 8) {
       buffer.put(buffer.getLengthInBits() % 16 === 0 ? PAD0 : PAD1, 8);
     }
+
+    setupAlignmentPatterns();
+    modules[moduleCount - 8][8] = true; // dark module marker
+    setupTypeInfo(maskPattern);
+    setupTypeNumber();
 
     const data = createBytes(buffer, typeNumber);
     mapData(data, maskPattern);
@@ -2225,7 +2342,11 @@ const PrimaryNav = ({ onAdd, onExport, activePage, onNavigate, onToggleTheme, is
         Live sync
       </span>
     </div>
-    <div className={`flex flex-wrap items-center gap-4 text-sm font-medium ${isDarkMode ? 'text-slate-200' : 'text-slate-500'}`}>
+    <div
+      className={`flex w-full flex-wrap items-center gap-3 text-sm font-medium ${
+        isDarkMode ? 'text-slate-200' : 'text-slate-500'
+      } lg:w-auto`}
+    >
       {NAV_LINKS.map((item) => (
         <button
           key={item}
@@ -2240,7 +2361,7 @@ const PrimaryNav = ({ onAdd, onExport, activePage, onNavigate, onToggleTheme, is
         </button>
       ))}
     </div>
-    <div className="flex items-center gap-2">
+    <div className="flex w-full flex-wrap items-center justify-end gap-2 lg:w-auto lg:justify-start">
       <button
         onClick={onExport}
         className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold transition ${
@@ -6181,7 +6302,7 @@ const App = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const employeeSuggestionListId = 'employee-name-suggestions';
   const containerStyle = useMemo(
-    () => (isMobile ? { maxWidth: '480px', minWidth: '360px', margin: '0 auto' } : undefined),
+    () => (isMobile ? { width: '100%', maxWidth: '100%', margin: '0 auto' } : undefined),
     [isMobile],
   );
   const [newHireRole, setNewHireRole] = useState('Engineer');
@@ -7939,7 +8060,7 @@ const App = () => {
 
   return (
     <div
-      className={`min-h-screen pb-16 ${
+      className={`min-h-screen overflow-x-hidden pb-16 ${
         isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-gradient-to-b from-slate-50 via-slate-100 to-slate-50 text-slate-900'
       }`}
     >
