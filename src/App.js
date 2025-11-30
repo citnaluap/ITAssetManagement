@@ -2502,48 +2502,52 @@ const PrimaryNav = ({ onAdd, onExport, activePage, onNavigate, onToggleTheme, is
             Live sync
           </span>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <button
-            onClick={onExport}
-            className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold transition ${
-              isDarkMode
-                ? 'border border-slate-700 text-slate-100 hover:border-slate-500'
-                : 'border border-slate-200 text-slate-600 hover:border-slate-300'
-            }`}
-          >
-            <Download className="h-4 w-4" />
-            Export
-          </button>
-          <button
-            onClick={onAdd}
-            className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
-          >
-            <Plus className="h-4 w-4" />
-            New asset
-          </button>
-          <button
-            className="rounded-full border border-slate-200 p-2 text-slate-500 hover:border-slate-300"
-            type="button"
-            onClick={onOpenMenu}
-            aria-label="Open menu"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <button
-            className={`rounded-full border p-2 ${isDarkMode ? 'border-slate-700 text-slate-200 hover:border-slate-500' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}
-            type="button"
-            onClick={onToggleTheme}
-            title="Toggle theme"
-            aria-label="Toggle theme"
-          >
-            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
-          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-1.5">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500" />
-            <div>
-              <p className="text-xs font-semibold text-slate-700">Operations</p>
-              <p className="text-[11px] font-semibold text-slate-500">IT Department</p>
+        <div className="flex flex-1 flex-wrap items-start justify-end gap-2">
+          <div className="flex flex-wrap items-center gap-2 self-end">
+            <button
+              onClick={onExport}
+              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold transition ${
+                isDarkMode
+                  ? 'border border-slate-700 text-slate-100 hover:border-slate-500'
+                  : 'border border-slate-200 text-slate-600 hover:border-slate-300'
+              }`}
+            >
+              <Download className="h-4 w-4" />
+              Export
+            </button>
+            <button
+              onClick={onAdd}
+              className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+            >
+              <Plus className="h-4 w-4" />
+              New asset
+            </button>
+            <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-1.5">
+              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500" />
+              <div>
+                <p className="text-xs font-semibold text-slate-700">Operations</p>
+                <p className="text-[11px] font-semibold text-slate-500">IT Department</p>
+              </div>
             </div>
+          </div>
+          <div className="flex items-center gap-2 self-start">
+            <button
+              className={`rounded-full border p-2 ${isDarkMode ? 'border-slate-700 text-slate-200 hover:border-slate-500' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}
+              type="button"
+              onClick={onToggleTheme}
+              title="Toggle theme"
+              aria-label="Toggle theme"
+            >
+              {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+            <button
+              className="rounded-full border border-slate-200 p-2 text-slate-500 hover:border-slate-300"
+              type="button"
+              onClick={onOpenMenu}
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
           </div>
         </div>
       </div>
