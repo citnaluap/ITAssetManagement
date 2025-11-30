@@ -2479,88 +2479,92 @@ const CardShell = ({ title, icon: Icon, action, children }) => (
 
 const PrimaryNav = ({ onAdd, onExport, activePage, onNavigate, onToggleTheme, isDarkMode, onOpenMenu }) => (
   <nav
-    className={`mb-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl px-5 py-4 backdrop-blur ${
+    className={`mb-10 rounded-2xl px-5 py-4 backdrop-blur ${
       isDarkMode ? 'border border-slate-800 bg-slate-900/70 text-slate-100' : 'border border-slate-100 bg-white/70 text-slate-500'
     }`}
   >
-    <div className="flex items-center gap-3">
-      <div className="flex items-center gap-3">
-        <img
-          src={MEDIA.logo}
-          alt="United Disabilities Services logo"
-          className="h-11 w-11 rounded-2xl border border-slate-100 bg-white object-contain p-1.5 shadow-sm"
-        />
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">United Disabilities Services</p>
-          <p className="text-base font-semibold text-slate-900">Asset Control Studio</p>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
+            <img
+              src={MEDIA.logo}
+              alt="United Disabilities Services logo"
+              className="h-11 w-11 rounded-2xl border border-slate-100 bg-white object-contain p-1.5 shadow-sm"
+            />
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">United Disabilities Services</p>
+              <p className="text-base font-semibold text-slate-900">Asset Control Studio</p>
+            </div>
+          </div>
+          <span className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 sm:inline-flex">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Live sync
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <button
+            onClick={onExport}
+            className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold transition ${
+              isDarkMode
+                ? 'border border-slate-700 text-slate-100 hover:border-slate-500'
+                : 'border border-slate-200 text-slate-600 hover:border-slate-300'
+            }`}
+          >
+            <Download className="h-4 w-4" />
+            Export
+          </button>
+          <button
+            onClick={onAdd}
+            className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+          >
+            <Plus className="h-4 w-4" />
+            New asset
+          </button>
+          <button
+            className="rounded-full border border-slate-200 p-2 text-slate-500 hover:border-slate-300"
+            type="button"
+            onClick={onOpenMenu}
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <button
+            className={`rounded-full border p-2 ${isDarkMode ? 'border-slate-700 text-slate-200 hover:border-slate-500' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}
+            type="button"
+            onClick={onToggleTheme}
+            title="Toggle theme"
+            aria-label="Toggle theme"
+          >
+            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-1.5">
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500" />
+            <div>
+              <p className="text-xs font-semibold text-slate-700">Operations</p>
+              <p className="text-[11px] font-semibold text-slate-500">IT Department</p>
+            </div>
+          </div>
         </div>
       </div>
-      <span className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 sm:inline-flex">
-        <ShieldCheck className="h-3.5 w-3.5" />
-        Live sync
-      </span>
-    </div>
-    <div
-      className={`flex w-full flex-wrap items-center gap-3 text-sm font-medium ${
-        isDarkMode ? 'text-slate-200' : 'text-slate-500'
-      } lg:w-auto`}
-    >
-      {NAV_LINKS.map((item) => (
-        <button
-          key={item}
-          onClick={() => onNavigate?.(item)}
-          className={`transition ${isDarkMode ? 'hover:text-white' : 'hover:text-slate-900'} ${
-            activePage === item ? (isDarkMode ? 'text-white' : 'text-slate-900') : ''
-          }`}
-          type="button"
-          aria-current={activePage === item ? 'page' : undefined}
-        >
-          {item}
-        </button>
-      ))}
-    </div>
-    <div className="flex w-full flex-wrap items-center justify-end gap-2 lg:w-auto lg:justify-start">
-      <button
-        onClick={onExport}
-        className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold transition ${
-          isDarkMode
-            ? 'border border-slate-700 text-slate-100 hover:border-slate-500'
-            : 'border border-slate-200 text-slate-600 hover:border-slate-300'
+      <div
+        className={`flex w-full flex-wrap items-center justify-end gap-4 text-sm font-medium ${
+          isDarkMode ? 'text-slate-200' : 'text-slate-500'
         }`}
       >
-        <Download className="h-4 w-4" />
-        Export
-      </button>
-      <button
-        onClick={onAdd}
-        className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
-      >
-        <Plus className="h-4 w-4" />
-        New asset
-      </button>
-      <button
-        className="rounded-full border border-slate-200 p-2 text-slate-500 hover:border-slate-300"
-        type="button"
-        onClick={onOpenMenu}
-        aria-label="Open menu"
-      >
-        <Menu className="h-5 w-5" />
-      </button>
-      <button
-        className={`rounded-full border p-2 ${isDarkMode ? 'border-slate-700 text-slate-200 hover:border-slate-500' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}
-        type="button"
-        onClick={onToggleTheme}
-        title="Toggle theme"
-        aria-label="Toggle theme"
-      >
-        {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-      </button>
-      <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-1.5">
-        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500" />
-        <div>
-          <p className="text-xs font-semibold text-slate-700">Operations</p>
-          <p className="text-[11px] font-semibold text-slate-500">IT Department</p>
-        </div>
+        {NAV_LINKS.map((item) => (
+          <button
+            key={item}
+            onClick={() => onNavigate?.(item)}
+            className={`transition ${isDarkMode ? 'hover:text-white' : 'hover:text-slate-900'} ${
+              activePage === item ? (isDarkMode ? 'text-white' : 'text-slate-900') : ''
+            }`}
+            type="button"
+            aria-current={activePage === item ? 'page' : undefined}
+          >
+            {item}
+          </button>
+        ))}
       </div>
     </div>
   </nav>
