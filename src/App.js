@@ -6298,6 +6298,7 @@ const App = () => {
   const fallbackCanvasRef = useRef(null);
   const scanLoopRef = useRef(null);
   const streamRef = useRef(null);
+  const lastScanTsRef = useRef(0);
   const keyFobNormalizedRef = useRef(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const employeeSuggestionListId = 'employee-name-suggestions';
@@ -6741,10 +6742,15 @@ const App = () => {
       return;
     }
     let cancelled = false;
+    lastScanTsRef.current = 0;
     const start = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' },
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
         });
         streamRef.current = stream;
         if (videoRef.current) {
@@ -6767,6 +6773,21 @@ const App = () => {
         } else {
           setScannerError('');
         }
+        const finishDetection = (value, message) => {
+          if (!value) return;
+          setScanResult(value);
+          setScanMessage(message || 'QR detected.');
+          cancelled = true;
+          setScannerActive(false);
+          if (scanLoopRef.current) {
+            cancelAnimationFrame(scanLoopRef.current);
+          }
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach((track) => track.stop());
+            streamRef.current = null;
+          }
+        };
+
         const tick = async () => {
           if (cancelled || !videoRef.current) {
             return;
@@ -6775,25 +6796,34 @@ const App = () => {
             if (detector) {
               const barcodes = await detector.detect(videoRef.current);
               if (barcodes.length > 0) {
-                setScanResult(barcodes[0].rawValue || '');
-                setScanMessage('QR detected. You can use the result now.');
+                finishDetection(barcodes[0].rawValue || '', 'QR detected.');
+                return;
               }
             } else {
               const videoEl = videoRef.current;
               const width = videoEl.videoWidth || videoEl.clientWidth;
               const height = videoEl.videoHeight || videoEl.clientHeight;
               if (width && height) {
-                const canvas = fallbackCanvasRef.current || document.createElement('canvas');
-                fallbackCanvasRef.current = canvas;
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(videoEl, 0, 0, width, height);
-                const imageData = ctx.getImageData(0, 0, width, height);
-                const code = jsQR(imageData.data, width, height, { inversionAttempts: 'dontInvert' });
-                if (code?.data) {
-                  setScanResult(code.data);
-                  setScanMessage('QR detected via fallback scanner.');
+                const now = typeof performance !== 'undefined' && typeof performance.now === 'function'
+                  ? performance.now()
+                  : Date.now();
+                if (now - lastScanTsRef.current > 120) {
+                  lastScanTsRef.current = now;
+                  const canvas = fallbackCanvasRef.current || document.createElement('canvas');
+                  fallbackCanvasRef.current = canvas;
+                  const targetWidth = Math.min(640, width);
+                  const scale = targetWidth / width;
+                  const targetHeight = Math.max(1, Math.round(height * scale));
+                  canvas.width = targetWidth;
+                  canvas.height = targetHeight;
+                  const ctx = canvas.getContext('2d');
+                  ctx.drawImage(videoEl, 0, 0, targetWidth, targetHeight);
+                  const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+                  const code = jsQR(imageData.data, targetWidth, targetHeight, { inversionAttempts: 'dontInvert' });
+                  if (code?.data) {
+                    finishDetection(code.data, 'QR detected via fallback scanner.');
+                    return;
+                  }
                 }
               }
             }
