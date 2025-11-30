@@ -652,7 +652,30 @@ const QRCodeModel = (typeNumber) => {
       });
     };
 
-    const setupTypeInfo = (maskPatternValue) => {
+    const reserveFormatSlots = () => {
+      for (let i = 0; i < 15; i += 1) {
+        if (i < 6) {
+          if (modules[i][8] === undefined) modules[i][8] = false;
+        } else if (i === 6) {
+          if (modules[7][8] === undefined) modules[7][8] = false;
+        } else if (i === 7) {
+          if (modules[8][8] === undefined) modules[8][8] = false;
+        } else if (i === 8) {
+          if (modules[8][7] === undefined) modules[8][7] = false;
+        } else {
+          if (modules[8][14 - i] === undefined) modules[8][14 - i] = false;
+        }
+      }
+      for (let i = 0; i < 15; i += 1) {
+        if (i < 8) {
+          if (modules[8][moduleCount - 1 - i] === undefined) modules[8][moduleCount - 1 - i] = false;
+        } else {
+          if (modules[moduleCount - 15 + i][8] === undefined) modules[moduleCount - 15 + i][8] = false;
+        }
+      }
+    };
+
+    const writeTypeInfo = (maskPatternValue) => {
       const bits = getFormatInfoBits(maskPatternValue);
       for (let i = 0; i < 15; i += 1) {
         const mod = ((bits >> i) & 1) === 1;
@@ -678,7 +701,23 @@ const QRCodeModel = (typeNumber) => {
       }
     };
 
-    const setupTypeNumber = () => {
+    const reserveVersionSlots = () => {
+      if (typeNumber < 7) {
+        return;
+      }
+      for (let i = 0; i < 18; i += 1) {
+        const row = Math.floor(i / 3);
+        const col = i % 3;
+        if (modules[row][moduleCount - 11 + col] === undefined) {
+          modules[row][moduleCount - 11 + col] = false;
+        }
+        if (modules[moduleCount - 11 + col][row] === undefined) {
+          modules[moduleCount - 11 + col][row] = false;
+        }
+      }
+    };
+
+    const writeTypeNumber = () => {
       if (typeNumber < 7) {
         return;
       }
@@ -696,6 +735,9 @@ const QRCodeModel = (typeNumber) => {
       if (modules[i][6] === undefined) modules[i][6] = i % 2 === 0;
       if (modules[6][i] === undefined) modules[6][i] = i % 2 === 0;
     }
+
+    reserveFormatSlots();
+    reserveVersionSlots();
 
     const mapData = (data, maskPatternValue) => {
       let inc = -1;
@@ -734,9 +776,10 @@ const QRCodeModel = (typeNumber) => {
 
     const totalDataCount = getTotalDataCount(typeNumber);
     const buffer = QRBitBuffer();
+    const lengthBits = typeNumber >= 10 ? 16 : 8;
     for (let i = 0; i < dataList.length; i += 1) {
       buffer.put(4, 4);
-      buffer.put(dataList[i].getLength(), 8);
+      buffer.put(dataList[i].getLength(), lengthBits);
       dataList[i].write(buffer);
     }
     let totalBits = buffer.getLengthInBits();
@@ -755,8 +798,8 @@ const QRCodeModel = (typeNumber) => {
 
     setupAlignmentPatterns();
     modules[moduleCount - 8][8] = true; // dark module marker
-    setupTypeInfo(maskPattern);
-    setupTypeNumber();
+    writeTypeInfo(maskPattern);
+    writeTypeNumber();
 
     const data = createBytes(buffer, typeNumber);
     mapData(data, maskPattern);
