@@ -2539,7 +2539,7 @@ const PrimaryNav = ({ onAdd, onExport, activePage, onNavigate, onToggleTheme, is
         New asset
       </button>
       <button
-        className="rounded-full border border-slate-200 p-2 text-slate-500 hover:border-slate-300 lg:hidden"
+        className="rounded-full border border-slate-200 p-2 text-slate-500 hover:border-slate-300"
         type="button"
         onClick={onOpenMenu}
         aria-label="Open menu"
@@ -7556,6 +7556,23 @@ const App = () => {
     setScanMessage('');
   };
 
+  const handleJumpToSection = useCallback(
+    (page, sectionId) => {
+      setActivePage(page);
+      setMenuOpen(false);
+      if (!isBrowser || !sectionId) {
+        return;
+      }
+      setTimeout(() => {
+        const el = document.getElementById(sectionId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 150);
+    },
+    [isBrowser],
+  );
+
   const handleUseScanResult = () => {
     const value = (manualScanInput || scanResult || '').trim();
     if (!value) {
@@ -7901,6 +7918,119 @@ const App = () => {
       icon: Share2,
       actionLabel: 'Export data',
       onAction: handleExport,
+    },
+  ];
+
+  const menuNavItems = [
+    { label: 'Overview', onClick: () => handleJumpToSection('Overview', 'overview-hero') },
+    { label: 'Hardware', onClick: () => handleJumpToSection('Hardware', 'hardware-hero') },
+    { label: 'Audit', onClick: () => handleJumpToSection('Audit', 'audit-hero') },
+    { label: 'Employees', onClick: () => handleJumpToSection('Employees', 'employees-hero') },
+    { label: 'Reports', onClick: () => handleJumpToSection('Reports', 'reports-hero') },
+    { label: 'Software', onClick: () => handleJumpToSection('Software', 'software-hero') },
+    { label: 'Vendors', onClick: () => handleJumpToSection('Vendors', 'vendors-hero') },
+  ];
+
+  const menuSectionLinks = [
+    { label: 'Overview metrics', onClick: () => handleJumpToSection('Overview', 'overview-metrics') },
+    { label: 'Quick actions', onClick: () => handleJumpToSection('Overview', 'overview-actions') },
+    { label: 'QR tools', onClick: () => handleJumpToSection('Overview', 'qr-tools-overview') },
+    { label: 'Asset table', onClick: () => handleJumpToSection('Hardware', 'asset-table') },
+    { label: 'Network printers', onClick: () => handleJumpToSection('Hardware', 'network-printers') },
+    { label: 'Audit run board', onClick: () => handleJumpToSection('Audit', 'audit-board') },
+    { label: 'Mobile audit card', onClick: () => handleJumpToSection('Audit', 'audit-mobile') },
+    { label: 'Employee directory', onClick: () => handleJumpToSection('Employees', 'employee-directory') },
+    { label: 'Reports gallery', onClick: () => handleJumpToSection('Reports', 'reports-hero') },
+    { label: 'Software suites', onClick: () => handleJumpToSection('Software', 'software-hero') },
+    { label: 'Vendor partners', onClick: () => handleJumpToSection('Vendors', 'vendors-hero') },
+  ];
+
+  const menuActionItems = [
+    {
+      label: 'Add asset',
+      onClick: () => {
+        setAssetForm(defaultAsset);
+        setActivePage('Hardware');
+        setMenuOpen(false);
+      },
+      icon: Plus,
+    },
+    {
+      label: 'Add employee',
+      onClick: () => {
+        setEmployeeForm({ ...defaultEmployeeProfile });
+        setActivePage('Employees');
+        setMenuOpen(false);
+      },
+      icon: Users,
+    },
+    {
+      label: 'Add software suite',
+      onClick: () => {
+        setSoftwareForm({ ...defaultSoftwareSuite });
+        setActivePage('Software');
+        setMenuOpen(false);
+      },
+      icon: Download,
+    },
+    {
+      label: 'Start audit',
+      onClick: () => {
+        setMenuOpen(false);
+        handleStartAudit();
+      },
+      icon: Wrench,
+    },
+    {
+      label: 'Warranty alerts',
+      onClick: () => {
+        setMenuOpen(false);
+        setWarrantyModalOpen(true);
+      },
+      icon: CalendarClock,
+    },
+    {
+      label: 'Scan QR code',
+      onClick: () => {
+        setMenuOpen(false);
+        handleStartScanner();
+      },
+      icon: Scan,
+    },
+    {
+      label: 'Export data',
+      onClick: () => {
+        setMenuOpen(false);
+        handleExport();
+      },
+      icon: Share2,
+    },
+    {
+      label: 'HelpDesk portal',
+      onClick: () => {
+        setMenuOpen(false);
+        handleOpenHelpDeskPortal();
+      },
+      icon: ArrowRightLeft,
+    },
+  ];
+
+  const menuUtilityItems = [
+    {
+      label: 'Command palette',
+      onClick: () => {
+        setCommandPaletteOpen(true);
+        setMenuOpen(false);
+      },
+      icon: Search,
+    },
+    {
+      label: isDarkMode ? 'Switch to light theme' : 'Switch to dark theme',
+      onClick: () => {
+        setMenuOpen(false);
+        handleToggleTheme();
+      },
+      icon: isDarkMode ? Sun : Moon,
     },
   ];
   useEffect(() => {
@@ -8291,7 +8421,7 @@ const App = () => {
 
         {activePage === 'Overview' && (
           <>
-        <section className="mb-8 grid gap-6 lg:grid-cols-[2fr,1fr]">
+        <section id="overview-hero" className="mb-8 grid gap-6 lg:grid-cols-[2fr,1fr]">
           <div className="relative overflow-hidden rounded-3xl bg-slate-900 p-8 text-white shadow-lg">
             <img src={MEDIA.hero} alt="UDS operations" className="absolute inset-0 h-full w-full object-cover opacity-40" />
             <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-blue-900/70" />
@@ -8378,11 +8508,11 @@ const App = () => {
           </div>
         </section>
 
-        <section className="mb-8 grid gap-6">
+        <section id="overview-metrics" className="mb-8 grid gap-6">
           <SnapshotMetricsRow metrics={snapshotMetrics} />
         </section>
 
-        <section className="mb-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
+        <section id="overview-attention" className="mb-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
           <OverviewAttentionPanel
             overdue={overdueAlerts}
             dueSoon={dueSoonAlerts}
@@ -8404,12 +8534,12 @@ const App = () => {
           </section>
         )}
 
-        <section className="mb-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
+        <section id="overview-people" className="mb-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
           <SpendHotspotsCard costByDepartment={costByDepartment} topLocations={sheetInsights.topLocations} />
           <EmployeeSummaryCard total={employeeGallery.length} departments={employeeDepartmentCount} onAdd={handleAddEmployee} />
         </section>
 
-        <section className="mb-8 grid gap-6 lg:grid-cols-[2fr,1fr]">
+        <section id="overview-actions" className="mb-8 grid gap-6 lg:grid-cols-[2fr,1fr]">
           <div className="grid gap-4 md:grid-cols-2">
             {quickActions.map((action) => (
               <QuickActionCard key={action.title} {...action} />
@@ -8438,7 +8568,7 @@ const App = () => {
 
         {activePage === 'Hardware' && (
           <>
-            <section className="mb-8 rounded-3xl border border-slate-900/60 bg-slate-900 p-8 text-white shadow-lg">
+            <section id="hardware-hero" className="mb-8 rounded-3xl border border-slate-900/60 bg-slate-900 p-8 text-white shadow-lg">
               <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-white/60">Hardware</p>
               <h2 className="mt-3 text-3xl font-semibold">Full-fidelity device management</h2>
               <p className="mt-2 text-sm text-white/70">Real-time visibility into every laptop, display, dock, and printer with proactive lifecycle tracking.</p>
@@ -8568,7 +8698,7 @@ const App = () => {
               </div>
             </section>
 
-            <section className="mb-10">
+            <section id="network-printers" className="mb-10">
               <NetworkPrinterBoard
                 printers={networkPrinters}
                 onAdd={handleAddPrinter}
@@ -8592,7 +8722,7 @@ const App = () => {
               <LaptopRepairCard data={laptopServiceSummary} onLoanerCheckout={handleLoanerCheckout} onLoanerCheckin={handleLoanerCheckin} />
             </section>
 
-            <section className="mb-8">
+            <section id="qr-tools-overview" className="mb-8">
               <QrToolingPanel
                 qrInput={qrInput}
                 onQrInput={setQrInput}
@@ -8618,7 +8748,7 @@ const App = () => {
 
         {activePage === 'Audit' && (
           <>
-            <section className="mb-8 rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+            <section id="audit-hero" className="mb-8 rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
               <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Audit</p>
               <h2 className="mt-2 text-3xl font-semibold text-slate-900">Mobile-ready audit lane</h2>
               <p className="mt-2 text-sm text-slate-600">
@@ -8644,16 +8774,16 @@ const App = () => {
               </div>
             </section>
 
-            <section className="mb-8 grid gap-6 xl:grid-cols-[1.6fr,1fr]">
+            <section id="audit-board" className="mb-8 grid gap-6 xl:grid-cols-[1.6fr,1fr]">
               <InventoryHealthPanel health={inventoryHealth} onStartAudit={handleStartAudit} />
               <AuditRunBoard runs={auditRuns} onStartAudit={handleStartAudit} />
             </section>
 
-            <section className="mb-8">
+            <section id="audit-mobile" className="mb-8">
               <MobileAuditCard inventoryHealth={inventoryHealth} onStartAudit={handleStartAudit} />
             </section>
 
-            <section className="mb-8">
+            <section id="qr-tools-audit" className="mb-8">
               <QrToolingPanel
                 qrInput={qrInput}
                 onQrInput={setQrInput}
@@ -8679,7 +8809,7 @@ const App = () => {
 
         {activePage === 'Employees' && (
           <>
-            <section className="mb-8 rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+            <section id="employees-hero" className="mb-8 rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-slate-400">Employees</p>
               <h2 className="mt-3 text-3xl font-semibold text-slate-900">The faces powering UDS technology</h2>
               <p className="mt-2 text-sm text-slate-600">
@@ -8719,7 +8849,7 @@ const App = () => {
               </div>
             </section>
 
-            <section className="grid gap-6 lg:grid-cols-[1.7fr,1fr]">
+            <section id="employee-directory" className="grid gap-6 lg:grid-cols-[1.7fr,1fr]">
               <div className="space-y-4">
                 <EmployeeDirectoryGrid
                   members={displayedEmployees}
@@ -8884,7 +9014,7 @@ const App = () => {
 
         {activePage === 'Reports' && (
           <>
-            <section className="mb-8 rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+            <section id="reports-hero" className="mb-8 rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-slate-400">Reports</p>
               <h2 className="mt-3 text-3xl font-semibold text-slate-900">Insights, forecasts, and exports</h2>
               <p className="mt-2 text-sm text-slate-600">
@@ -8982,7 +9112,7 @@ const App = () => {
 
         {activePage === 'Vendors' && (
           <>
-            <section className="mb-8 overflow-hidden rounded-[2.5rem] bg-slate-950 p-8 text-white shadow-2xl">
+            <section id="vendors-hero" className="mb-8 overflow-hidden rounded-[2.5rem] bg-slate-950 p-8 text-white shadow-2xl">
               <div className="grid gap-8 lg:grid-cols-[1.5fr,1fr]">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/60">Vendor galaxy</p>
@@ -9101,7 +9231,7 @@ const App = () => {
 
         {activePage === 'Software' && (
           <>
-            <section className="mb-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
+            <section id="software-hero" className="mb-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
               <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
@@ -9288,22 +9418,35 @@ const App = () => {
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-500">Navigate</p>
                 <div className="mt-2 flex flex-col gap-2">
-                  {NAV_LINKS.map((item) => (
+                  {menuNavItems.map((item) => (
                     <button
-                      key={`menu-${item}`}
+                      key={`menu-nav-${item.label}`}
                       type="button"
-                      onClick={() => {
-                        setActivePage(item);
-                        setMenuOpen(false);
-                      }}
+                      onClick={item.onClick}
                       className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-sm font-semibold ${
-                        activePage === item
+                        activePage === item.label
                           ? 'border-blue-200 bg-blue-50 text-blue-700'
                           : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200'
                       }`}
                     >
-                      {item}
+                      {item.label}
                       <ArrowRightLeft className="h-4 w-4" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-500">Jump to</p>
+                <div className="mt-2 flex flex-col gap-2">
+                  {menuSectionLinks.map((item) => (
+                    <button
+                      key={`menu-jump-${item.label}`}
+                      type="button"
+                      onClick={item.onClick}
+                      className="flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
+                    >
+                      {item.label}
+                      <Navigation className="h-4 w-4" />
                     </button>
                   ))}
                 </div>
@@ -9311,78 +9454,31 @@ const App = () => {
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-500">Actions</p>
                 <div className="mt-2 grid grid-cols-1 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAssetForm(defaultAsset);
-                      setActivePage('Hardware');
-                      setMenuOpen(false);
-                    }}
-                    className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
-                  >
-                    New asset <Plus className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEmployeeForm({ ...defaultEmployeeProfile });
-                      setActivePage('Employees');
-                      setMenuOpen(false);
-                    }}
-                    className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
-                  >
-                    Add employee <Users className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setWarrantyModalOpen(true);
-                      setMenuOpen(false);
-                    }}
-                    className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
-                  >
-                    Warranty alerts <CalendarClock className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActivePage('Audit');
-                      setMenuOpen(false);
-                      handleStartAudit();
-                    }}
-                    className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
-                  >
-                    Start audit <Wrench className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleStartScanner();
-                      setMenuOpen(false);
-                    }}
-                    className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
-                  >
-                    Scan QR <Scan className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleExport();
-                      setMenuOpen(false);
-                    }}
-                    className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
-                  >
-                    Export data <Download className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleToggleTheme();
-                    }}
-                    className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
-                  >
-                    Toggle theme {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                  </button>
+                  {menuActionItems.map((item) => (
+                    <button
+                      key={`menu-action-${item.label}`}
+                      type="button"
+                      onClick={item.onClick}
+                      className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
+                    >
+                      {item.label} <item.icon className="h-4 w-4" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-500">Utilities</p>
+                <div className="mt-2 grid grid-cols-1 gap-2">
+                  {menuUtilityItems.map((item) => (
+                    <button
+                      key={`menu-util-${item.label}`}
+                      type="button"
+                      onClick={item.onClick}
+                      className="inline-flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200"
+                    >
+                      {item.label} <item.icon className="h-4 w-4" />
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
