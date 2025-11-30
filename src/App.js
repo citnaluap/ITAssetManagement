@@ -511,10 +511,31 @@ const QRBitBuffer = () => {
 
 const QRMaskPattern = {
   PATTERN000: 0,
+  PATTERN001: 1,
+  PATTERN010: 2,
+  PATTERN011: 3,
+  PATTERN100: 4,
+  PATTERN101: 5,
+  PATTERN110: 6,
+  PATTERN111: 7,
   getMask: (maskPattern, i, j) => {
     switch (maskPattern) {
       case 0:
         return (i + j) % 2 === 0;
+      case 1:
+        return i % 2 === 0;
+      case 2:
+        return j % 3 === 0;
+      case 3:
+        return (i + j) % 3 === 0;
+      case 4:
+        return (Math.floor(i / 2) + Math.floor(j / 3)) % 2 === 0;
+      case 5:
+        return ((i * j) % 2) + ((i * j) % 3) === 0;
+      case 6:
+        return (((i * j) % 2) + ((i * j) % 3)) % 2 === 0;
+      case 7:
+        return (((i + j) % 2) + ((i * j) % 3)) % 2 === 0;
       default:
         return false;
     }
@@ -739,10 +760,104 @@ const QRCodeModel = (typeNumber) => {
 
     const data = createBytes(buffer, typeNumber);
     mapData(data, maskPattern);
+    return modules;
+  };
+
+  const calculatePenalty = (grid) => {
+    const size = grid.length;
+    let penalty = 0;
+
+    // Rule 1: consecutive modules in row/column
+    const countRuns = (line) => {
+      let score = 0;
+      let runColor = line[0];
+      let runLength = 1;
+      for (let i = 1; i < line.length; i += 1) {
+        if (line[i] === runColor) {
+          runLength += 1;
+        } else {
+          if (runLength >= 5) {
+            score += 3 + (runLength - 5);
+          }
+          runColor = line[i];
+          runLength = 1;
+        }
+      }
+      if (runLength >= 5) {
+        score += 3 + (runLength - 5);
+      }
+      return score;
+    };
+
+    for (let r = 0; r < size; r += 1) {
+      penalty += countRuns(grid[r]);
+    }
+    for (let c = 0; c < size; c += 1) {
+      const col = [];
+      for (let r = 0; r < size; r += 1) col.push(grid[r][c]);
+      penalty += countRuns(col);
+    }
+
+    // Rule 2: 2x2 blocks of same color
+    for (let r = 0; r < size - 1; r += 1) {
+      for (let c = 0; c < size - 1; c += 1) {
+        const val = grid[r][c];
+        if (val === grid[r][c + 1] && val === grid[r + 1][c] && val === grid[r + 1][c + 1]) {
+          penalty += 3;
+        }
+      }
+    }
+
+    // Rule 3: finder-like patterns in rows/cols
+    const patternPenalty = (line) => {
+      const pattern = [true, false, true, true, true, false, true];
+      for (let i = 0; i <= line.length - 7; i += 1) {
+        if (pattern.every((v, idx) => line[i + idx] === v)) {
+          const before = line.slice(Math.max(0, i - 4), i).every((v) => v === false);
+          const after = line.slice(i + 7, i + 11).every((v) => v === false);
+          if (before || after) {
+            return 40;
+          }
+        }
+      }
+      return 0;
+    };
+    for (let r = 0; r < size; r += 1) {
+      penalty += patternPenalty(grid[r]);
+    }
+    for (let c = 0; c < size; c += 1) {
+      const col = [];
+      for (let r = 0; r < size; r += 1) col.push(grid[r][c]);
+      penalty += patternPenalty(col);
+    }
+
+    // Rule 4: balance of dark modules
+    const totalModules = size * size;
+    let darkCount = 0;
+    for (let r = 0; r < size; r += 1) {
+      for (let c = 0; c < size; c += 1) {
+        if (grid[r][c]) darkCount += 1;
+      }
+    }
+    const ratio = Math.abs((darkCount * 100) / totalModules - 50) / 5;
+    penalty += ratio * 10;
+
+    return penalty;
   };
 
   const make = () => {
-    makeImpl(0);
+    let bestModules = null;
+    let bestScore = Infinity;
+    for (let mask = 0; mask <= 7; mask += 1) {
+      const trial = makeImpl(mask);
+      const score = calculatePenalty(trial);
+      if (score < bestScore) {
+        bestScore = score;
+        bestModules = trial.map((row) => row.slice());
+      }
+    }
+    modules = bestModules;
+    moduleCount = bestModules.length;
   };
 
   const addData = (data) => {
@@ -824,7 +939,7 @@ const generateQrDataUrl = (text, size = 280) => {
   qr.make();
 
   const count = qr.getModuleCount();
-  const quietZone = 8; // generous quiet zone improves scan reliability
+  const quietZone = 12; // larger quiet zone improves scan reliability
   const moduleSize = Math.floor((size - quietZone * 2) / count) || 1;
   const renderSize = moduleSize * count + quietZone * 2;
   const canvas = document.createElement('canvas');
