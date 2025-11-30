@@ -2477,7 +2477,16 @@ const CardShell = ({ title, icon: Icon, action, children }) => (
   </div>
 );
 
-const PrimaryNav = ({ onAdd, onExport, activePage, onNavigate, onToggleTheme, isDarkMode, onOpenMenu }) => (
+const PrimaryNav = ({
+  onAdd,
+  onExport,
+  activePage,
+  onNavigate,
+  onToggleTheme,
+  isDarkMode,
+  onOpenMenu,
+  onOpenCommandPalette,
+}) => (
   <nav
     className={`mb-10 rounded-2xl px-5 py-4 backdrop-blur ${
       isDarkMode ? 'border border-slate-800 bg-slate-900/70 text-slate-100' : 'border border-slate-100 bg-white/70 text-slate-500'
@@ -2503,33 +2512,6 @@ const PrimaryNav = ({ onAdd, onExport, activePage, onNavigate, onToggleTheme, is
           </span>
         </div>
         <div className="flex flex-1 flex-wrap items-start justify-end gap-2">
-          <div className="flex flex-wrap items-center gap-2 self-end">
-            <button
-              onClick={onExport}
-              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold transition ${
-                isDarkMode
-                  ? 'border border-slate-700 text-slate-100 hover:border-slate-500'
-                  : 'border border-slate-200 text-slate-600 hover:border-slate-300'
-              }`}
-            >
-              <Download className="h-4 w-4" />
-              Export
-            </button>
-            <button
-              onClick={onAdd}
-              className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
-            >
-              <Plus className="h-4 w-4" />
-              New asset
-            </button>
-            <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-1.5">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500" />
-              <div>
-                <p className="text-xs font-semibold text-slate-700">Operations</p>
-                <p className="text-[11px] font-semibold text-slate-500">IT Department</p>
-              </div>
-            </div>
-          </div>
           <div className="flex items-center gap-2 self-start">
             <button
               className={`rounded-full border p-2 ${isDarkMode ? 'border-slate-700 text-slate-200 hover:border-slate-500' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}
@@ -2552,23 +2534,64 @@ const PrimaryNav = ({ onAdd, onExport, activePage, onNavigate, onToggleTheme, is
         </div>
       </div>
       <div
-        className={`flex w-full flex-wrap items-center justify-end gap-4 text-sm font-medium ${
+        className={`flex w-full flex-wrap items-center justify-between gap-4 text-sm font-medium ${
           isDarkMode ? 'text-slate-200' : 'text-slate-500'
         }`}
       >
-        {NAV_LINKS.map((item) => (
+        <div className="flex flex-wrap items-center gap-2">
           <button
-            key={item}
-            onClick={() => onNavigate?.(item)}
-            className={`transition ${isDarkMode ? 'hover:text-white' : 'hover:text-slate-900'} ${
-              activePage === item ? (isDarkMode ? 'text-white' : 'text-slate-900') : ''
+            onClick={onExport}
+            className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold transition ${
+              isDarkMode
+                ? 'border border-slate-700 text-slate-100 hover:border-slate-500'
+                : 'border border-slate-200 text-slate-600 hover:border-slate-300'
             }`}
-            type="button"
-            aria-current={activePage === item ? 'page' : undefined}
           >
-            {item}
+            <Download className="h-4 w-4" />
+            Export
           </button>
-        ))}
+          <button
+            onClick={onAdd}
+            className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+          >
+            <Plus className="h-4 w-4" />
+            New asset
+          </button>
+          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-1.5">
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500" />
+            <div>
+              <p className="text-xs font-semibold text-slate-700">Operations</p>
+              <p className="text-[11px] font-semibold text-slate-500">IT Department</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenCommandPalette}
+            className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold transition ${
+              isDarkMode
+                ? 'border border-slate-700 text-slate-100 hover:border-slate-500'
+                : 'border border-slate-200 text-slate-600 hover:border-slate-300'
+            }`}
+          >
+            <Search className="h-4 w-4" />
+            Command palette
+          </button>
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-4">
+          {NAV_LINKS.map((item) => (
+            <button
+              key={item}
+              onClick={() => onNavigate?.(item)}
+              className={`transition ${isDarkMode ? 'hover:text-white' : 'hover:text-slate-900'} ${
+                activePage === item ? (isDarkMode ? 'text-white' : 'text-slate-900') : ''
+              }`}
+              type="button"
+              aria-current={activePage === item ? 'page' : undefined}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   </nav>
@@ -8396,11 +8419,12 @@ const App = () => {
           onAdd={() => setAssetForm(defaultAsset)}
           onExport={handleExport}
           activePage={activePage}
-          onNavigate={setActivePage}
-          onToggleTheme={handleToggleTheme}
-          isDarkMode={isDarkMode}
-          onOpenMenu={() => setMenuOpen(true)}
-        />
+        onNavigate={setActivePage}
+        onToggleTheme={handleToggleTheme}
+        isDarkMode={isDarkMode}
+        onOpenMenu={() => setMenuOpen(true)}
+        onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+      />
         <datalist id={employeeSuggestionListId}>
           {employeeNames.map((name) => (
             <option key={`employee-suggestion-${name}`} value={name} />
@@ -8416,16 +8440,6 @@ const App = () => {
             Offline mode: changes will queue locally until you reconnect.
           </div>
         )}
-        <div className="mb-4 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setCommandPaletteOpen(true)}
-            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700"
-          >
-            <Search className="h-4 w-4" />
-            Command palette (Ctrl/Cmd+K)
-          </button>
-        </div>
 
         {activePage === 'Overview' && (
           <>
