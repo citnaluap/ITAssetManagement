@@ -37,7 +37,6 @@ import {
   Filter,
   QrCode,
   Scan,
-  Clock,
   Sun,
   Moon,
   Menu,
@@ -50,7 +49,6 @@ import employeePhotoMap from './data/employeePhotos.json';
 import automateMap from './data/automateMap.json';
 import {
   fetchSharePointListItems,
-  SHAREPOINT_CONFIG,
   createSharePointListItem,
   updateSharePointListItem,
   deleteSharePointListItem,
@@ -95,6 +93,8 @@ const STORAGE_KEYS = {
   licenses: 'uds_licenses',
   maintenance: 'uds_maintenance',
   history: 'uds_history',
+  employees: 'uds_employees',
+  laptopRepairs: 'uds_laptop_repairs',
   clearedWarrantyAlerts: 'uds_cleared_warranty_alerts',
 };
 const STORAGE_VERSION_KEY = 'uds_storage_version';
@@ -135,6 +135,15 @@ const getAutomateLink = (asset) => {
     .map(normalizeKey);
   const match = candidates.find((key) => automateMap[key]);
   return (match && automateMap[match]) || AUTOMATE_BASE_URL;
+};
+
+const isComputerAsset = (asset = {}) => {
+  const type = (asset.type || '').toLowerCase();
+  if (['computer', 'laptop', 'desktop', 'server'].includes(type)) {
+    return true;
+  }
+  const fingerprint = `${asset.assetName || ''} ${asset.deviceName || ''} ${asset.model || ''}`.toLowerCase();
+  return fingerprint.includes('computer') || fingerprint.includes('laptop') || fingerprint.includes('desktop');
 };
 
 const defaultAsset = {
@@ -1719,19 +1728,6 @@ const buildAssetsFromSheet = (assetRows = assetSheetData, employeeRows = employe
     });
 };
 
-const buildHistoryFromAssets = (assets) =>
-  assets
-    .filter((asset) => asset.purchaseDate)
-    .slice(0, 25)
-    .map((asset, index) => ({
-      id: index + 1,
-      assetId: asset.id,
-      action: asset.checkedOut ? 'Check Out' : 'Check In',
-      user: asset.assignedTo || 'Operations',
-      date: asset.checkOutDate || asset.purchaseDate,
-      notes: asset.location,
-    }));
-
 const buildMaintenanceFromAssets = (assets) => {
   const today = new Date();
 
@@ -1814,7 +1810,7 @@ const buildTeamSpotlight = (rows = employeeSheetData, limit = 8) =>
   });
 
 const BASE_ASSETS = buildAssetsFromSheet();
-const BASE_HISTORY = buildHistoryFromAssets(BASE_ASSETS);
+const BASE_HISTORY = [];
 const BASE_TEAM = buildTeamSpotlight();
 const BASE_EMPLOYEE_GALLERY = buildTeamSpotlight(undefined, Number.MAX_SAFE_INTEGER);
 const buildCanonicalMap = (assets = []) =>
@@ -1965,10 +1961,8 @@ const computeSheetInsights = (assets) => {
   return { counts, topLocations, remoteShare };
 };
 
-const isBrowser = typeof window !== 'undefined';
-
 const ensureStorageVersion = () => {
-  if (!isBrowser) {
+  if (typeof window === 'undefined') {
     return;
   }
   try {
@@ -1985,7 +1979,7 @@ const ensureStorageVersion = () => {
 
 const usePersistentState = (key, initialValue) => {
   const [state, setState] = useState(() => {
-    if (!isBrowser) {
+    if (typeof window === 'undefined') {
       return initialValue;
     }
 
@@ -1999,7 +1993,7 @@ const usePersistentState = (key, initialValue) => {
   });
 
   useEffect(() => {
-    if (!isBrowser) {
+    if (typeof window === 'undefined') {
       return;
     }
 
@@ -2233,7 +2227,7 @@ const describeLaptopRepairIssue = (asset = {}, order = null) => {
   return `${note}. ${reporter}.`;
 };
 
-const computeLaptopServiceSummary = (assets = [], workOrders = []) => {
+const computeLaptopServiceSummary = (assets = [], workOrders = [], manualRepairs = []) => {
   const laptops = assets.filter(isLaptopAsset);
   const orderLookup = workOrders.reduce((acc, order) => {
     acc[order.assetId] = order;
@@ -2259,26 +2253,42 @@ const computeLaptopServiceSummary = (assets = [], workOrders = []) => {
         severity: order?.severity || 'Normal',
         eta: order?.eta || null,
         ageMonths,
+        source: 'asset',
       };
     })
     .sort((a, b) => b.ageMonths - a.ageMonths);
+  const manualTickets = (manualRepairs || []).map((ticket) => ({
+    id: ticket.id || `manual-${Date.now()}`,
+    assetId: ticket.assetId || 'Laptop',
+    model: ticket.model || 'Laptop',
+    assignedTo: ticket.assignedTo || 'Unassigned',
+    location: ticket.location || 'Operations',
+    issue: ticket.issue || 'No issue provided.',
+    status: ticket.status || 'Awaiting intake',
+    severity: ticket.severity || 'Normal',
+    eta: ticket.eta || null,
+    ageMonths: ticket.ageMonths || 0,
+    source: 'manual',
+  }));
+  const manualAssetIds = new Set(manualTickets.map((item) => item.assetId));
+  const mergedRepairs = [...manualTickets, ...repairsFull.filter((item) => !manualAssetIds.has(item.assetId))];
   const loanerPool = laptops.filter(isLoanerLaptop);
   const availableLoanersRaw = loanerPool.filter((asset) => getAssetDisplayStatus(asset) === 'Available');
   const deployedLoanersRaw = loanerPool.filter((asset) => getAssetDisplayStatus(asset) !== 'Available');
-const mapLoaner = (asset) => ({
-  id: asset.id,
-  assetId: asset.sheetId || asset.assetName || `Asset-${asset.id}`,
-  assignedTo: asset.assignedTo || 'Unassigned',
-  location: asset.location || 'Operations',
-  asset,
-});
+  const mapLoaner = (asset) => ({
+    id: asset.id,
+    assetId: asset.sheetId || asset.assetName || `Asset-${asset.id}`,
+    assignedTo: asset.assignedTo || 'Unassigned',
+    location: asset.location || 'Operations',
+    asset,
+  });
   const sortLoaners = (collection) => collection.map(mapLoaner).sort((a, b) => a.assetId.localeCompare(b.assetId));
-  const avgRepairAgeMonths = repairsFull.length
-    ? Math.round(repairsFull.reduce((sum, item) => sum + (item.ageMonths || 0), 0) / repairsFull.length)
+  const avgRepairAgeMonths = mergedRepairs.length
+    ? Math.round(mergedRepairs.reduce((sum, item) => sum + (item.ageMonths || 0), 0) / mergedRepairs.length)
     : 0;
   return {
-    repairs: repairsFull.slice(0, 4),
-    repairTotal: repairsFull.length,
+    repairs: mergedRepairs.slice(0, 6),
+    repairTotal: mergedRepairs.length,
     avgRepairAgeMonths,
     loanersAvailable: sortLoaners(availableLoanersRaw).slice(0, 6),
     loanerAvailableCount: availableLoanersRaw.length,
@@ -2479,7 +2489,6 @@ const CardShell = ({ title, icon: Icon, action, children }) => (
 
 const PrimaryNav = ({
   onAdd,
-  onExport,
   activePage,
   onNavigate,
   onToggleTheme,
@@ -2539,17 +2548,6 @@ const PrimaryNav = ({
         }`}
       >
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={onExport}
-            className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold transition ${
-              isDarkMode
-                ? 'border border-slate-700 text-slate-100 hover:border-slate-500'
-                : 'border border-slate-200 text-slate-600 hover:border-slate-300'
-            }`}
-          >
-            <Download className="h-4 w-4" />
-            Export
-          </button>
           <button
             onClick={onAdd}
             className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
@@ -2957,7 +2955,11 @@ const TeamSpotlightPanel = ({ team = [], remoteShare, downloadHref }) => (
                   {member.email}
                 </a>
               )}
-              {!member.email && member.phone && <span>{member.phone}</span>}
+              {!member.email && member.phone && (
+                <a href={`tel:${member.phone}`} className="font-semibold text-blue-600 hover:underline">
+                  {member.phone}
+                </a>
+              )}
             </div>
           </div>
         </li>
@@ -3017,11 +3019,6 @@ const VendorCard = ({ vendor }) => {
             {vendor.contact.email && (
               <a href={`mailto:${vendor.contact.email}`} className="text-blue-600 hover:underline">
                 {vendor.contact.email}
-              </a>
-            )}
-            {vendor.contact.url && (
-              <a href={vendor.contact.url} target="_blank" rel="noreferrer" className="block text-blue-600 hover:underline">
-                {vendor.contact.url.replace(/^https?:\/\//, '')}
               </a>
             )}
           </div>
@@ -3920,6 +3917,7 @@ const EmployeeDirectoryGrid = ({
   getLicenses = () => [],
   onEdit = () => {},
   onDelete = () => {},
+  onPhoto = () => {},
 }) => (
   <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
     <div className="border-b border-slate-100 px-6 py-5">
@@ -3960,13 +3958,22 @@ const EmployeeDirectoryGrid = ({
             onKeyDown={handleKeyDown}
           >
             <div className="flex items-start gap-4">
-              {member.avatar ? (
-                <img src={member.avatar} alt={member.name} className="h-12 w-12 rounded-2xl object-cover" />
-              ) : (
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-600">
-                  {getInitials(member.name)}
-                </div>
-              )}
+                {member.avatar ? (
+                  <img
+                    src={member.avatar}
+                    alt={member.name}
+                    loading="lazy"
+                    className="h-12 w-12 cursor-zoom-in rounded-2xl object-cover"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onPhoto(member);
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-600">
+                    {getInitials(member.name)}
+                  </div>
+                )}
               <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-900">{member.name}</p>
                 <p className="text-xs text-slate-500">{member.title}</p>
@@ -3988,7 +3995,17 @@ const EmployeeDirectoryGrid = ({
                 <p className="mt-1 text-xs text-slate-500">
                   Supervisor: <span className="font-semibold text-slate-800">{supervisorLabel}</span>
                 </p>
-                {member.phone && <p className="mt-1 text-[11px] text-slate-400">{member.phone}</p>}
+                {member.phone && (
+                  <p className="mt-1 text-[11px] text-slate-400">
+                    <a
+                      href={`tel:${member.phone}`}
+                      onClick={(event) => event.stopPropagation()}
+                      className="font-semibold text-blue-600 hover:underline"
+                    >
+                      {member.phone}
+                    </a>
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-1">
                 <button
@@ -4083,7 +4100,7 @@ const EmployeeDirectoryGrid = ({
   </div>
 );
 
-const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin }) => {
+const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair, onEditRepair }) => {
   if (!data) {
     return null;
   }
@@ -4100,9 +4117,21 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin }) => {
   return (
     <div className="rounded-3xl border border-slate-100 bg-gradient-to-b from-white to-slate-50 p-6 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Repair desk</p>
-          <p className="text-xl font-semibold text-slate-900">Laptop service status</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Repair desk</p>
+            <p className="text-xl font-semibold text-slate-900">Laptop service status</p>
+          </div>
+          {typeof onAddRepair === 'function' && (
+            <button
+              type="button"
+              onClick={onAddRepair}
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600"
+            >
+              <Plus className="h-4 w-4" />
+              Add
+            </button>
+          )}
         </div>
         <div className="text-right">
           <p className="text-xs uppercase tracking-widest text-slate-400">Avg age in repair</p>
@@ -4128,7 +4157,18 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin }) => {
                 <li key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-semibold text-slate-900">{item.assetId}</p>
-                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-500">{item.status}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-500">{item.status}</span>
+                      {typeof onEditRepair === 'function' && (
+                        <button
+                          type="button"
+                          onClick={() => onEditRepair(item)}
+                          className="rounded-full border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-600"
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <p className="mt-1 text-xs text-slate-500">{item.issue}</p>
                   <p className="mt-1 text-xs text-slate-500">
@@ -4683,59 +4723,34 @@ const LicenseUsage = ({ licenses }) => {
   );
 };
 
-const MaintenanceList = ({ records, getAssetName }) => (
-  <CardShell title="Recent maintenance" icon={Wrench}>
-    <div className="space-y-4">
-      {records.map((record) => (
-        <div key={record.id} className="rounded-xl border border-slate-100 p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-slate-800">{record.type}</p>
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                record.status === 'Completed'
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : 'bg-amber-50 text-amber-700'
-              }`}
-            >
-              {record.status}
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-slate-500">{record.date}</p>
-          <p className="mt-3 text-sm text-slate-600">{record.description}</p>
-          <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-            <span>{getAssetName(record.assetId)}</span>
-            <span>${record.cost}</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  </CardShell>
-);
-
 const ActivityPanel = ({ history, lookupAsset }) => (
   <CardShell title="Check-in/out activity" icon={History}>
-    <div className="space-y-4">
-      {history.map((entry) => (
-        <div key={entry.id} className="flex items-start gap-3 rounded-2xl border border-slate-100 p-4">
-          <div
-            className={`rounded-full p-2 ${
-              entry.action === 'Check Out' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'
-            }`}
-          >
-            <ArrowRightLeft className="h-4 w-4" />
+    {history.length === 0 ? (
+      <p className="text-sm text-slate-500">No check-in/out activity yet.</p>
+    ) : (
+      <div className="space-y-4">
+        {history.map((entry) => (
+          <div key={entry.id} className="flex items-start gap-3 rounded-2xl border border-slate-100 p-4">
+            <div
+              className={`rounded-full p-2 ${
+                entry.action === 'Check Out' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'
+              }`}
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-800">
+                {entry.action} - {lookupAsset(entry.assetId)}
+              </p>
+              <p className="text-xs text-slate-500">
+                {entry.date} | {entry.user}
+              </p>
+              {entry.notes && <p className="mt-1 text-sm text-slate-600">{entry.notes}</p>}
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-slate-800">
-              {entry.action} - {lookupAsset(entry.assetId)}
-            </p>
-            <p className="text-xs text-slate-500">
-              {entry.date} | {entry.user}
-            </p>
-            {entry.notes && <p className="mt-1 text-sm text-slate-600">{entry.notes}</p>}
-          </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    )}
   </CardShell>
 );
 
@@ -5203,31 +5218,6 @@ const PrinterFormModal = ({ printer, onSubmit, onCancel }) => {
   );
 };
 
-const ActivityTimeline = ({ events = [] }) => (
-  <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-slate-400">Timeline</p>
-        <p className="text-lg font-semibold text-slate-900">Recent field activity</p>
-      </div>
-      <Clock className="h-5 w-5 text-slate-500" />
-    </div>
-    <div className="mt-4 space-y-3">
-      {events.length === 0 && <p className="text-sm text-slate-500">No recent changes.</p>}
-      {events.map((event) => (
-        <div key={event.id} className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
-          <div className="mt-1 text-slate-400">{event.icon}</div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-slate-900">{event.title}</p>
-            <p className="text-xs text-slate-500">{event.detail}</p>
-          </div>
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{event.date}</div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
 const MobileActionBar = ({ onAdd, onAudit, onWarranty, onFilters, onScan, mobileAuditMode }) => (
   <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-slate-200 bg-white/95 shadow-2xl backdrop-blur">
     <div className="mx-auto grid max-w-5xl grid-cols-2 items-center gap-2 px-4 py-3 text-sm font-semibold text-slate-700 sm:flex sm:flex-wrap sm:justify-between">
@@ -5294,6 +5284,7 @@ const AssetSpotlight = ({
   const approvalStatus = asset?.approvalStatus || 'Approved';
   const ready = isAssetReady(asset || {});
   const automateUrl = getAutomateLink(asset);
+  const automateEligible = isComputerAsset(asset);
 
   return (
     <div className="sticky top-6 rounded-3xl border border-slate-100 bg-white/80 p-6 shadow-sm">
@@ -5302,25 +5293,15 @@ const AssetSpotlight = ({
           <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Asset spotlight</p>
           <p className="text-base font-semibold text-slate-900">{asset ? 'Live snapshot' : 'Choose a device'}</p>
         </div>
-        {asset && (
+        {asset && !ready && (
           <div className="flex items-center gap-2">
-            {!ready && (
-              <button
-                onClick={() => onApproveIntake?.(asset)}
-                className="inline-flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 hover:border-emerald-200"
-                type="button"
-              >
-                <Check className="h-3.5 w-3.5" />
-                Approve intake
-              </button>
-            )}
             <button
-              onClick={() => onEdit(asset)}
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-slate-300"
+              onClick={() => onApproveIntake?.(asset)}
+              className="inline-flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 hover:border-emerald-200"
               type="button"
             >
-              <Edit2 className="h-3.5 w-3.5" />
-              Update
+              <Check className="h-3.5 w-3.5" />
+              Approve intake
             </button>
           </div>
         )}
@@ -5404,29 +5385,33 @@ const AssetSpotlight = ({
             </div>
           </dl>
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onOpenAutomate?.(asset)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
-            >
-              Open in Automate
-              <ExternalLink className="h-4 w-4" />
-            </button>
-            <a
-              href={automateUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-600"
-              title="Open directly (no pre-warm)"
-            >
-              Direct link
-            </a>
+            {automateEligible && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => onOpenAutomate?.(asset)}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
+                >
+                  Open in Automate
+                  <ExternalLink className="h-4 w-4" />
+                </button>
+                <a
+                  href={automateUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-600"
+                  title="Open directly (no pre-warm)"
+                >
+                  Direct link
+                </a>
+              </>
+            )}
             <button
               type="button"
               onClick={() => onEdit?.(asset)}
               className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600"
             >
-              Edit asset
+              Edit / Update asset
               <Edit2 className="h-4 w-4" />
             </button>
           </div>
@@ -5548,7 +5533,16 @@ const ModalShell = ({ title, onClose, children }) => (
   </div>
 );
 
-const AssetFormModal = ({ asset, onSubmit, onCancel, sharePointMode = false, suggestionListId }) => {
+const AssetFormModal = ({
+  asset,
+  onSubmit,
+  onCancel,
+  sharePointMode = false,
+  suggestionListId,
+  modelSuggestionListId,
+  departmentSuggestionListId,
+  locationSuggestionListId,
+}) => {
   const [form, setForm] = useState(asset || defaultAsset);
 
   useEffect(() => {
@@ -5564,9 +5558,6 @@ const AssetFormModal = ({ asset, onSubmit, onCancel, sharePointMode = false, sug
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    if (qualityIssues.length && !window.confirm(`Missing: ${qualityIssues.join(', ')}. Save as pending?`)) {
-      return;
-    }
     onSubmit({ ...form, approvalStatus: qualityIssues.length ? 'Pending Approval' : 'Approved' });
   };
 
@@ -5605,6 +5596,7 @@ const AssetFormModal = ({ asset, onSubmit, onCancel, sharePointMode = false, sug
             <input
               value={form.model}
               onChange={(event) => update('model', event.target.value)}
+              list={modelSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -5621,6 +5613,7 @@ const AssetFormModal = ({ asset, onSubmit, onCancel, sharePointMode = false, sug
             <input
               value={form.department}
               onChange={(event) => update('department', event.target.value)}
+              list={departmentSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -5629,6 +5622,7 @@ const AssetFormModal = ({ asset, onSubmit, onCancel, sharePointMode = false, sug
             <input
               value={form.location}
               onChange={(event) => update('location', event.target.value)}
+              list={locationSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -5742,6 +5736,139 @@ const AssetFormModal = ({ asset, onSubmit, onCancel, sharePointMode = false, sug
   );
 };
 
+const EMPTY_REPAIR_TICKET = {
+  id: null,
+  assetId: '',
+  model: '',
+  assignedTo: '',
+  location: '',
+  issue: '',
+  status: 'Awaiting intake',
+  severity: 'Normal',
+  eta: '',
+};
+
+const RepairTicketModal = ({ ticket, onSubmit, onCancel }) => {
+  const [form, setForm] = useState(() => ticket || { ...EMPTY_REPAIR_TICKET });
+
+  useEffect(() => {
+    setForm(ticket || { ...EMPTY_REPAIR_TICKET });
+  }, [ticket]);
+
+  const update = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    onSubmit?.(form);
+  };
+
+  return (
+    <ModalShell title={form.id ? 'Edit laptop repair' : 'Add laptop repair'} onClose={onCancel}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid gap-3 md:grid-cols-2">
+          <label className="text-sm font-medium text-slate-700">
+            Asset ID
+            <input
+              value={form.assetId}
+              onChange={(event) => update('assetId', event.target.value)}
+              placeholder="e.g., LAPTOP123"
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Model
+            <input
+              value={form.model}
+              onChange={(event) => update('model', event.target.value)}
+              placeholder="Dell Latitude"
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Assigned to
+            <input
+              value={form.assignedTo}
+              onChange={(event) => update('assignedTo', event.target.value)}
+              placeholder="Name or team"
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Location
+            <input
+              value={form.location}
+              onChange={(event) => update('location', event.target.value)}
+              placeholder="Depot, HQ, etc."
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Status
+            <select
+              value={form.status}
+              onChange={(event) => update('status', event.target.value)}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="Awaiting intake">Awaiting intake</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Awaiting Parts">Awaiting Parts</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Severity
+            <select
+              value={form.severity}
+              onChange={(event) => update('severity', event.target.value)}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="Normal">Normal</option>
+              <option value="High">High</option>
+              <option value="Urgent">Urgent</option>
+            </select>
+          </label>
+          <label className="text-sm font-medium text-slate-700 md:col-span-2">
+            Issue
+            <textarea
+              value={form.issue}
+              onChange={(event) => update('issue', event.target.value)}
+              rows={3}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            ETA (optional)
+            <input
+              value={form.eta || ''}
+              onChange={(event) => update('eta', event.target.value)}
+              placeholder="Dec 12"
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+        </div>
+        <div className="flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="inline-flex items-center rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:border-slate-300"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+          >
+            <Check className="h-4 w-4" />
+            Save
+          </button>
+        </div>
+      </form>
+    </ModalShell>
+  );
+};
+
 const CheckActionModal = ({ asset, mode, onSubmit, onCancel, suggestionListId }) => {
   const [form, setForm] = useState({
     user: asset?.assignedTo || '',
@@ -5829,7 +5956,15 @@ const CheckActionModal = ({ asset, mode, onSubmit, onCancel, suggestionListId })
   );
 };
 
-const EmployeeFormModal = ({ employee, onSubmit, onCancel }) => {
+const EmployeeFormModal = ({
+  employee,
+  onSubmit,
+  onCancel,
+  departmentSuggestionListId,
+  locationSuggestionListId,
+  modelSuggestionListId,
+  employeeSuggestionListId,
+}) => {
   const [form, setForm] = useState(employee || defaultEmployeeProfile);
   const [photoPreview, setPhotoPreview] = useState(employee?.avatar || '');
 
@@ -5876,6 +6011,7 @@ const EmployeeFormModal = ({ employee, onSubmit, onCancel }) => {
               value={form.name}
               onChange={(event) => update('name', event.target.value)}
               placeholder="e.g., Jamie Rivera"
+              list={employeeSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               required
             />
@@ -5894,6 +6030,7 @@ const EmployeeFormModal = ({ employee, onSubmit, onCancel }) => {
             <input
               value={form.department}
               onChange={(event) => update('department', event.target.value)}
+              list={departmentSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -5902,6 +6039,7 @@ const EmployeeFormModal = ({ employee, onSubmit, onCancel }) => {
             <input
               value={form.location}
               onChange={(event) => update('location', event.target.value)}
+              list={locationSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -5930,6 +6068,42 @@ const EmployeeFormModal = ({ employee, onSubmit, onCancel }) => {
               type="date"
               value={form.startDate}
               onChange={(event) => update('startDate', event.target.value)}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Laptop / computer
+            <input
+              value={form.computer}
+              onChange={(event) => update('computer', event.target.value)}
+              list={modelSuggestionListId}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Printer
+            <input
+              value={form.printer}
+              onChange={(event) => update('printer', event.target.value)}
+              list={modelSuggestionListId}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Monitor
+            <input
+              value={form.monitor}
+              onChange={(event) => update('monitor', event.target.value)}
+              list={modelSuggestionListId}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Dock
+            <input
+              value={form.dock}
+              onChange={(event) => update('dock', event.target.value)}
+              list={modelSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -6070,6 +6244,7 @@ const App = () => {
   const [assets, setAssets] = usePersistentState(STORAGE_KEYS.assets, BASE_ASSETS);
   const [history, setHistory] = usePersistentState(STORAGE_KEYS.history, BASE_HISTORY);
   const [softwareSuites, setSoftwareSuites] = usePersistentState(STORAGE_KEYS.licenses, BASE_LICENSES);
+  const [repairTickets, setRepairTickets] = usePersistentState(STORAGE_KEYS.laptopRepairs, []);
   const [isMobile, setIsMobile] = useState(false);
   const [clearedWarrantyAlerts, setClearedWarrantyAlerts] = usePersistentState(
     STORAGE_KEYS.clearedWarrantyAlerts,
@@ -6179,13 +6354,16 @@ const App = () => {
       count: NETWORK_PRINTER_BRAND_TOTALS[entry.brand] || 0,
     }));
     const verizonCount = vendorProfiles.find((vendor) => vendor.id === 'verizon')?.assetCount || 0;
+    const dellComputerCount =
+      vendorProfiles.find((vendor) => vendor.id === 'dell')?.assetCount || 0;
     return [
       ...brandEntries,
+      { title: 'Dell computers', count: dellComputerCount, note: 'Laptop and desktop fleet' },
       { title: 'Verizon lines', count: verizonCount, note: 'Active smartphones' },
     ];
   }, [vendorProfiles]);
   const teamSpotlight = useMemo(() => BASE_TEAM, []);
-  const [employeeGallery, setEmployeeGallery] = useState(() => BASE_EMPLOYEE_GALLERY);
+  const [employeeGallery, setEmployeeGallery] = usePersistentState(STORAGE_KEYS.employees, BASE_EMPLOYEE_GALLERY);
   useEffect(() => {
     let cancelled = false;
     const loadOrgChart = async () => {
@@ -6244,10 +6422,10 @@ const App = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
-  const sharePointEnabled = SHAREPOINT_CONFIG.enabled;
-  const sharePointAssetList = SHAREPOINT_CONFIG.assetListTitle;
-  const sharePointEmployeeList = SHAREPOINT_CONFIG.employeeListTitle;
+  }, [setEmployeeGallery]);
+  const sharePointEnabled = false; // Temporarily disable SharePoint until it's re-enabled.
+  const sharePointAssetList = null;
+  const sharePointEmployeeList = null;
   const shouldFetchAssets = sharePointEnabled && Boolean(sharePointAssetList);
   const shouldFetchEmployees = sharePointEnabled && Boolean(sharePointEmployeeList);
 
@@ -6331,8 +6509,8 @@ const App = () => {
   );
   const maintenanceWorkOrders = useMemo(() => buildMaintenanceWorkOrders(assets), [assets]);
   const laptopServiceSummary = useMemo(
-    () => computeLaptopServiceSummary(assets, maintenanceWorkOrders),
-    [assets, maintenanceWorkOrders],
+    () => computeLaptopServiceSummary(assets, maintenanceWorkOrders, repairTickets),
+    [assets, maintenanceWorkOrders, repairTickets],
   );
   const laptopRefreshReport = useMemo(
     () => computeLaptopRefreshReport(assets, laptopRefreshDate),
@@ -6491,14 +6669,20 @@ const App = () => {
   const keyFobNormalizedRef = useRef(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const employeeSuggestionListId = 'employee-name-suggestions';
+  const modelSuggestionListId = 'asset-model-suggestions';
+  const departmentSuggestionListId = 'asset-department-suggestions';
+  const locationSuggestionListId = 'asset-location-suggestions';
   const containerStyle = useMemo(
     () => (isMobile ? { width: '100%', maxWidth: '100%', margin: '0 auto' } : undefined),
     [isMobile],
   );
-  const [newHireRole, setNewHireRole] = useState('Engineer');
+  const [newHireRole, setNewHireRole] = useState('');
   const [newHireLocation, setNewHireLocation] = useState('HQ');
+  const [newHireDepartment, setNewHireDepartment] = useState('UDS');
   const [newHireRemote, setNewHireRemote] = useState(true);
   const [terminationEmployee, setTerminationEmployee] = useState('');
+  const [repairTicketForm, setRepairTicketForm] = useState(null);
+  const [photoLightbox, setPhotoLightbox] = useState(null);
 
   const assetQualityMap = useMemo(
     () =>
@@ -6519,6 +6703,75 @@ const App = () => {
       ),
     [employeeGallery],
   );
+  const formatRoleLabel = (value = '') =>
+    normalizeKey(value) === 'servicecoordinator' ? 'Service Coordinator' : value.trim();
+  const roleOptions = useMemo(() => {
+    const titles = employeeGallery.map((member) => member.title || '').filter(Boolean);
+    const seen = new Set();
+    const filtered = [];
+    titles.forEach((title) => {
+      const trimmed = title.trim();
+      if (!trimmed) return;
+      const candidate = formatRoleLabel(trimmed);
+      const key = normalizeKey(candidate);
+      if (key === 'servicecoordinator' && candidate !== 'Service Coordinator') {
+        return;
+      }
+      if (seen.has(key)) {
+        return;
+      }
+      seen.add(key);
+      filtered.push(candidate);
+    });
+    const uniqueTitles = filtered.sort((a, b) => a.localeCompare(b));
+    return uniqueTitles;
+  }, [employeeGallery]);
+  useEffect(() => {
+    if (!roleOptions.length) {
+      if (newHireRole) {
+        setNewHireRole('');
+      }
+      return;
+    }
+    const normalized = normalizeKey(newHireRole || '');
+    const inList = roleOptions.some((role) => normalizeKey(role) === normalized);
+    if (!inList) {
+      setNewHireRole(roleOptions[0]);
+    } else if (normalized === 'servicecoordinator' && newHireRole !== 'Service Coordinator') {
+      setNewHireRole('Service Coordinator');
+    }
+  }, [newHireRole, roleOptions]);
+  const modelOptions = useMemo(() => {
+    const isKeyFob = (value = '') => /key\s*fob/i.test(value);
+    const isUnbrandedLatitude = (value = '') => /latitude/i.test(value) && !/^dell\s+latitude/i.test(value.trim());
+    return Array.from(
+      new Set(
+        assets
+          .map((asset) => asset.model)
+          .filter(Boolean)
+          .filter((model) => !isKeyFob(model) && !isUnbrandedLatitude(model)),
+      ),
+    ).sort((a, b) => a.localeCompare(b));
+  }, [assets]);
+  const departmentOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(employeeGallery.map((member) => member.department).filter(Boolean)),
+      ).sort((a, b) => a.localeCompare(b)),
+    [employeeGallery],
+  );
+  const locationOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(employeeGallery.map((member) => member.location).filter(Boolean)),
+      ).sort((a, b) => a.localeCompare(b)),
+    [employeeGallery],
+  );
+  useEffect(() => {
+    if (!newHireDepartment && departmentOptions.length > 0) {
+      setNewHireDepartment(departmentOptions[0]);
+    }
+  }, [departmentOptions, newHireDepartment]);
   const employeeLookupByName = useMemo(() => {
     return employeeGallery.reduce((acc, member) => {
       acc[normalizeKey(member.name || '')] = member;
@@ -6714,47 +6967,125 @@ const App = () => {
     }, {});
   }, [assets]);
   const recommendedKit = useMemo(() => {
+    const classifyRole = () => {
+      const value = (newHireRole || '').toLowerCase();
+      const isServiceCoordinator = /\bservice\s*coordinator\b/i.test(value);
+      const isUpmcServiceCoordinator = isServiceCoordinator && normalizeKey(newHireDepartment || '') === 'hcbsupmc';
+      if (isUpmcServiceCoordinator) return 'blocked';
+      if (isServiceCoordinator) return 'serviceCoordinator';
+      if (/engineer|developer|software|devops|cloud|data/i.test(value)) return 'engineering';
+      if (/it|systems|sysadmin|network|support|help desk|helpdesk|service desk/i.test(value)) return 'it';
+      if (/design|ux|ui|creative|graphics/i.test(value)) return 'design';
+      if (/sales|account|bd|business development|rep|csr/i.test(value)) return 'sales';
+      if (/finance|accounting|payroll|ap\\b|ar\\b|controller/i.test(value)) return 'finance';
+      if (/hr|human resources|recruit|talent/i.test(value)) return 'hr';
+      if (/marketing|brand|content|growth|communications|comms/i.test(value)) return 'marketing';
+      if (/ops|operations|logistics|warehouse|field|technician|installer/i.test(value)) return 'operations';
+      if (/manager|director|vp|c[eo][fo]|executive|leadership/i.test(value)) return 'executive';
+      if (/nurse|clinical|therapist|care|aide|medical/i.test(value)) return 'clinical';
+      return 'general';
+    };
+    const roleCategory = classifyRole();
+    const normalizedDept = normalizeKey(newHireDepartment || '');
+    const isUpmc = normalizedDept === 'upmc' || normalizedDept === 'hcbsupmc';
+    if (roleCategory === 'blocked' || isUpmc) {
+      return [];
+    }
+    const includeHeadset = roleCategory !== 'serviceCoordinator';
     const baseKit = [
-      { label: 'Primary laptop', type: 'Laptop', reason: 'Standard issue for all hires' },
       { label: 'Monitor', type: 'Monitor', reason: newHireRemote ? 'Extra monitor for remote setup' : 'Desk monitor' },
       { label: 'Dock + power', type: 'Accessory', reason: 'Connectivity and charging' },
-      { label: 'Headset', type: 'Accessory', reason: 'Meetings and calls' },
+      includeHeadset ? { label: 'Headset', type: 'Accessory', reason: 'Meetings and calls' } : null,
       { label: 'Keyboard + mouse', type: 'Accessory', reason: 'Ergonomic bundle' },
       { label: 'Backpack/Case', type: 'Accessory', reason: 'Carry kit' },
-      { label: 'Productivity suite', type: 'Software', reason: 'Email, calendar, docs' },
-    ];
+      { label: 'Apple iPhone or Samsung Galaxy', type: 'Phone', reason: 'Mobile choice based on preference' },
+      { label: 'Microsoft 365', type: 'Software', reason: 'Email, Teams, and Office apps' },
+      { label: 'Adobe Acrobat Pro', type: 'Software', reason: 'PDF editing and signatures' },
+    ].filter(Boolean);
+    const laptopForRole = () => {
+      switch (roleCategory) {
+        case 'serviceCoordinator':
+          return { label: 'Dell Latitude 3400 (Core i5)', type: 'Laptop', reason: 'Standard issue for coordinators' };
+        case 'it':
+        case 'finance':
+        case 'marketing':
+        case 'executive':
+          return { label: 'Dell Latitude 5400 (Core i7)', type: 'Laptop', reason: 'Premium device for critical roles' };
+        case 'engineering':
+          return { label: 'High-spec laptop (32GB/1TB)', type: 'Laptop', reason: 'Builds, VMs, and tooling' };
+        case 'design':
+          return { label: 'High-spec laptop (32GB/1TB)', type: 'Laptop', reason: 'Creative and rendering workloads' };
+        case 'sales':
+          return { label: 'Lightweight laptop', type: 'Laptop', reason: 'Travel-friendly for client visits' };
+        case 'operations':
+          return { label: 'Rugged laptop/tablet', type: 'Laptop', reason: 'Durable for field and warehouse use' };
+        case 'clinical':
+          return { label: 'Rugged tablet/laptop', type: 'Tablet', reason: 'Mobile charting and care coordination' };
+        default:
+          return { label: 'Standard laptop (i5)', type: 'Laptop', reason: 'Default issue for new hires' };
+      }
+    };
     const roleExtras = {
-      Engineer: [
-        { label: 'High-spec laptop (32GB/1TB)', type: 'Laptop', reason: 'Builds and VMs' },
+      serviceCoordinator: [
+        { label: 'Brother laser printer', type: 'Printer', reason: 'Desk-side printing for coordinators' },
+      ],
+      engineering: [
         { label: 'Second monitor', type: 'Monitor', reason: 'Multi-screen workflows' },
-        { label: 'Admin access request', type: 'Access', reason: 'Dev tools and repos' },
+        { label: 'Admin access request', type: 'Access', reason: 'Repos and packages' },
       ],
-      Designer: [
-        { label: 'Color-accurate monitor', type: 'Monitor', reason: 'Visual work' },
+      design: [
+        { label: 'Color-accurate monitor', type: 'Monitor', reason: 'Visual fidelity' },
         { label: 'iPad/Tablet (optional)', type: 'Tablet', reason: 'Reviews and sketching' },
-        { label: 'Figma/Adobe licenses', type: 'Software', reason: 'Creative suite' },
+        { label: 'Creative suite license', type: 'Software', reason: 'Adobe/Figma access' },
       ],
-      Support: [
-        { label: 'Rugged laptop', type: 'Laptop', reason: 'Field durability' },
-        { label: 'Spare battery/charger', type: 'Accessory', reason: 'On-call shifts' },
+      it: [
+        { label: 'Spare loaner', type: 'Laptop', reason: 'Hot-swap support' },
+        { label: 'Label/QR printer access', type: 'Accessory', reason: 'Asset tagging' },
+        { label: 'Remote support tools', type: 'Software', reason: 'Endpoint management' },
       ],
-      Sales: [
-        { label: 'Lightweight laptop', type: 'Laptop', reason: 'Travel-friendly' },
+      sales: [
         { label: 'Mobile hotspot', type: 'Accessory', reason: 'Reliable connectivity' },
         { label: 'CRM license', type: 'Software', reason: 'Pipeline management' },
+        { label: 'Phone line upgrade', type: 'Phone', reason: 'Client calls' },
       ],
-      Ops: [{ label: 'Label/QR printer access', type: 'Accessory', reason: 'Inventory processing' }],
-      Finance: [{ label: 'Secure token', type: 'Accessory', reason: 'Payment approvals' }],
-      HR: [{ label: 'HRIS license', type: 'Software', reason: 'On/Offboarding tasks' }],
-      IT: [{ label: 'Spare loaner', type: 'Laptop', reason: 'Hot-swap support' }],
+      finance: [
+        { label: 'Secure token', type: 'Accessory', reason: 'Approvals and MFA' },
+        { label: 'Finance suite access', type: 'Software', reason: 'ERP/GL systems' },
+      ],
+      hr: [
+        { label: 'HRIS access', type: 'Software', reason: 'On/Offboarding tasks' },
+        { label: 'Background check portal', type: 'Software', reason: 'Hiring workflows' },
+      ],
+      marketing: [
+        { label: 'Analytics/SEO tools', type: 'Software', reason: 'Campaign reporting' },
+        { label: 'Brand asset access', type: 'Access', reason: 'Shared content libraries' },
+      ],
+      operations: [
+        { label: 'Spare battery/charger', type: 'Accessory', reason: 'On-call shifts' },
+        { label: 'Label/QR printer access', type: 'Accessory', reason: 'Inventory processing' },
+      ],
+      executive: [
+        { label: 'Travel kit (charger + adapters)', type: 'Accessory', reason: 'Travel readiness' },
+        { label: 'VIP support flag', type: 'Access', reason: 'White-glove support' },
+      ],
+      clinical: [
+        { label: 'Phone/VOIP line', type: 'Phone', reason: 'Patient coordination' },
+        { label: 'EHR access', type: 'Software', reason: 'Medical records' },
+      ],
+      general: [],
     };
-    const extras = roleExtras[newHireRole] || [];
-    const kit = [...baseKit, ...extras];
+    const extras = roleExtras[roleCategory] || roleExtras.general;
+    const laptop = roleCategory === 'blocked' ? null : laptopForRole();
+    const zoomAccess =
+      laptop && laptop.type === 'Laptop'
+        ? { label: 'Zoom Workplace', type: 'Software', reason: 'Meetings and voice' }
+        : null;
+    const kit = [laptop, ...baseKit, zoomAccess, ...extras].filter(Boolean);
     return kit.map((item) => ({
       ...item,
       available: item.type && availableByType[item.type] !== undefined ? availableByType[item.type] : null,
     }));
-  }, [availableByType, newHireRemote, newHireRole]);
+  }, [availableByType, newHireDepartment, newHireRemote, newHireRole]);
   const terminationAssets = useMemo(() => {
     const normalized = normalizeKey(terminationEmployee || '');
     if (!normalized) {
@@ -7141,15 +7472,6 @@ const App = () => {
       .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
   }, [maintenanceRecords, selectedAsset]);
 
-  const recentMaintenance = useMemo(
-    () =>
-      maintenanceRecords
-        .slice()
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 4),
-    [maintenanceRecords],
-  );
-
   const recentHistory = useMemo(
     () =>
       history
@@ -7166,29 +7488,6 @@ const App = () => {
     },
     [assets],
   );
-
-  const coordinatorTimeline = useMemo(() => {
-    const events = [];
-    recentHistory.forEach((entry, index) => {
-      events.push({
-        id: `hist-${index}`,
-        title: `${entry.action} - ${getAssetName(entry.assetId) || 'Asset'}`,
-        detail: entry.user || 'Unassigned',
-        date: entry.date ? formatDate(entry.date) : '',
-        icon: <ArrowRightLeft className="h-4 w-4" />,
-      });
-    });
-    recentMaintenance.forEach((item, index) => {
-      events.push({
-        id: `maint-${index}`,
-        title: `${item.type} - ${getAssetName(item.assetId) || 'Device'}`,
-        detail: item.description || item.status,
-        date: item.date ? formatDate(item.date) : '',
-        icon: <Wrench className="h-4 w-4" />,
-      });
-    });
-    return events.slice(0, 10);
-  }, [getAssetName, recentHistory, recentMaintenance]);
 
   const typeOptions = useMemo(() => Array.from(new Set(assets.map((asset) => asset.type))), [assets]);
 
@@ -7282,7 +7581,7 @@ const App = () => {
     setActivePage('Hardware');
     setFilters((prev) => ({ ...prev, status: 'all' }));
     setMobileAuditMode(true);
-    if (!isBrowser) {
+    if (typeof window === 'undefined') {
       return;
     }
     const section = document.getElementById('asset-table');
@@ -7293,7 +7592,7 @@ const App = () => {
   const handleToggleMobileAudit = useCallback(() => {
     setMobileAuditMode((prev) => !prev);
     setActivePage('Hardware');
-    if (!isBrowser) {
+    if (typeof window === 'undefined') {
       return;
     }
     const section = document.getElementById('asset-table');
@@ -7316,7 +7615,7 @@ const App = () => {
   );
   const handleSpotlightFilter = (type) => {
     setFilters({ search: '', type: type || 'all', status: 'all' });
-    if (!isBrowser) {
+    if (typeof window === 'undefined') {
       return;
     }
     const section = document.getElementById('asset-table');
@@ -7333,7 +7632,7 @@ const App = () => {
 
   const handleOpenAutomate = useCallback(
     (asset) => {
-      if (!isBrowser) return;
+      if (typeof window === 'undefined') return;
       const targetUrl = getAutomateLink(asset);
       const warmUrl = AUTOMATE_BASE_URL;
 
@@ -7431,6 +7730,61 @@ const App = () => {
       setFlashMessage(`Issue logged for ${printer.deviceType} (${printer.model}). Include toner/counter in ticket.`);
     },
     [],
+  );
+
+  const handleAddRepairTicket = useCallback(() => {
+    setRepairTicketForm({
+      id: null,
+      assetId: '',
+      model: '',
+      assignedTo: '',
+      location: '',
+      issue: '',
+      status: 'Awaiting intake',
+      severity: 'Normal',
+      eta: '',
+    });
+  }, []);
+
+  const handleEditRepairTicket = useCallback((ticket) => {
+    if (!ticket) return;
+    setRepairTicketForm({
+      id: ticket.id || null,
+      assetId: ticket.assetId || '',
+      model: ticket.model || '',
+      assignedTo: ticket.assignedTo || '',
+      location: ticket.location || '',
+      issue: ticket.issue || '',
+      status: ticket.status || 'Awaiting intake',
+      severity: ticket.severity || 'Normal',
+      eta: ticket.eta || '',
+    });
+  }, []);
+
+  const handleSaveRepairTicket = useCallback(
+    (ticket) => {
+      if (!ticket) {
+        setRepairTicketForm(null);
+        return;
+      }
+      const normalized = {
+        ...ticket,
+        id: ticket.id || `manual-${Date.now()}`,
+        assetId: ticket.assetId || 'Laptop',
+        model: ticket.model || 'Laptop',
+        assignedTo: ticket.assignedTo || 'Unassigned',
+        location: ticket.location || 'Operations',
+        status: ticket.status || 'Awaiting intake',
+        severity: ticket.severity || 'Normal',
+        eta: ticket.eta || '',
+      };
+      setRepairTickets((prev) => {
+        const exists = prev.some((item) => item.id === normalized.id);
+        return exists ? prev.map((item) => (item.id === normalized.id ? normalized : item)) : [normalized, ...prev];
+      });
+      setRepairTicketForm(null);
+    },
+    [setRepairTickets],
   );
 
   const commandItems = useMemo(() => {
@@ -7567,6 +7921,9 @@ const App = () => {
       } catch (error) {
         console.error('SharePoint asset sync failed', error);
         setSharePointError(error?.message || 'SharePoint sync failed');
+        // Allow offline/local save so edits aren't blocked when SharePoint is unavailable.
+        upsertLocalAsset(enrichedPayload);
+        setAssetForm(null);
         return;
       }
     }
@@ -7591,7 +7948,7 @@ const App = () => {
     (page, sectionId) => {
       setActivePage(page);
       setMenuOpen(false);
-      if (!isBrowser || !sectionId) {
+      if (typeof window === 'undefined' || !sectionId) {
         return;
       }
       setTimeout(() => {
@@ -7601,7 +7958,7 @@ const App = () => {
         }
       }, 150);
     },
-    [isBrowser],
+    [],
   );
 
   const handleUseScanResult = () => {
@@ -7634,7 +7991,7 @@ const App = () => {
     } else {
       setScanMessage('No asset matched this code.');
     }
-    if (!isBrowser) {
+    if (typeof window === 'undefined') {
       return;
     }
     const section = document.getElementById('asset-table');
@@ -7650,6 +8007,16 @@ const App = () => {
   const handleAddEmployee = useCallback(() => {
     setEmployeeForm({ ...defaultEmployeeProfile });
     setActivePage('Employees');
+  }, []);
+  const handleOpenPhoto = useCallback((member) => {
+    if (!member?.avatar) {
+      return;
+    }
+    setPhotoLightbox({
+      src: member.avatar,
+      name: member.name || 'Employee photo',
+      title: member.title || '',
+    });
   }, []);
 
   const handleSortChange = useCallback((keyOrConfig) => {
@@ -7858,7 +8225,7 @@ const App = () => {
   };
 
   const handleOpenHelpDeskPortal = useCallback(() => {
-    if (!isBrowser) {
+    if (typeof window === 'undefined') {
       return;
     }
     const target = HELP_DESK_PORTAL_URL;
@@ -7876,7 +8243,7 @@ const App = () => {
         icon: Printer,
         actionLabel: 'Email Sara',
         onAction: () => {
-          if (!isBrowser) {
+          if (typeof window === 'undefined') {
             return;
           }
           window.location.href = 'mailto:Sara@weaverassociatesinc.com?subject=Brother%20Toner%20Request';
@@ -7888,7 +8255,7 @@ const App = () => {
         icon: ExternalLink,
         actionLabel: 'Open Colony form',
         onAction: () => {
-          if (!isBrowser) {
+          if (typeof window === 'undefined') {
             return;
           }
           window.open('https://www.colonyproducts.com/contact/order-supplies/', '_blank', 'noopener,noreferrer');
@@ -7900,7 +8267,7 @@ const App = () => {
         icon: Server,
         actionLabel: 'Open Dell Premier',
         onAction: () => {
-          if (!isBrowser) {
+          if (typeof window === 'undefined') {
             return;
           }
           window.open('https://www.dell.com/premier', '_blank', 'noopener,noreferrer');
@@ -7912,7 +8279,7 @@ const App = () => {
         icon: PhoneCall,
         actionLabel: 'Open Verizon support',
         onAction: () => {
-          if (!isBrowser) {
+          if (typeof window === 'undefined') {
             return;
           }
           window.open('https://www.verizon.com/business/support/', '_blank', 'noopener,noreferrer');
@@ -8430,6 +8797,21 @@ const App = () => {
             <option key={`employee-suggestion-${name}`} value={name} />
           ))}
         </datalist>
+        <datalist id={modelSuggestionListId}>
+          {modelOptions.map((model) => (
+            <option key={`model-suggestion-${model}`} value={model} />
+          ))}
+        </datalist>
+        <datalist id={departmentSuggestionListId}>
+          {departmentOptions.map((dept) => (
+            <option key={`department-suggestion-${dept}`} value={dept} />
+          ))}
+        </datalist>
+        <datalist id={locationSuggestionListId}>
+          {locationOptions.map((location) => (
+            <option key={`location-suggestion-${location}`} value={location} />
+          ))}
+        </datalist>
         {sharePointError && (
           <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             SharePoint sync failed: {sharePointError}
@@ -8732,16 +9114,17 @@ const App = () => {
               />
             </section>
 
-            <section className="grid gap-6 lg:grid-cols-2">
-              <MaintenanceList records={recentMaintenance} getAssetName={getAssetName} />
+            <section className="grid gap-6">
               <ActivityPanel history={recentHistory} lookupAsset={getAssetName} />
             </section>
-            <section className="mb-10">
-              <ActivityTimeline events={coordinatorTimeline} />
-            </section>
-
             <section className="mb-8">
-              <LaptopRepairCard data={laptopServiceSummary} onLoanerCheckout={handleLoanerCheckout} onLoanerCheckin={handleLoanerCheckin} />
+              <LaptopRepairCard
+                data={laptopServiceSummary}
+                onLoanerCheckout={handleLoanerCheckout}
+                onLoanerCheckin={handleLoanerCheckin}
+                onAddRepair={handleAddRepairTicket}
+                onEditRepair={handleEditRepairTicket}
+              />
             </section>
 
             <section id="qr-tools-overview" className="mb-8">
@@ -8882,6 +9265,7 @@ const App = () => {
                   getLicenses={getEmployeeLicenses}
                   onEdit={(member) => setEmployeeForm({ ...member })}
                   onDelete={handleDeleteEmployee}
+                  onPhoto={handleOpenPhoto}
                 />
                 <div className="rounded-2xl border border-slate-100 bg-white/70 px-4 py-3">
                   <PaginationControls align="center" page={employeePage} totalPages={totalEmployeePages} onPageChange={setEmployeePage} />
@@ -8894,32 +9278,68 @@ const App = () => {
               <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">New hire wizard</p>
                 <h3 className="mt-2 text-xl font-semibold text-slate-900">Recommend gear and licenses</h3>
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500">Role</p>
-                    <select
-                      value={newHireRole}
-                      onChange={(event) => setNewHireRole(event.target.value)}
-                      className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                    >
-                      {['Engineer', 'Designer', 'Support', 'Sales', 'Ops', 'Finance', 'HR', 'IT'].map((role) => (
-                        <option key={role}>{role}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500">Location</p>
-                    <input
-                      value={newHireLocation}
-                      onChange={(event) => setNewHireLocation(event.target.value)}
-                      className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                      placeholder="HQ, Remote, Field"
-                    />
-                  </div>
-                  <div className="flex items-end gap-2">
-                    <input
-                      id="new-hire-remote"
-                      type="checkbox"
+          <div className="mt-4 grid gap-3 sm:grid-cols-4">
+            <div>
+              <p className="text-xs font-semibold text-slate-500">Role</p>
+              <select
+                value={formatRoleLabel(newHireRole)}
+                onChange={(event) => {
+                  const value = formatRoleLabel(event.target.value);
+                  setNewHireRole(value);
+                }}
+                className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              >
+                {(() => {
+                  const raw = roleOptions;
+                  const seen = new Set();
+                  const normalizedList = [];
+                  raw.forEach((role) => {
+                    const label = formatRoleLabel(role);
+                    const key = normalizeKey(label);
+                    if (key === 'servicecoordinator' && label !== 'Service Coordinator') {
+                      return;
+                    }
+                    if (seen.has(key)) return;
+                    seen.add(key);
+                    normalizedList.push(label);
+                  });
+                  return normalizedList.map((role) => <option key={role}>{role}</option>);
+                })()}
+              </select>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-500">Department</p>
+              <select
+                value={newHireDepartment}
+                onChange={(event) => setNewHireDepartment(event.target.value)}
+                className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              >
+                {[...departmentOptions, newHireDepartment]
+                  .filter(Boolean)
+                  .filter((value, index, arr) => arr.indexOf(value) === index)
+                  .map((dept) => (
+                    <option key={dept}>{dept}</option>
+                  ))}
+              </select>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-500">Location</p>
+              <select
+                value={newHireLocation}
+                onChange={(event) => setNewHireLocation(event.target.value)}
+                className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              >
+                {[...locationOptions, newHireLocation].filter(Boolean).filter(
+                  (value, index, arr) => arr.indexOf(value) === index,
+                ).map((location) => (
+                  <option key={location}>{location}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end gap-2">
+              <input
+                id="new-hire-remote"
+                type="checkbox"
                       checked={newHireRemote}
                       onChange={(event) => setNewHireRemote(event.target.checked)}
                       className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
@@ -9384,10 +9804,21 @@ const App = () => {
           onCancel={() => setAssetForm(null)}
           sharePointMode={sharePointEnabled}
           suggestionListId={employeeSuggestionListId}
+          modelSuggestionListId={modelSuggestionListId}
+          departmentSuggestionListId={departmentSuggestionListId}
+          locationSuggestionListId={locationSuggestionListId}
         />
       )}
       {employeeForm && (
-        <EmployeeFormModal employee={employeeForm} onSubmit={handleSaveEmployee} onCancel={() => setEmployeeForm(null)} />
+        <EmployeeFormModal
+          employee={employeeForm}
+          onSubmit={handleSaveEmployee}
+          onCancel={() => setEmployeeForm(null)}
+          departmentSuggestionListId={departmentSuggestionListId}
+          locationSuggestionListId={locationSuggestionListId}
+          modelSuggestionListId={modelSuggestionListId}
+          employeeSuggestionListId={employeeSuggestionListId}
+        />
       )}
       {actionState && (
         <CheckActionModal
@@ -9406,6 +9837,42 @@ const App = () => {
           onClear={handleClearWarrantyAlert}
           onClearAll={handleClearAllWarrantyAlerts}
         />
+      )}
+      {repairTicketForm && (
+        <RepairTicketModal
+          ticket={repairTicketForm}
+          onSubmit={handleSaveRepairTicket}
+          onCancel={() => setRepairTicketForm(null)}
+        />
+      )}
+      {photoLightbox && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4"
+          onClick={() => setPhotoLightbox(null)}
+        >
+          <div
+            className="relative max-w-3xl rounded-3xl bg-white p-4 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setPhotoLightbox(null)}
+              className="absolute right-3 top-3 rounded-full p-2 text-slate-500 hover:bg-slate-100"
+              aria-label="Close photo"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <img
+              src={photoLightbox.src}
+              alt={photoLightbox.name}
+              className="max-h-[75vh] w-full rounded-2xl object-contain"
+            />
+            <div className="mt-3 text-center">
+              <p className="text-sm font-semibold text-slate-900">{photoLightbox.name}</p>
+              {photoLightbox.title && <p className="text-xs text-slate-500">{photoLightbox.title}</p>}
+            </div>
+          </div>
+        </div>
       )}
       {printerForm && <PrinterFormModal printer={printerForm} onSubmit={handleSavePrinter} onCancel={() => setPrinterForm(null)} />}
       <CommandPalette
