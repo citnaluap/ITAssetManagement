@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
+﻿import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
 import * as XLSX from 'xlsx';
@@ -227,6 +227,11 @@ const defaultEmployeeProfile = {
   startDate: '',
   avatar: '',
   lookupKey: '',
+  computer: '',
+  printer: '',
+  monitor: '',
+  dock: '',
+  keyFob: '',
 };
 
 const NAV_LINKS = ['Overview', 'Hardware', 'Employees', 'Reports', 'Software', 'Vendors'];
@@ -279,8 +284,27 @@ const SOFTWARE_LOGOS = {
   cisco: `${PUBLIC_URL}/assets/software/cisco-secure.png`,
   barracuda: `${PUBLIC_URL}/assets/software/barracuda.png`,
   dragon: `${PUBLIC_URL}/assets/software/dragon.webp`,
+  duo: `${PUBLIC_URL}/assets/software/duo-security.png`,
+  keeper: `${PUBLIC_URL}/assets/software/keeper.jpg`,
+  eset: `${PUBLIC_URL}/assets/software/eset.jpeg`,
   hrms: `${PUBLIC_URL}/assets/software/hrms.png`,
   sage: `${PUBLIC_URL}/assets/software/sage.webp`,
+};
+const SOFTWARE_ADMIN_PORTALS = {
+  m365: 'https://admin.microsoft.com/',
+  'adobe-cc': 'https://adminconsole.adobe.com/',
+  autocad: 'https://manage.autodesk.com/',
+  'cisco-secure': 'https://dashboard.umbrella.com/',
+  'duo-security': 'https://admin.duosecurity.com/',
+  barracuda: 'https://login.barracudanetworks.com/',
+  keeper: 'https://admin.keepersecurity.com/',
+  citrix: 'https://citrix.cloud.com/',
+  dragon: 'https://login.nuance.com/',
+  'eset-endpoint': 'https://protect.eset.com/',
+  'eset-encryption': 'https://protect.eset.com/',
+  hrms: 'https://access.paylocity.com/',
+  sage: 'https://signin.intacct.com/',
+  zoom: 'https://zoom.us/account',
 };
 const EXCEL_EXPORTS = {
   assets: `${PUBLIC_URL}/tables/${encodeURIComponent('Asset List 11-18-25.xlsx')}`,
@@ -573,7 +597,15 @@ const computeDepreciationForecast = (assets, horizonYears = 3) => {
   });
 };
 
-const normalizeKey = (value = '') => value.replace(/[^a-z0-9]/gi, '').toLowerCase();
+const normalizeKey = (value = '') => {
+  if (value === null || value === undefined) return '';
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeKey(item)).filter(Boolean).join('');
+  }
+  const text = typeof value === 'string' ? value : String(value);
+  return text.replace(/[^a-z0-9]/gi, '').toLowerCase();
+};
+const safeLocaleCompare = (a, b) => String(a || '').localeCompare(String(b || ''));
 
 const normalizeStatusLabel = (value = '') => {
   const normalized = value.trim().toLowerCase();
@@ -644,6 +676,28 @@ const normalizeAssetStatus = (asset) => {
   }
 
   return ensureKeyFobModel({ ...asset, assignedTo: owner, status, checkedOut });
+};
+
+const normalizeSheetDate = (value) => {
+  if (value === null || value === undefined) return '';
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    if (value <= 0) return '';
+    const excelEpochMs = Math.round((value - 25569) * 86400 * 1000);
+    const date = new Date(excelEpochMs);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toISOString().slice(0, 10);
+    }
+  }
+  const text = String(value || '').trim();
+  if (!text || text === '0') return '';
+  const parsed = new Date(text);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toISOString().slice(0, 10);
+  }
+  return '';
 };
 
 const EMPLOYEE_PHOTOS = {
@@ -767,6 +821,7 @@ const SOFTWARE_PORTFOLIO = [
     used: 452,
     costPerSeat: 32,
     renewal: '2025-12-31',
+    portal: 'https://admin.microsoft.com/',
     logo: SOFTWARE_LOGOS.m365,
     accent: { from: '#0ea5e9', to: '#2563eb' },
     description: 'Email, collaboration, Teams telephony, and Intune device management for the entire workforce.',
@@ -784,6 +839,7 @@ const SOFTWARE_PORTFOLIO = [
     used: 58,
     costPerSeat: 55,
     renewal: '2025-09-01',
+    portal: 'https://adminconsole.adobe.com/',
     logo: SOFTWARE_LOGOS.adobe,
     accent: { from: '#fb7185', to: '#a21caf' },
     description: 'Full Photoshop, Illustrator, and Premiere access for marketing deliverables.',
@@ -801,6 +857,7 @@ const SOFTWARE_PORTFOLIO = [
     used: 11,
     costPerSeat: 210,
     renewal: '2025-04-15',
+    portal: 'https://manage.autodesk.com/',
     logo: SOFTWARE_LOGOS.autocad,
     accent: { from: '#ef4444', to: '#991b1b' },
     description: 'Drafting, survey, and permit packages for capital projects.',
@@ -818,11 +875,30 @@ const SOFTWARE_PORTFOLIO = [
     used: 205,
     costPerSeat: 18,
     renewal: '2025-07-01',
+    portal: 'https://dashboard.umbrella.com/',
     logo: SOFTWARE_LOGOS.cisco,
     accent: { from: '#0f766e', to: '#0ea5e9' },
     description: 'Unified VPN, Secure Client, and Umbrella protection for remote staff.',
     stack: ['AnyConnect', 'Secure Client', 'Umbrella DNS', 'Secure Endpoint'],
     deployment: 'Hybrid',
+    criticality: 'High',
+  },
+  {
+    id: 'duo-security',
+    software: 'Duo Security MFA',
+    vendor: 'Cisco',
+    owner: 'Security Operations',
+    category: 'Identity & MFA',
+    seats: 480,
+    used: 458,
+    costPerSeat: 4,
+    renewal: '2025-10-01',
+    portal: 'https://admin.duosecurity.com/',
+    logo: SOFTWARE_LOGOS.duo,
+    accent: { from: '#115e59', to: '#22c55e' },
+    description: 'MFA enforcement, device trust, and SSO guardrails for privileged and staff access.',
+    stack: ['Push MFA', 'SSO', 'Device Trust'],
+    deployment: 'Cloud',
     criticality: 'High',
   },
   {
@@ -835,10 +911,29 @@ const SOFTWARE_PORTFOLIO = [
     used: 465,
     costPerSeat: 6,
     renewal: '2025-05-30',
+    portal: 'https://login.barracudanetworks.com/',
     logo: SOFTWARE_LOGOS.barracuda,
     accent: { from: '#0284c7', to: '#0c4a6e' },
     description: 'Inbound filtering, archiving, and continuity for Microsoft 365 mailboxes.',
     stack: ['Impersonation Protect', 'Backup', 'Sentinel'],
+    deployment: 'Cloud',
+    criticality: 'High',
+  },
+  {
+    id: 'keeper',
+    software: 'Keeper Password Manager',
+    vendor: 'Keeper Security',
+    owner: 'Security Operations',
+    category: 'Password Management',
+    seats: 320,
+    used: 265,
+    costPerSeat: 6,
+    renewal: '2025-08-15',
+    portal: 'https://admin.keepersecurity.com/',
+    logo: SOFTWARE_LOGOS.keeper,
+    accent: { from: '#f59e0b', to: '#b45309' },
+    description: 'Enterprise vaults, shared folders, and breach monitoring for staff credentials.',
+    stack: ['Vaults', 'Shared Folders', 'BreachWatch'],
     deployment: 'Cloud',
     criticality: 'High',
   },
@@ -852,6 +947,7 @@ const SOFTWARE_PORTFOLIO = [
     used: 82,
     costPerSeat: 40,
     renewal: '2025-03-20',
+    portal: 'https://citrix.cloud.com/',
     logo: SOFTWARE_LOGOS.citrix,
     accent: { from: '#312e81', to: '#7c3aed' },
     description: 'Secure delivery of EMR, scheduling, and legacy apps to remote clinicians.',
@@ -869,12 +965,49 @@ const SOFTWARE_PORTFOLIO = [
     used: 35,
     costPerSeat: 25,
     renewal: '2025-08-10',
+    portal: 'https://login.nuance.com/',
     logo: SOFTWARE_LOGOS.dragon,
     accent: { from: '#e11d48', to: '#fb923c' },
     description: 'Secure speech-to-text documentation for service coordinators.',
     stack: ['Dragon Professional', 'PowerMic'],
     deployment: 'Desktop',
     criticality: 'Medium',
+  },
+  {
+    id: 'eset-endpoint',
+    software: 'ESET Endpoint Antivirus',
+    vendor: 'ESET',
+    owner: 'Infrastructure',
+    category: 'Endpoint Protection',
+    seats: 520,
+    used: 503,
+    costPerSeat: 7,
+    renewal: '2025-11-30',
+    portal: 'https://protect.eset.com/',
+    logo: SOFTWARE_LOGOS.eset,
+    accent: { from: '#0ea5e9', to: '#0369a1' },
+    description: 'Malware defense, device control, and remote remediation for the Windows fleet.',
+    stack: ['Endpoint AV', 'Device Control', 'ESET PROTECT'],
+    deployment: 'Hybrid',
+    criticality: 'High',
+  },
+  {
+    id: 'eset-encryption',
+    software: 'ESET Full Disk Encryption',
+    vendor: 'ESET',
+    owner: 'Infrastructure',
+    category: 'Endpoint Protection',
+    seats: 420,
+    used: 318,
+    costPerSeat: 8,
+    renewal: '2025-11-30',
+    portal: 'https://protect.eset.com/',
+    logo: SOFTWARE_LOGOS.eset,
+    accent: { from: '#0f172a', to: '#22d3ee' },
+    description: 'BitLocker policy enforcement and recovery key escrow for laptops and desktops.',
+    stack: ['FDE', 'BitLocker Policies', 'Recovery Keys'],
+    deployment: 'Hybrid',
+    criticality: 'High',
   },
   {
     id: 'hrms',
@@ -886,6 +1019,7 @@ const SOFTWARE_PORTFOLIO = [
     used: 154,
     costPerSeat: 28,
     renewal: '2025-06-01',
+    portal: 'https://access.paylocity.com/',
     logo: SOFTWARE_LOGOS.hrms,
     accent: { from: '#9333ea', to: '#2563eb' },
     description: 'Payroll, benefits enrollment, and onboarding workflows.',
@@ -903,6 +1037,7 @@ const SOFTWARE_PORTFOLIO = [
     used: 23,
     costPerSeat: 110,
     renewal: '2025-02-28',
+    portal: 'https://signin.intacct.com/',
     logo: SOFTWARE_LOGOS.sage,
     accent: { from: '#16a34a', to: '#15803d' },
     description: 'Accounting, grants, and fixed-asset workflows.',
@@ -921,6 +1056,7 @@ const SOFTWARE_PORTFOLIO = [
     annualCost: 48534,
     costPerSeat: 162,
     renewal: '2026-07-21',
+    portal: 'https://zoom.us/account',
     logo: SOFTWARE_LOGOS.zoom,
     accent: { from: '#2563eb', to: '#60a5fa' },
     description: 'Video conferencing, webinars, and digital signage feeds.',
@@ -1005,7 +1141,9 @@ const mapNormalizedAssetRow = (row = {}, index = 0, employeeDirectory = {}) => {
   const estimatedCost = estimateCost(type, row.model, inferredBrand);
   const parsedCost = Number(row.cost);
   const cost = Number.isFinite(parsedCost) && parsedCost > 0 ? parsedCost : estimatedCost;
-  const purchaseDate = row.purchaseDate || row.checkOutDate || '';
+  const purchaseDate = normalizeSheetDate(row.purchaseDate || row.checkOutDate || '');
+  const warrantyExpiry = normalizeSheetDate(row.warrantyExpiry || row.warrantyEndDate || '');
+  const retiredDate = normalizeSheetDate(row.retiredDate || '');
 
   const baseAsset = {
     id: Number(row.id) || index + 1,
@@ -1021,8 +1159,8 @@ const mapNormalizedAssetRow = (row = {}, index = 0, employeeDirectory = {}) => {
     location: normalizeLocationLabel(row.location || person?.location || 'Remote'),
     status: row.status || (hasAssignee ? 'Checked Out' : 'Available'),
     purchaseDate,
-    warrantyExpiry: row.warrantyExpiry || '',
-    retiredDate: row.retiredDate || '',
+    warrantyExpiry,
+    retiredDate,
     cost,
     checkedOut: row.checkedOut ?? hasAssignee,
     checkOutDate: row.checkOutDate || (hasAssignee ? purchaseDate || '' : ''),
@@ -1050,9 +1188,9 @@ const buildAssetsFromSheet = (assetRows = assetSheetData, employeeRows = employe
       const hasAssignee = Boolean(assignedName && assignedName !== 'Unassigned');
       const person = employeeDirectory[assignedName] || null;
       const type = row['Device Type'] || 'Hardware';
-      const purchaseDate = row['Purchase Date'] || '';
-      const warrantyExpiry = row['Warranty End Date'] || '';
-      const retiredDate = row['Retired Date'] || '';
+      const purchaseDate = normalizeSheetDate(row['Purchase Date'] || '');
+      const warrantyExpiry = normalizeSheetDate(row['Warranty End Date'] || '');
+      const retiredDate = normalizeSheetDate(row['Retired Date'] || '');
       const assetIdentifier = row['Device Name'] || row['Serial Num'] || row['Product Num'] || `Asset-${index + 1}`;
       const inferredBrand = row.Model ? row.Model.split(' ')[0] : type;
       const baseAsset = {
@@ -1128,6 +1266,7 @@ const buildLicensePools = () =>
       deployment: suite.deployment,
       stack: suite.stack,
       criticality: suite.criticality,
+      portal: suite.portal || SOFTWARE_ADMIN_PORTALS[suite.id] || '',
       logo: suite.logo,
       accent: suite.accent,
     };
@@ -1155,12 +1294,17 @@ const buildTeamSpotlight = (rows = employeeSheetData, limit = 8) =>
         email: row['E-mail Address'] || '',
         supervisor: row['Supervisor'] || row['Manager'] || '',
         supervisorEmail: row['Supervisor Email'] || '',
-      phone: row['Mobile Phone'] || '',
-      startDate: row['Start Date'] || '',
-      avatar: EMPLOYEE_PHOTOS[avatarKey],
-      lookupKey: avatarKey,
-    };
-  });
+        phone: row['Mobile Phone'] || '',
+        startDate: row['Start Date'] || '',
+        avatar: EMPLOYEE_PHOTOS[avatarKey],
+        lookupKey: avatarKey,
+        computer: row['Computer'] || '',
+        printer: row['Printer'] || '',
+        monitor: row['Monitor'] || '',
+        dock: row['Dock'] || '',
+        keyFob: row['Key Fob'] || '',
+      };
+    });
 
 const BASE_ASSETS = buildAssetsFromSheet();
 const BASE_HISTORY = [];
@@ -1669,7 +1813,8 @@ const computeLaptopServiceSummary = (assets = [], workOrders = [], manualRepairs
     location: asset.location || 'Operations',
     asset,
   });
-  const sortLoaners = (collection) => collection.map(mapLoaner).sort((a, b) => a.assetId.localeCompare(b.assetId));
+const sortLoaners = (collection) =>
+  collection.map(mapLoaner).sort((a, b) => safeLocaleCompare(a.assetId, b.assetId));
   const avgRepairAgeMonths = mergedRepairs.length
     ? Math.round(mergedRepairs.reduce((sum, item) => sum + (item.ageMonths || 0), 0) / mergedRepairs.length)
     : 0;
@@ -2195,8 +2340,7 @@ const VendorCard = ({ vendor }) => {
 
 const NetworkPrinterBoard = ({
   printers = [],
-  limit,
-  title = 'Network printers & copiers',
+  title = 'Network Printers and Copiers',
   subtitle,
   enableSearch = false,
   onAdd,
@@ -2206,11 +2350,11 @@ const NetworkPrinterBoard = ({
   onReport,
 }) => {
   const [search, setSearch] = useState('');
+  const PAGE_SIZE = 10;
   const rows = useMemo(() => {
-    const base = typeof limit === 'number' ? printers.slice(0, limit) : printers;
-    if (!enableSearch || !search.trim()) return base;
+    if (!enableSearch || !search.trim()) return printers;
     const query = search.trim().toLowerCase();
-    return base.filter((printer) => {
+    return printers.filter((printer) => {
       const haystack = [
         printer.deviceType,
         printer.location,
@@ -2225,9 +2369,9 @@ const NetworkPrinterBoard = ({
         .toLowerCase();
       return haystack.includes(query);
     });
-  }, [enableSearch, limit, printers, search]);
-  const remaining = printers.length - (typeof limit === 'number' ? rows.length : rows.length);
+  }, [enableSearch, printers, search]);
   const [sortConfig, setSortConfig] = useState({ key: 'location', direction: 'asc' });
+  const [page, setPage] = useState(1);
 
   const sortedRows = useMemo(() => {
     const getValue = (printer, key) => {
@@ -2260,6 +2404,14 @@ const NetworkPrinterBoard = ({
     });
     return next;
   }, [rows, sortConfig.direction, sortConfig.key]);
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE)), [sortedRows.length]);
+  useEffect(() => {
+    setPage(1);
+  }, [search, printers, sortConfig.key, sortConfig.direction]);
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return sortedRows.slice(start, start + PAGE_SIZE);
+  }, [page, sortedRows]);
 
   const toggleSort = (key) => {
     setSortConfig((prev) => {
@@ -2351,7 +2503,7 @@ const NetworkPrinterBoard = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-slate-700">
-            {sortedRows.map((printer, index) => (
+            {pagedRows.map((printer, index) => (
               <tr key={printer.id || `${printer.deviceType}-${printer.location}-${index}`} className="align-top hover:bg-slate-50/60">
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-2">
@@ -2420,11 +2572,7 @@ const NetworkPrinterBoard = ({
           </tbody>
         </table>
       </div>
-      {remaining > 0 && (
-        <p className="px-5 py-4 text-xs text-slate-500">
-          +{remaining} additional printers managed outside this view.
-        </p>
-      )}
+      <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   );
 };
@@ -2490,89 +2638,98 @@ const SoftwareSuiteCard = ({ suite, onEdit, onDelete }) => {
     SOFTWARE_LOGOS[vendorKey] ||
     SOFTWARE_LOGOS[softwareKey] ||
     null;
-  const topStyle = suiteLogo
-    ? {
-        backgroundImage: `linear-gradient(135deg, rgba(15,23,42,0.75), rgba(29,78,216,0.75)), url(${suiteLogo})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }
-    : {
-        backgroundImage: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`,
-      };
 
   return (
-    <div className="flex h-full flex-col justify-between rounded-3xl border border-slate-100 bg-white p-6 shadow-sm ring-1 ring-transparent transition hover:-translate-y-0.5 hover:shadow-xl hover:ring-blue-100">
-      <div>
-        <div className="relative mb-5 overflow-hidden rounded-2xl border border-white/20 p-5 text-white shadow-inner" style={topStyle}>
-          {onEdit && (
-            <div className="absolute right-3 top-3 flex gap-2">
-              <button
-                type="button"
-                onClick={() => onEdit(suite)}
-                className="rounded-full bg-white/20 p-2 text-white hover:bg-white/40"
-                title="Edit suite"
-              >
-                <Edit2 className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => onDelete?.(suite.id)}
-                className="rounded-full bg-white/20 p-2 text-white hover:bg-white/40"
-                title="Delete suite"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          )}
-          <span className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/40 blur-3xl" />
-          <span className="pointer-events-none absolute -left-10 bottom-0 h-28 w-28 rounded-full bg-white/30 blur-2xl" />
-          <div className="relative z-10 flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-white/70">{suite.category}</p>
-              <p className="mt-2 text-xl font-semibold leading-tight">{suite.software}</p>
-              <p className="mt-1 text-xs text-white/80">{suite.owner}</p>
-            </div>
+    <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm ring-1 ring-transparent transition hover:-translate-y-0.5 hover:shadow-xl hover:ring-blue-100">
+      <div className="relative h-52 w-full overflow-hidden">
+        {suiteLogo ? (
+          <>
+            <img
+              src={suiteLogo}
+              alt={`${suite.software} brand`}
+              className="absolute inset-0 h-full w-full object-cover"
+              loading="lazy"
+            />
+            <div
+              className="absolute inset-0"
+              style={{ backgroundImage: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`, opacity: 0.78 }}
+            />
+          </>
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ backgroundImage: `linear-gradient(135deg, ${accentFrom}, ${accentTo})` }}
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/45 via-slate-900/30 to-slate-950/70" />
+        {onEdit && (
+          <div className="absolute right-4 top-4 z-20 flex gap-2">
+            <button
+              type="button"
+              onClick={() => onEdit(suite)}
+              className="rounded-full bg-white/25 p-2 text-white shadow hover:bg-white/40"
+              title="Edit suite"
+            >
+              <Edit2 className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete?.(suite.id)}
+              className="rounded-full bg-white/25 p-2 text-white shadow hover:bg-white/40"
+              title="Delete suite"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
           </div>
-        </div>
-
-        <div className="flex items-center justify-between text-sm">
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${badgeStyle}`}>{status}</span>
-          <p className="text-xs uppercase tracking-[0.35rem] text-slate-400">{suite.deployment}</p>
-        </div>
-
-        <p className="mt-4 text-sm text-slate-500">{suite.description}</p>
-
-        <div className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-slate-400">Seats in use</p>
-            <p className="mt-1 text-2xl font-semibold text-slate-900">
-              {suite.used} / {suite.seats}
-            </p>
-            <p className="text-xs text-slate-500">{spareLabel}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-widest text-slate-400">Renewal</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">{suite.expiryDate || 'Rolling'}</p>
-            <p className="text-xs text-slate-500">{suite.vendor}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-widest text-slate-400">Annual cost</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">{formatCurrency(suite.cost || 0)}</p>
-            <p className="text-xs text-slate-500">{perSeat ? `${formatCurrency(perSeat)}/seat` : 'Cost pending'}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-widest text-slate-400">Criticality</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">{suite.criticality}</p>
-            <p className="text-xs text-slate-500">{suite.owner}</p>
-          </div>
+        )}
+        <div className="absolute bottom-5 left-5 right-5 z-10">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/70">{suite.category}</p>
+          <p className="mt-1 text-2xl font-semibold leading-tight text-white drop-shadow">{suite.software}</p>
+          <p className="mt-1 text-xs text-white/80">{suite.owner}</p>
         </div>
       </div>
 
-      {suite.stack?.length > 0 && (
-        <div className="mt-5 border-t border-slate-100 pt-4 text-xs text-slate-500">
-          <span className="font-semibold text-slate-600">Stack:</span> {suite.stack.join(', ')}
+      <div className="flex flex-1 flex-col justify-between p-6">
+        <div>
+          <div className="flex items-center justify-between text-sm">
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${badgeStyle}`}>{status}</span>
+            <p className="text-xs uppercase tracking-[0.35rem] text-slate-400">{suite.deployment}</p>
+          </div>
+
+          <p className="mt-4 text-sm text-slate-500">{suite.description}</p>
+
+          <div className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-slate-400">Seats in use</p>
+              <p className="mt-1 text-2xl font-semibold text-slate-900">
+                {suite.used} / {suite.seats}
+              </p>
+              <p className="text-xs text-slate-500">{spareLabel}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-widest text-slate-400">Renewal</p>
+              <p className="mt-1 text-lg font-semibold text-slate-900">{suite.expiryDate || 'Rolling'}</p>
+              <p className="text-xs text-slate-500">{suite.vendor}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-widest text-slate-400">Annual cost</p>
+              <p className="mt-1 text-lg font-semibold text-slate-900">{formatCurrency(suite.cost || 0)}</p>
+              <p className="text-xs text-slate-500">{perSeat ? `${formatCurrency(perSeat)}/seat` : 'Cost pending'}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-widest text-slate-400">Criticality</p>
+              <p className="mt-1 text-lg font-semibold text-slate-900">{suite.criticality}</p>
+              <p className="text-xs text-slate-500">{suite.owner}</p>
+            </div>
+          </div>
         </div>
-      )}
+
+        {suite.stack?.length > 0 && (
+          <div className="mt-5 border-t border-slate-100 pt-4 text-xs text-slate-500">
+            <span className="font-semibold text-slate-600">Stack:</span> {suite.stack.join(', ')}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -2648,7 +2805,7 @@ const WhatsNewCard = () => (
   </div>
 );
 
-const SoftwareFormModal = ({ suite, onSubmit, onCancel }) => {
+const SoftwareFormModal = ({ suite, onSubmit, onCancel, suggestionListId }) => {
   const toFormState = (input) => ({
     ...defaultSoftwareSuite,
     ...input,
@@ -2699,6 +2856,7 @@ const SoftwareFormModal = ({ suite, onSubmit, onCancel }) => {
             <input
               value={form.owner}
               onChange={(event) => update('owner', event.target.value)}
+              list={suggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -2932,15 +3090,29 @@ const AnalyticsInsightsPanel = ({ costData = [], depreciation = [] }) => (
     <div className="grid gap-6 p-6 lg:grid-cols-2">
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%" minWidth={200}>
-          <BarChart data={costData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+          <BarChart data={costData} margin={{ top: 8, right: 8, left: -16, bottom: 24 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="name" hide />
+            <XAxis
+              dataKey="name"
+              interval={0}
+              tick={{ fontSize: 10 }}
+              tickMargin={10}
+              height={48}
+            />
             <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
             <Tooltip formatter={(value) => formatCurrency(value)} />
             <Bar dataKey="value" fill="#2563eb" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
         <p className="mt-3 text-xs uppercase tracking-widest text-slate-400">Spend by department</p>
+        <div className="mt-2 grid gap-2 text-xs text-slate-600 sm:grid-cols-2 lg:hidden">
+          {costData.map((dept) => (
+            <div key={dept.name} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+              <span className="font-semibold">{dept.name}</span>
+              <span className="text-slate-500">{formatCurrency(dept.value)}</span>
+            </div>
+          ))}
+        </div>
       </div>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%" minWidth={200}>
@@ -5083,6 +5255,7 @@ const EmployeeFormModal = ({
   locationSuggestionListId,
   modelSuggestionListId,
   employeeSuggestionListId,
+  jobTitleSuggestionListId,
 }) => {
   const [form, setForm] = useState(employee || defaultEmployeeProfile);
   const [photoPreview, setPhotoPreview] = useState(employee?.avatar || '');
@@ -5212,6 +5385,7 @@ const EmployeeFormModal = ({
               value={form.title}
               onChange={(event) => update('title', event.target.value)}
               placeholder="Service Coordinator"
+              list={jobTitleSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -5266,7 +5440,6 @@ const EmployeeFormModal = ({
             <input
               value={form.computer}
               onChange={(event) => update('computer', event.target.value)}
-              list={modelSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -5275,7 +5448,6 @@ const EmployeeFormModal = ({
             <input
               value={form.printer}
               onChange={(event) => update('printer', event.target.value)}
-              list={modelSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -5284,7 +5456,6 @@ const EmployeeFormModal = ({
             <input
               value={form.monitor}
               onChange={(event) => update('monitor', event.target.value)}
-              list={modelSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -5293,7 +5464,6 @@ const EmployeeFormModal = ({
             <input
               value={form.dock}
               onChange={(event) => update('dock', event.target.value)}
-              list={modelSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -5458,7 +5628,18 @@ const App = () => {
   const [softwareForm, setSoftwareForm] = useState(null);
   const [warrantyModalOpen, setWarrantyModalOpen] = useState(false);
   const [laptopRefreshDate, setLaptopRefreshDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [authUser, setAuthUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState('');
   const sentWarrantyAlertRef = useRef(new Set());
+  const apiBaseUrl = (process.env.REACT_APP_API_BASE_URL || '').replace(/\/$/, '');
+  const buildApiUrl = useCallback(
+    (path) => {
+      if (!apiBaseUrl) return path;
+      return `${apiBaseUrl}${path}`;
+    },
+    [apiBaseUrl],
+  );
   useEffect(() => {
     setAssets((prev) => {
       const canonicalMap = buildCanonicalMap(prev);
@@ -5833,6 +6014,7 @@ const App = () => {
   const modelSuggestionListId = 'asset-model-suggestions';
   const departmentSuggestionListId = 'asset-department-suggestions';
   const locationSuggestionListId = 'asset-location-suggestions';
+  const jobTitleSuggestionListId = 'job-title-suggestions';
   useEffect(() => {
     let cancelled = false;
     const loadAssetsFromWorkbook = async () => {
@@ -5874,12 +6056,163 @@ const App = () => {
       cancelled = true;
     };
   }, [setAssets, setAssetPage]);
+  useEffect(() => {
+    let cancelled = false;
+    const syncDatesFromWorkbook = async () => {
+      const assetSources = [EXCEL_EXPORTS.assets, '/Tables/Asset List 11-18-25.xlsx', '/Tables/Asset%20List%2011-18-25.xlsx'];
+      let dateLookup = null;
+      for (const url of assetSources) {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            continue;
+          }
+          const buffer = await response.arrayBuffer();
+          const workbook = XLSX.read(buffer, { type: 'array' });
+          const sheetName = workbook.SheetNames?.[0];
+          const sheet = sheetName ? workbook.Sheets[sheetName] : null;
+          if (!sheet) {
+            continue;
+          }
+          const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+          const lookup = rows.reduce((acc, row) => {
+            const purchaseDate = normalizeSheetDate(row['Purchase Date'] || row['PurchaseDate'] || '');
+            const warrantyExpiry = normalizeSheetDate(row['Warranty End Date'] || row['WarrantyEndDate'] || '');
+            const retiredDate = normalizeSheetDate(row['Retired Date'] || row['RetiredDate'] || '');
+            if (!purchaseDate && !warrantyExpiry && !retiredDate) {
+              return acc;
+            }
+            const serialKey = normalizeKey(row['Serial Num'] || row['Serial Number'] || '');
+            const sheetKey = normalizeKey(row['Device Name'] || row['Product Num'] || row['Asset Name'] || '');
+            const idKey = normalizeKey(row['Asset ID'] || row['ID'] || '');
+            [serialKey, sheetKey, idKey].filter(Boolean).forEach((key) => {
+              if (!acc[key]) {
+                acc[key] = {};
+              }
+              if (purchaseDate && !acc[key].purchaseDate) acc[key].purchaseDate = purchaseDate;
+              if (warrantyExpiry && !acc[key].warrantyExpiry) acc[key].warrantyExpiry = warrantyExpiry;
+              if (retiredDate && !acc[key].retiredDate) acc[key].retiredDate = retiredDate;
+            });
+            return acc;
+          }, {});
+          dateLookup = lookup;
+          break;
+        } catch (error) {
+          console.warn('Purchase date workbook fetch failed for', url, error);
+        }
+      }
+      if (!dateLookup || cancelled) {
+        return;
+      }
+      setAssets((prev) => {
+        let changed = false;
+        const updated = prev.map((asset) => {
+          const keys = [
+            normalizeKey(asset.serialNumber || ''),
+            normalizeKey(asset.sheetId || ''),
+            normalizeKey(asset.deviceName || ''),
+            normalizeKey(asset.assetName || ''),
+            normalizeKey(asset.id || ''),
+          ].filter(Boolean);
+          const match = keys.map((key) => dateLookup[key]).find(Boolean);
+          if (match) {
+            const nextPurchase = match.purchaseDate && match.purchaseDate !== asset.purchaseDate;
+            const nextWarranty = match.warrantyExpiry && match.warrantyExpiry !== asset.warrantyExpiry;
+            const nextRetired = match.retiredDate && match.retiredDate !== asset.retiredDate;
+            if (nextPurchase || nextWarranty || nextRetired) {
+              changed = true;
+              return {
+                ...asset,
+                purchaseDate: nextPurchase ? match.purchaseDate : asset.purchaseDate,
+                warrantyExpiry: nextWarranty ? match.warrantyExpiry : asset.warrantyExpiry,
+                retiredDate: nextRetired ? match.retiredDate : asset.retiredDate,
+              };
+            }
+          }
+          return asset;
+        });
+        return changed ? updated : prev;
+      });
+    };
+    syncDatesFromWorkbook();
+    return () => {
+      cancelled = true;
+    };
+  }, [setAssets]);
+  useEffect(() => {
+    let cancelled = false;
+    const loadEmployeesFromWorkbook = async () => {
+      const employeeSources = [
+        EXCEL_EXPORTS.employees,
+        '/Tables/Employee Information Hub.xlsx',
+        '/Tables/Employee%20Information%20Hub.xlsx',
+      ];
+      for (const url of employeeSources) {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            continue;
+          }
+          const buffer = await response.arrayBuffer();
+          const workbook = XLSX.read(buffer, { type: 'array' });
+          const sheetNames = workbook.SheetNames || [];
+          const preferredSheetName =
+            sheetNames.find((name) => /contact/i.test(name)) ||
+            sheetNames.find((name) => /employee/i.test(name)) ||
+            sheetNames[0];
+          const candidateSheets = preferredSheetName ? [preferredSheetName, ...sheetNames] : sheetNames;
+          let spotlight = [];
+          for (const name of candidateSheets) {
+            const sheet = workbook.Sheets[name];
+            if (!sheet) continue;
+            const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+            const nextSpotlight = buildTeamSpotlight(rows, Number.MAX_SAFE_INTEGER);
+            if (nextSpotlight.length > 0) {
+              spotlight = nextSpotlight;
+              break;
+            }
+          }
+          if (!spotlight.length) {
+            continue;
+          }
+          const seen = new Set();
+          const normalizedRoster = spotlight.filter((member) => {
+            const key = normalizeKey(member.id || member.lookupKey || member.name);
+            if (!key || seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+          if (!cancelled) {
+            setEmployeeGallery((prev) => {
+              const merged = [...normalizedRoster];
+              prev.forEach((member) => {
+                const key = normalizeKey(member.id || member.lookupKey || member.name);
+                if (!key || seen.has(key)) {
+                  return;
+                }
+                seen.add(key);
+                merged.push(member);
+              });
+              return merged;
+            });
+          }
+          break;
+        } catch (error) {
+          console.warn('Employee workbook fetch failed for', url, error);
+        }
+      }
+    };
+    loadEmployeesFromWorkbook();
+    return () => {
+      cancelled = true;
+    };
+  }, [setEmployeeGallery]);
   const containerStyle = useMemo(
     () => (isMobile ? { width: '100%', maxWidth: '100%', margin: '0 auto' } : undefined),
     [isMobile],
   );
   const [newHireRole, setNewHireRole] = useState('');
-  const [newHireLocation, setNewHireLocation] = useState('HQ');
+  const [newHireLocation, setNewHireLocation] = useState('');
   const [newHireDepartment, setNewHireDepartment] = useState('UDS');
   const [newHireRemote, setNewHireRemote] = useState(true);
   const [terminationEmployee, setTerminationEmployee] = useState('');
@@ -5911,7 +6244,7 @@ const App = () => {
   const employeeNames = useMemo(
     () =>
       Array.from(new Set(employeeGallery.map((member) => member.name).filter(Boolean))).sort((a, b) =>
-        a.localeCompare(b),
+        safeLocaleCompare(a, b),
       ),
     [employeeGallery],
   );
@@ -5935,7 +6268,7 @@ const App = () => {
       seen.add(key);
       filtered.push(candidate);
     });
-    const uniqueTitles = filtered.sort((a, b) => a.localeCompare(b));
+    const uniqueTitles = filtered.sort((a, b) => safeLocaleCompare(a, b));
     return uniqueTitles;
   }, [employeeGallery]);
   useEffect(() => {
@@ -5956,34 +6289,56 @@ const App = () => {
   const modelOptions = useMemo(() => {
     const isKeyFob = (value = '') => /key\s*fob/i.test(value);
     const isUnbrandedLatitude = (value = '') => /latitude/i.test(value) && !/^dell\s+latitude/i.test(value.trim());
+    const employeeModels = employeeGallery.flatMap((member) =>
+      [member.computer, member.printer, member.monitor, member.dock, member.keyFob].filter(Boolean),
+    );
     return Array.from(
       new Set(
-        assets
-          .map((asset) => asset.model)
+        [...assets.map((asset) => asset.model), ...employeeModels]
           .filter(Boolean)
           .filter((model) => !isKeyFob(model) && !isUnbrandedLatitude(model)),
       ),
-    ).sort((a, b) => a.localeCompare(b));
-  }, [assets]);
+    ).sort((a, b) => safeLocaleCompare(a, b));
+  }, [assets, employeeGallery]);
   const departmentOptions = useMemo(
     () =>
-      Array.from(
-        new Set(employeeGallery.map((member) => member.department).filter(Boolean)),
-      ).sort((a, b) => a.localeCompare(b)),
+      Array.from(new Set(employeeGallery.map((member) => member.department).filter(Boolean))).sort((a, b) =>
+        safeLocaleCompare(a, b),
+      ),
     [employeeGallery],
   );
   const locationOptions = useMemo(
     () =>
-      Array.from(
-        new Set(employeeGallery.map((member) => member.location).filter(Boolean)),
-      ).sort((a, b) => a.localeCompare(b)),
+      Array.from(new Set(employeeGallery.map((member) => member.location).filter(Boolean))).sort((a, b) =>
+        safeLocaleCompare(a, b),
+      ),
     [employeeGallery],
+  );
+  const newHireLocationOptions = useMemo(
+    () => locationOptions.filter((location) => normalizeKey(location) !== 'hq'),
+    [locationOptions],
   );
   useEffect(() => {
     if (!newHireDepartment && departmentOptions.length > 0) {
       setNewHireDepartment(departmentOptions[0]);
     }
   }, [departmentOptions, newHireDepartment]);
+  useEffect(() => {
+    const normalizedSelection = normalizeKey(newHireLocation || '');
+    if (normalizedSelection && normalizedSelection !== 'hq') {
+      const inList = newHireLocationOptions.some(
+        (location) => normalizeKey(location) === normalizedSelection,
+      );
+      if (inList) {
+        return;
+      }
+    }
+    if (newHireLocationOptions.length > 0) {
+      setNewHireLocation(newHireLocationOptions[0]);
+    } else if (newHireLocation) {
+      setNewHireLocation('');
+    }
+  }, [newHireLocation, newHireLocationOptions]);
   const remoteAssetCount = useMemo(
     () => assets.filter((asset) => normalizeLocationLabel(asset.location) === 'Remote').length,
     [assets],
@@ -5996,8 +6351,18 @@ const App = () => {
   }, [employeeGallery]);
   const employeeLicenseMap = useMemo(() => {
     const normalizedEmployees = employeeGallery
-      .map((member) => ({ name: member.name, key: normalizeKey(member.lookupKey || member.name || '') }))
+      .map((member) => ({
+        name: member.name,
+        key: normalizeKey(member.lookupKey || member.name || ''),
+        department: normalizeKey(member.department || ''),
+      }))
       .filter((item) => item.name && item.key);
+    const suiteById = softwareSuites.reduce((acc, suite) => {
+      if (suite?.id) {
+        acc[suite.id] = suite;
+      }
+      return acc;
+    }, {});
     const seededAssignments = softwareSuites.reduce((acc, suite, index) => {
       const assignedUsers = Array.isArray(suite.assignedUsers)
         ? suite.assignedUsers
@@ -6030,6 +6395,27 @@ const App = () => {
       });
       return acc;
     }, {});
+    const defaultSuiteIds = ['m365', 'adobe-cc', 'zoom', 'cisco-secure', 'duo-security'];
+    normalizedEmployees.forEach((employee) => {
+      const isUpmc = employee.department === 'upmc' || employee.department === 'hcbsupmc';
+      if (isUpmc) {
+        return;
+      }
+      defaultSuiteIds.forEach((suiteId) => {
+        const suite = suiteById[suiteId];
+        if (!suite || !employee.key) return;
+        if (!seededAssignments[employee.key]) seededAssignments[employee.key] = [];
+        const alreadyAssigned = seededAssignments[employee.key].some((entry) => entry.suiteId === suiteId);
+        if (alreadyAssigned) return;
+        seededAssignments[employee.key].push({
+          suiteId: suite.id,
+          name: suite.software || suite.id,
+          vendor: suite.vendor,
+          licenseKey: suite.licenseKey,
+          expiryDate: suite.expiryDate || suite.renewal || '',
+        });
+      });
+    });
     return seededAssignments;
   }, [employeeGallery, softwareSuites]);
   useEffect(() => {
@@ -6130,9 +6516,22 @@ const App = () => {
       setEmployeePage(totalEmployeePages);
     }
   }, [employeePage, totalEmployeePages]);
+  const orderedEmployees = useMemo(() => {
+    if (!isMobile) {
+      return filteredEmployees;
+    }
+    return [...filteredEmployees].sort((a, b) => {
+      const nameA = (a.name || '').toLowerCase();
+      const nameB = (b.name || '').toLowerCase();
+      if (nameA === nameB) {
+        return String(a.id || '').localeCompare(String(b.id || ''));
+      }
+      return nameA.localeCompare(nameB);
+    });
+  }, [filteredEmployees, isMobile]);
   const displayedEmployees = useMemo(
-    () => filteredEmployees.slice((employeePage - 1) * EMPLOYEE_PAGE_SIZE, employeePage * EMPLOYEE_PAGE_SIZE),
-    [filteredEmployees, employeePage],
+    () => orderedEmployees.slice((employeePage - 1) * EMPLOYEE_PAGE_SIZE, employeePage * EMPLOYEE_PAGE_SIZE),
+    [orderedEmployees, employeePage],
   );
   const employeeAssignments = useMemo(() => {
     const lookup = assets.reduce((acc, asset) => {
@@ -6223,6 +6622,9 @@ const App = () => {
       { label: 'Apple iPhone or Samsung Galaxy', type: 'Phone', reason: 'Mobile choice based on preference' },
       { label: 'Microsoft 365', type: 'Software', reason: 'Email, Teams, and Office apps' },
       { label: 'Adobe Acrobat Pro', type: 'Software', reason: 'PDF editing and signatures' },
+      { label: 'Zoom Workplace', type: 'Software', reason: 'Meetings, chat, and voice' },
+      { label: 'Cisco Secure Client', type: 'Software', reason: 'VPN and secure remote access' },
+      { label: 'Duo Security MFA', type: 'Software', reason: 'MFA and device trust' },
     ].filter(Boolean);
     const laptopForRole = () => {
       switch (roleCategory) {
@@ -6346,6 +6748,36 @@ const App = () => {
       setExpandedEmployeeId(null);
     }
   }, [displayedEmployees, expandedEmployeeId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const fetchSession = async () => {
+      setAuthLoading(true);
+      try {
+        const resp = await fetch(buildApiUrl('/api/auth/duo/me'), { credentials: 'include' });
+        if (resp.ok) {
+          const isJson = (resp.headers.get('content-type') || '').includes('application/json');
+          if (!isJson) {
+            setAuthUser(null);
+            setAuthError('');
+            return;
+          }
+          const data = await resp.json();
+          setAuthUser(data.user);
+          setAuthError('');
+          return;
+        }
+        setAuthError('');
+        setAuthUser(null);
+      } catch (error) {
+        setAuthError('');
+        setAuthUser(null);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+    fetchSession();
+  }, [buildApiUrl]);
 
   useEffect(() => {
     const syncViewport = () => {
@@ -7911,6 +8343,60 @@ const App = () => {
     XLSX.writeFile(workbook, filename);
   };
 
+  const handleLogout = useCallback(() => {
+    setAuthUser(null);
+    setAuthError('');
+    fetch(buildApiUrl('/api/auth/duo/logout'), { method: 'POST', credentials: 'include' }).catch(() => {});
+  }, [buildApiUrl]);
+
+  const beginDuoLogin = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const returnTo = `${window.location.pathname}${window.location.search}`;
+    window.location.href = buildApiUrl(`/api/auth/duo/start?returnTo=${encodeURIComponent(returnTo)}`);
+  }, [buildApiUrl]);
+
+  useEffect(() => {
+    if (!authUser?.expiresAt) return;
+    if (Date.now() > authUser.expiresAt) {
+      handleLogout();
+    }
+  }, [authUser, handleLogout]);
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="rounded-3xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
+          <p className="text-sm font-semibold text-slate-700">Checking session…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authUser) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 via-slate-100 to-slate-50 px-4">
+        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-lg">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Login</p>
+          <h1 className="mt-3 text-2xl font-semibold text-slate-900">Secure Duo sign-in</h1>
+          <p className="mt-2 text-sm text-slate-600">
+            Continue with Duo SSO to access the UDS Asset Management dashboard.
+          </p>
+          {authError && <p className="mt-3 rounded-2xl bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700">{authError}</p>}
+          <button
+            type="button"
+            onClick={beginDuoLogin}
+            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
+          >
+            Continue with Duo
+          </button>
+          <p className="mt-3 text-[11px] uppercase tracking-[0.25rem] text-slate-400">
+            Secured by Duo (redirect handled server-side)
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`min-h-screen overflow-x-hidden pb-24 sm:pb-16 ${
@@ -7948,6 +8434,11 @@ const App = () => {
         <datalist id={locationSuggestionListId}>
           {locationOptions.map((location) => (
             <option key={`location-suggestion-${location}`} value={location} />
+          ))}
+        </datalist>
+        <datalist id={jobTitleSuggestionListId}>
+          {roleOptions.map((title) => (
+            <option key={`title-suggestion-${title}`} value={title} />
           ))}
         </datalist>
         {isOffline && (
@@ -8383,11 +8874,16 @@ const App = () => {
                 onChange={(event) => setNewHireLocation(event.target.value)}
                 className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
-                {[...locationOptions, newHireLocation].filter(Boolean).filter(
-                  (value, index, arr) => arr.indexOf(value) === index,
-                ).map((location) => (
-                  <option key={location}>{location}</option>
-                ))}
+                {[...newHireLocationOptions, newHireLocation]
+                  .filter(Boolean)
+                  .filter((value) => normalizeKey(value) !== 'hq')
+                  .filter(
+                    (value, index, arr) =>
+                      arr.findIndex((item) => normalizeKey(item) === normalizeKey(value)) === index,
+                  )
+                  .map((location) => (
+                    <option key={location}>{location}</option>
+                  ))}
               </select>
             </div>
             <div className="flex items-end gap-2">
@@ -8484,7 +8980,7 @@ const App = () => {
                               return `- ${name} (${type}, Serial: ${serial})`;
                             });
                       const body = encodeURIComponent(
-                        `Hi ${terminationProfile.supervisor || ''},\n\nWe're processing offboarding for ${terminationEmployee}. Please confirm return of the assets below and complete access revocation.\n\nAssets:\n${assetLines.join(
+                        `Hi ${terminationProfile.supervisor || ''},\n\nWe're processing offboarding for ${terminationEmployee}. Please confirm return of the assets below; our IT team will handle disabling accounts and permissions.\n\nAssets:\n${assetLines.join(
                           '\n',
                         )}\n\nThank you.`,
                       );
@@ -8516,7 +9012,7 @@ const App = () => {
               <p className="mt-2 text-sm text-slate-600">
                 Benchmark hardware performance, anticipate spend, and share ready-to-run reports with stakeholders.
               </p>
-              <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div>
                   <p className="text-xs uppercase tracking-widest text-slate-400">Aging fleet</p>
                   <p className="mt-1 text-2xl font-semibold text-slate-900">{stats.expiringSoon} devices</p>
@@ -8618,7 +9114,7 @@ const App = () => {
                   <p className="mt-3 text-sm text-white/80">
                     Showcase vendor accountability with live device counts, SLAs, and lightning-fast contacts from a single pane.
                   </p>
-                  <div className="mt-8 grid gap-4 sm:grid-cols-3">
+                  <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <div className="rounded-2xl bg-white/10 p-4 text-center">
                       <p className="text-xs uppercase tracking-widest text-white/70">Vendors engaged</p>
                       <p className="mt-2 text-3xl font-semibold">{vendorProfiles.length}</p>
@@ -8633,11 +9129,11 @@ const App = () => {
                     </div>
                   </div>
                 </div>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-2 md:overflow-visible md:pb-0">
                   {vendorProfiles.slice(0, 4).map((vendor) => (
                     <a
                       key={`vendor-mosaic-${vendor.id}`}
-                      className="relative block h-32 overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur transition hover:-translate-y-0.5 hover:border-blue-200"
+                      className="relative block h-32 min-w-[14rem] overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur transition hover:-translate-y-0.5 hover:border-blue-200"
                       href={
                         vendor.contact?.url ||
                         (vendor.id === 'brother'
@@ -8700,8 +9196,7 @@ const App = () => {
             <section className="mb-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
               <NetworkPrinterBoard
                 printers={networkPrinters}
-                limit={8}
-                title="Network printer routing"
+                title="Network Printers and Copiers"
                 subtitle="Local routing data; cloud sync will return when available."
                 onAdd={handleAddPrinter}
                 onEdit={handleEditPrinter}
@@ -8727,15 +9222,15 @@ const App = () => {
 
         {activePage === 'Software' && (
           <>
-            <section id="software-hero" className="mb-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
+            <section id="software-hero" className="mb-8 grid gap-6 lg:grid-cols-[2.1fr,0.5fr]">
               <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
-                <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-slate-400">Software</p>
                     <h2 className="mt-3 text-3xl font-semibold text-slate-900">Licensing + SaaS operations</h2>
                     <p className="mt-2 text-sm text-slate-600">
-                      Centralize entitlement tracking for Microsoft 365, Adobe, AutoCAD, Cisco Secure Client, Barracuda, Citrix, Zoom, and more without
-                      tying usage to hardware guesses.
+                      Centralize entitlement tracking for Microsoft 365, Adobe, AutoCAD, Cisco Secure Client, Duo, Keeper, ESET, Barracuda, Citrix,
+                      Zoom, and more without tying usage to hardware guesses.
                     </p>
                   </div>
                   <button
@@ -8747,7 +9242,7 @@ const App = () => {
                     Add software
                   </button>
                 </div>
-                <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <div>
                     <p className="text-xs uppercase tracking-widest text-slate-400">Suites tracked</p>
                     <p className="mt-1 text-2xl font-semibold text-slate-900">{licenseBuckets.length}</p>
@@ -8765,12 +9260,20 @@ const App = () => {
                 </div>
                 {suitesWithLogos.length > 0 && (
                   <div className="mt-8 rounded-2xl border border-slate-100/80 bg-slate-50/80 p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Stack highlights</p>
-                    <div className="mt-4 flex flex-wrap items-center gap-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Admin Portals</p>
+                    <div className="mt-4 flex items-center gap-4 overflow-x-auto pb-2 sm:flex-wrap sm:pb-0">
                       {suitesWithLogos.map((suite) => (
-                        <div
+                        <a
                           key={`logo-${suite.id}`}
-                          className="group relative flex h-14 w-28 items-center justify-center rounded-2xl bg-white/90 shadow-inner ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:ring-blue-200"
+                          href={suite.portal || SOFTWARE_ADMIN_PORTALS[suite.id] || '#'}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="group relative flex h-14 min-w-[7rem] items-center justify-center rounded-2xl bg-white/90 shadow-inner ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:ring-blue-200"
+                          title={
+                            suite.portal || SOFTWARE_ADMIN_PORTALS[suite.id]
+                              ? `${suite.software} admin portal`
+                              : suite.software
+                          }
                         >
                           <img
                             src={suite.logo}
@@ -8778,7 +9281,7 @@ const App = () => {
                             className="h-8 w-auto object-contain opacity-80 transition group-hover:opacity-100 group-hover:scale-105"
                             loading="lazy"
                           />
-                        </div>
+                        </a>
                       ))}
                     </div>
                   </div>
@@ -8870,6 +9373,7 @@ const App = () => {
           locationSuggestionListId={locationSuggestionListId}
           modelSuggestionListId={modelSuggestionListId}
           employeeSuggestionListId={employeeSuggestionListId}
+          jobTitleSuggestionListId={jobTitleSuggestionListId}
         />
       )}
       {actionState && (
@@ -8881,7 +9385,14 @@ const App = () => {
           suggestionListId={employeeSuggestionListId}
         />
       )}
-      {softwareForm && <SoftwareFormModal suite={softwareForm} onSubmit={handleSaveSoftware} onCancel={() => setSoftwareForm(null)} />}
+      {softwareForm && (
+        <SoftwareFormModal
+          suite={softwareForm}
+          onSubmit={handleSaveSoftware}
+          onCancel={() => setSoftwareForm(null)}
+          suggestionListId={employeeSuggestionListId}
+        />
+      )}
       {warrantyModalOpen && (
         <WarrantyAlertModal
           alerts={warrantyReminders}
