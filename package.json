@@ -10,6 +10,7 @@
     "gulp": "^5.0.1",
     "jsqr": "^1.4.0",
     "lucide-react": "^0.552.0",
+    "qrcode": "^1.5.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-scripts": "^5.0.1",
@@ -42,5 +43,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "wrangler": "^4.51.0"
   }
 }

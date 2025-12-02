@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
 import jsQR from 'jsqr';
+import QRCode from 'qrcode';
 import * as XLSX from 'xlsx';
 import {
   Laptop,
@@ -15,7 +16,6 @@ import {
   Key,
   History,
   ArrowRightLeft,
-  Wrench,
   X,
   Check,
   Share2,
@@ -29,8 +29,6 @@ import {
   ExternalLink,
   PhoneCall,
   TrendingDown,
-  ClipboardList,
-  ClipboardCheck,
   Users,
   Smartphone,
   Navigation,
@@ -47,12 +45,6 @@ import assetSheetData from './data/assets.json';
 import employeeSheetData from './data/employees.json';
 import employeePhotoMap from './data/employeePhotos.json';
 import automateMap from './data/automateMap.json';
-import {
-  fetchSharePointListItems,
-  createSharePointListItem,
-  updateSharePointListItem,
-  deleteSharePointListItem,
-} from './services/sharePointService';
 
 const DARK_MODE_STYLES = `
   html.theme-dark body {
@@ -79,13 +71,40 @@ const DARK_MODE_STYLES = `
   html.theme-dark .border-slate-200 {
     border-color: #1f2937 !important;
   }
+  html.theme-dark .divide-slate-100,
+  html.theme-dark .divide-slate-200 {
+    border-color: #1f2937 !important;
+  }
+  html.theme-dark .ring-slate-100,
+  html.theme-dark .ring-slate-200 {
+    --tw-ring-color: #1f2937 !important;
+  }
   html.theme-dark .text-slate-900,
   html.theme-dark .text-slate-800,
   html.theme-dark .text-slate-700 { color: #e2e8f0 !important; }
   html.theme-dark .text-slate-600 { color: #cbd5e1 !important; }
   html.theme-dark .text-slate-500 { color: #94a3b8 !important; }
+  html.theme-dark .text-slate-400 { color: #cbd5e1 !important; }
+  html.theme-dark .text-slate-300 { color: #e2e8f0 !important; }
   html.theme-dark .shadow-sm { box-shadow: 0 20px 60px rgba(0,0,0,0.45) !important; }
   html.theme-dark .shadow-inner { box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 14px 50px rgba(0,0,0,0.35) !important; }
+  html.theme-dark .bg-white\\/70,
+  html.theme-dark .bg-white\\/80,
+  html.theme-dark .bg-white\\/90 { background-color: #111827 !important; }
+  html.theme-dark .bg-slate-100,
+  html.theme-dark .bg-slate-100\\/70,
+  html.theme-dark .bg-slate-200 { background-color: #0f172a !important; }
+  html.theme-dark input,
+  html.theme-dark select,
+  html.theme-dark textarea {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+    border-color: #1f2937 !important;
+  }
+  html.theme-dark input::placeholder,
+  html.theme-dark textarea::placeholder {
+    color: #94a3b8 !important;
+  }
 `;
 
 const STORAGE_KEYS = {
@@ -98,7 +117,7 @@ const STORAGE_KEYS = {
   clearedWarrantyAlerts: 'uds_cleared_warranty_alerts',
 };
 const STORAGE_VERSION_KEY = 'uds_storage_version';
-const STORAGE_VERSION = '2025-11-19-refresh';
+const STORAGE_VERSION = '2025-11-20-zoom-refresh';
 
 const assetTypeIcons = {
   Laptop,
@@ -137,6 +156,17 @@ const getAutomateLink = (asset) => {
   return (match && automateMap[match]) || AUTOMATE_BASE_URL;
 };
 
+const generateQrDataUrl = async (text, size = 400) => {
+  const input = (text || '').toString().trim();
+  if (!input) return '';
+  return QRCode.toDataURL(input, {
+    errorCorrectionLevel: 'M',
+    margin: 2,
+    width: size,
+    color: { dark: '#000000', light: '#ffffff' },
+  });
+};
+
 const isComputerAsset = (asset = {}) => {
   const type = (asset.type || '').toLowerCase();
   if (['computer', 'laptop', 'desktop', 'server'].includes(type)) {
@@ -160,7 +190,7 @@ const defaultAsset = {
   purchaseDate: '',
   warrantyExpiry: '',
   retiredDate: '',
-  cost: 0,
+  cost: '',
   checkedOut: false,
   checkOutDate: '',
   qrCode: '',
@@ -176,7 +206,7 @@ const defaultSoftwareSuite = {
   seats: 0,
   used: 0,
   expiryDate: '',
-  cost: 0,
+  cost: '',
   description: '',
   deployment: 'Cloud',
   criticality: 'Medium',
@@ -199,7 +229,7 @@ const defaultEmployeeProfile = {
   lookupKey: '',
 };
 
-const NAV_LINKS = ['Overview', 'Hardware', 'Audit', 'Employees', 'Reports', 'Software', 'Vendors'];
+const NAV_LINKS = ['Overview', 'Hardware', 'Employees', 'Reports', 'Software', 'Vendors'];
 
 const PUBLIC_URL = process.env.PUBLIC_URL || '';
 const normalizedPublicUrl = PUBLIC_URL.replace(/\/+$/, '');
@@ -238,12 +268,19 @@ const VENDOR_IMAGES = {
   dell: `${PUBLIC_URL}/assets/vendors/Dell.jpg`,
   verizon: `${PUBLIC_URL}/assets/vendors/Verizon_Wireless_Logo.webp`,
 };
+const EMPLOYEE_PHOTO_UPLOAD_URL = process.env.REACT_APP_EMPLOYEE_PHOTO_UPLOAD_URL || '';
+const EMPLOYEE_PHOTO_CDN = (process.env.REACT_APP_EMPLOYEE_PHOTO_CDN || '').replace(/\/$/, '');
 const SOFTWARE_LOGOS = {
   m365: `${PUBLIC_URL}/assets/software/microsoft-365.png`,
   adobe: `${PUBLIC_URL}/assets/software/adobe.png`,
   autocad: `${PUBLIC_URL}/assets/software/autocad.png`,
   citrix: `${PUBLIC_URL}/assets/software/citrix.png`,
   zoom: `${PUBLIC_URL}/assets/software/zoom.jpg`,
+  cisco: `${PUBLIC_URL}/assets/software/cisco-secure.png`,
+  barracuda: `${PUBLIC_URL}/assets/software/barracuda.png`,
+  dragon: `${PUBLIC_URL}/assets/software/dragon.webp`,
+  hrms: `${PUBLIC_URL}/assets/software/hrms.png`,
+  sage: `${PUBLIC_URL}/assets/software/sage.webp`,
 };
 const EXCEL_EXPORTS = {
   assets: `${PUBLIC_URL}/tables/${encodeURIComponent('Asset List 11-18-25.xlsx')}`,
@@ -362,6 +399,16 @@ const getInitials = (value = '') =>
     .join('')
     .toUpperCase() || 'UDS';
 
+const normalizeLocationLabel = (value = '') => {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return '';
+  const lower = trimmed.toLowerCase();
+  if (lower === 'remote' || lower === 'field' || lower === 'remote/field' || lower === 'field/remote') {
+    return 'Remote';
+  }
+  return trimmed;
+};
+
 const DEVICE_COST_BY_TYPE = {
   Phone: 650,
   Computer: 1450,
@@ -403,614 +450,6 @@ const ensureKeyFobModel = (asset) => {
   }
   const nextModel = asset.model ? `${asset.model} KeyFob` : 'KeyFob';
   return { ...asset, model: nextModel };
-};
-
-// Minimal QR code generator (based on qrcode-generator, MIT License)
-const QR8bitByte = (data) => ({
-  mode: 1,
-  getLength: () => data.length,
-  write: (buffer) => {
-    for (let i = 0; i < data.length; i += 1) {
-      buffer.put(data.charCodeAt(i), 8);
-    }
-  },
-});
-
-const QRMath = (() => {
-  const EXP_TABLE = new Array(256);
-  const LOG_TABLE = new Array(256);
-  for (let i = 0; i < 8; i += 1) {
-    EXP_TABLE[i] = 1 << i;
-  }
-  for (let i = 8; i < 256; i += 1) {
-    EXP_TABLE[i] = EXP_TABLE[i - 4] ^ EXP_TABLE[i - 5] ^ EXP_TABLE[i - 6] ^ EXP_TABLE[i - 8];
-  }
-  for (let i = 0; i < 255; i += 1) {
-    LOG_TABLE[EXP_TABLE[i]] = i;
-  }
-  const glog = (n) => {
-    if (n < 1) {
-      throw new Error('glog(' + n + ')');
-    }
-    return LOG_TABLE[n];
-  };
-  const gexp = (n) => EXP_TABLE[(n % 255 + 255) % 255];
-  return { glog, gexp };
-})();
-
-const QRPolynomial = (num, shift) => {
-  let offset = 0;
-  while (offset < num.length && num[offset] === 0) {
-    offset += 1;
-  }
-  const _num = num.slice(offset);
-  const multiply = (e) => {
-    const n = new Array(_num.length + e._num.length - 1).fill(0);
-    for (let i = 0; i < _num.length; i += 1) {
-      for (let j = 0; j < e._num.length; j += 1) {
-        n[i + j] ^= QRMath.gexp(QRMath.glog(_num[i]) + QRMath.glog(e._num[j]));
-      }
-    }
-    return QRPolynomial(n, 0);
-  };
-  const mod = (e) => {
-    if (_num.length - e._num.length < 0) {
-      return QRPolynomial([0], 0);
-    }
-    const ratio = QRMath.glog(_num[0]) - QRMath.glog(e._num[0]);
-    const num2 = _num.slice();
-    for (let i = 0; i < e._num.length; i += 1) {
-      num2[i] ^= QRMath.gexp(QRMath.glog(e._num[i]) + ratio);
-    }
-    return QRPolynomial(num2, 0).mod(e);
-  };
-  return { _num, multiply, mod };
-};
-
-const QRRSBlock = (() => {
-  const RS_BLOCK_TABLE = [
-    [1, 26, 19],
-    [1, 44, 34],
-    [1, 70, 55],
-    [1, 100, 80],
-    [1, 134, 108],
-    [2, 86, 68],
-    [2, 98, 78],
-    [2, 121, 97],
-    [2, 146, 116],
-    [2, 86, 68, 2, 87, 69],
-  ];
-  const getRSBlocks = (typeNumber) => {
-    const rsTable = RS_BLOCK_TABLE[typeNumber - 1];
-    const list = [];
-    for (let i = 0; i < rsTable.length; i += 3) {
-      const count = rsTable[i];
-      const totalCount = rsTable[i + 1];
-      const dataCount = rsTable[i + 2];
-      for (let j = 0; j < count; j += 1) {
-        list.push({ totalCount, dataCount });
-      }
-    }
-    return list;
-  };
-  return { getRSBlocks };
-})();
-
-const QRBitBuffer = () => {
-  const buffer = [];
-  let length = 0;
-  const get = (index) => (buffer[Math.floor(index / 8)] >>> (7 - (index % 8))) & 1;
-  const put = (num, lengthBits) => {
-    for (let i = 0; i < lengthBits; i += 1) {
-      putBit(((num >>> (lengthBits - i - 1)) & 1) === 1);
-    }
-  };
-  const putBit = (bit) => {
-    const bufIndex = Math.floor(length / 8);
-    if (buffer.length <= bufIndex) {
-      buffer.push(0);
-    }
-    if (bit) {
-      buffer[bufIndex] |= 0x80 >>> (length % 8);
-    }
-    length += 1;
-  };
-  return { buffer, get, put, putBit, getLengthInBits: () => length };
-};
-
-const QRMaskPattern = {
-  PATTERN000: 0,
-  PATTERN001: 1,
-  PATTERN010: 2,
-  PATTERN011: 3,
-  PATTERN100: 4,
-  PATTERN101: 5,
-  PATTERN110: 6,
-  PATTERN111: 7,
-  getMask: (maskPattern, i, j) => {
-    switch (maskPattern) {
-      case 0:
-        return (i + j) % 2 === 0;
-      case 1:
-        return i % 2 === 0;
-      case 2:
-        return j % 3 === 0;
-      case 3:
-        return (i + j) % 3 === 0;
-      case 4:
-        return (Math.floor(i / 2) + Math.floor(j / 3)) % 2 === 0;
-      case 5:
-        return ((i * j) % 2) + ((i * j) % 3) === 0;
-      case 6:
-        return (((i * j) % 2) + ((i * j) % 3)) % 2 === 0;
-      case 7:
-        return (((i + j) % 2) + ((i * j) % 3)) % 2 === 0;
-      default:
-        return false;
-    }
-  },
-};
-
-const ERROR_CORRECTION_LEVEL = 1; // Level L
-const ALIGNMENT_PATTERN_POSITIONS = {
-  1: [],
-  2: [6, 18],
-  3: [6, 22],
-  4: [6, 26],
-  5: [6, 30],
-  6: [6, 34],
-  7: [6, 22, 38],
-  8: [6, 24, 42],
-  9: [6, 26, 46],
-  10: [6, 28, 50],
-};
-const G15 = 0x537;
-const G18 = 0x1f25;
-const G15_MASK = 0x5412;
-
-const getAlignmentPatternPositions = (typeNumber) => ALIGNMENT_PATTERN_POSITIONS[typeNumber] || [];
-
-const getBCHDigit = (data) => {
-  let digit = 0;
-  let value = data;
-  while (value !== 0) {
-    digit += 1;
-    value >>>= 1;
-  }
-  return digit;
-};
-
-const getFormatInfoBits = (maskPattern) => {
-  const data = (ERROR_CORRECTION_LEVEL << 3) | maskPattern;
-  let d = data << 10;
-  while (getBCHDigit(d) - getBCHDigit(G15) >= 0) {
-    d ^= G15 << (getBCHDigit(d) - getBCHDigit(G15));
-  }
-  return ((data << 10) | d) ^ G15_MASK;
-};
-
-const getVersionInfoBits = (typeNumber) => {
-  let d = typeNumber << 12;
-  while (getBCHDigit(d) - getBCHDigit(G18) >= 0) {
-    d ^= G18 << (getBCHDigit(d) - getBCHDigit(G18));
-  }
-  return (typeNumber << 12) | d;
-};
-
-const getTotalDataCount = (typeNumber) => {
-  const rsBlocks = QRRSBlock.getRSBlocks(typeNumber);
-  return rsBlocks.reduce((sum, block) => sum + block.dataCount, 0);
-};
-
-const QRCodeModel = (typeNumber) => {
-  const PAD0 = 0xec;
-  const PAD1 = 0x11;
-  let modules = null;
-  let moduleCount = 0;
-  const dataList = [];
-
-  const makeImpl = (maskPattern) => {
-    moduleCount = typeNumber * 4 + 17;
-    modules = Array.from({ length: moduleCount }, () => new Array(moduleCount));
-
-    const setupPositionProbePattern = (row, col) => {
-      for (let r = -1; r <= 7; r += 1) {
-        if (row + r <= -1 || moduleCount <= row + r) continue;
-        for (let c = -1; c <= 7; c += 1) {
-          if (col + c <= -1 || moduleCount <= col + c) continue;
-          if (
-            (0 <= r && r <= 6 && (c === 0 || c === 6)) ||
-            (0 <= c && c <= 6 && (r === 0 || r === 6)) ||
-            (2 <= r && r <= 4 && 2 <= c && c <= 4)
-          ) {
-            modules[row + r][col + c] = true;
-          } else {
-            modules[row + r][col + c] = false;
-          }
-        }
-      }
-    };
-
-    setupPositionProbePattern(0, 0);
-    setupPositionProbePattern(moduleCount - 7, 0);
-    setupPositionProbePattern(0, moduleCount - 7);
-
-    const setupPositionAdjustPattern = (row, col) => {
-      for (let r = -2; r <= 2; r += 1) {
-        for (let c = -2; c <= 2; c += 1) {
-          const rr = row + r;
-          const cc = col + c;
-          if (modules[rr][cc] !== undefined) continue;
-          modules[rr][cc] = Math.max(Math.abs(r), Math.abs(c)) !== 1;
-        }
-      }
-    };
-
-    const setupAlignmentPatterns = () => {
-      const positions = getAlignmentPatternPositions(typeNumber);
-      if (!positions || positions.length === 0) {
-        return;
-      }
-      positions.forEach((row) => {
-        positions.forEach((col) => {
-          if (modules[row][col] !== undefined) {
-            return;
-          }
-          setupPositionAdjustPattern(row, col);
-        });
-      });
-    };
-
-    const reserveFormatSlots = () => {
-      for (let i = 0; i < 15; i += 1) {
-        if (i < 6) {
-          if (modules[i][8] === undefined) modules[i][8] = false;
-        } else if (i === 6) {
-          if (modules[7][8] === undefined) modules[7][8] = false;
-        } else if (i === 7) {
-          if (modules[8][8] === undefined) modules[8][8] = false;
-        } else if (i === 8) {
-          if (modules[8][7] === undefined) modules[8][7] = false;
-        } else {
-          if (modules[8][14 - i] === undefined) modules[8][14 - i] = false;
-        }
-      }
-      for (let i = 0; i < 15; i += 1) {
-        if (i < 8) {
-          if (modules[8][moduleCount - 1 - i] === undefined) modules[8][moduleCount - 1 - i] = false;
-        } else {
-          if (modules[moduleCount - 15 + i][8] === undefined) modules[moduleCount - 15 + i][8] = false;
-        }
-      }
-    };
-
-    const writeTypeInfo = (maskPatternValue) => {
-      const bits = getFormatInfoBits(maskPatternValue);
-      for (let i = 0; i < 15; i += 1) {
-        const mod = ((bits >> i) & 1) === 1;
-        if (i < 6) {
-          modules[i][8] = mod;
-        } else if (i === 6) {
-          modules[7][8] = mod;
-        } else if (i === 7) {
-          modules[8][8] = mod;
-        } else if (i === 8) {
-          modules[8][7] = mod;
-        } else {
-          modules[8][14 - i] = mod;
-        }
-      }
-      for (let i = 0; i < 15; i += 1) {
-        const mod = ((bits >> i) & 1) === 1;
-        if (i < 8) {
-          modules[8][moduleCount - 1 - i] = mod;
-        } else {
-          modules[moduleCount - 15 + i][8] = mod;
-        }
-      }
-    };
-
-    const reserveVersionSlots = () => {
-      if (typeNumber < 7) {
-        return;
-      }
-      for (let i = 0; i < 18; i += 1) {
-        const row = Math.floor(i / 3);
-        const col = i % 3;
-        if (modules[row][moduleCount - 11 + col] === undefined) {
-          modules[row][moduleCount - 11 + col] = false;
-        }
-        if (modules[moduleCount - 11 + col][row] === undefined) {
-          modules[moduleCount - 11 + col][row] = false;
-        }
-      }
-    };
-
-    const writeTypeNumber = () => {
-      if (typeNumber < 7) {
-        return;
-      }
-      const bits = getVersionInfoBits(typeNumber);
-      for (let i = 0; i < 18; i += 1) {
-        const mod = ((bits >> i) & 1) === 1;
-        const row = Math.floor(i / 3);
-        const col = i % 3;
-        modules[row][moduleCount - 11 + col] = mod;
-        modules[moduleCount - 11 + col][row] = mod;
-      }
-    };
-
-    for (let i = 8; i < moduleCount - 8; i += 1) {
-      if (modules[i][6] === undefined) modules[i][6] = i % 2 === 0;
-      if (modules[6][i] === undefined) modules[6][i] = i % 2 === 0;
-    }
-
-    reserveFormatSlots();
-    reserveVersionSlots();
-
-    const mapData = (data, maskPatternValue) => {
-      let inc = -1;
-      let row = moduleCount - 1;
-      let bitIndex = 7;
-      let byteIndex = 0;
-      for (let col = moduleCount - 1; col > 0; col -= 2) {
-        if (col === 6) col -= 1;
-        while (true) {
-          for (let c = 0; c < 2; c += 1) {
-            if (modules[row][col - c] === undefined) {
-              let dark = false;
-              if (byteIndex < data.length) {
-                dark = ((data[byteIndex] >>> bitIndex) & 1) === 1;
-              }
-              if (QRMaskPattern.getMask(maskPatternValue, row, col - c)) {
-                dark = !dark;
-              }
-              modules[row][col - c] = dark;
-              bitIndex -= 1;
-              if (bitIndex === -1) {
-                byteIndex += 1;
-                bitIndex = 7;
-              }
-            }
-          }
-          row += inc;
-          if (row < 0 || moduleCount <= row) {
-            row -= inc;
-            inc = -inc;
-            break;
-          }
-        }
-      }
-    };
-
-    const totalDataCount = getTotalDataCount(typeNumber);
-    const buffer = QRBitBuffer();
-    const lengthBits = typeNumber >= 10 ? 16 : 8;
-    for (let i = 0; i < dataList.length; i += 1) {
-      buffer.put(4, 4);
-      buffer.put(dataList[i].getLength(), lengthBits);
-      dataList[i].write(buffer);
-    }
-    let totalBits = buffer.getLengthInBits();
-    if (totalBits > totalDataCount * 8) {
-      throw new Error('data overflow');
-    }
-    if (totalBits + 4 <= totalDataCount * 8) {
-      buffer.put(0, 4);
-    }
-    while (buffer.getLengthInBits() % 8 !== 0) {
-      buffer.putBit(false);
-    }
-    while (buffer.getLengthInBits() < totalDataCount * 8) {
-      buffer.put(buffer.getLengthInBits() % 16 === 0 ? PAD0 : PAD1, 8);
-    }
-
-    setupAlignmentPatterns();
-    modules[moduleCount - 8][8] = true; // dark module marker
-    writeTypeInfo(maskPattern);
-    writeTypeNumber();
-
-    const data = createBytes(buffer, typeNumber);
-    mapData(data, maskPattern);
-    return modules;
-  };
-
-  const calculatePenalty = (grid) => {
-    const size = grid.length;
-    let penalty = 0;
-
-    // Rule 1: consecutive modules in row/column
-    const countRuns = (line) => {
-      let score = 0;
-      let runColor = line[0];
-      let runLength = 1;
-      for (let i = 1; i < line.length; i += 1) {
-        if (line[i] === runColor) {
-          runLength += 1;
-        } else {
-          if (runLength >= 5) {
-            score += 3 + (runLength - 5);
-          }
-          runColor = line[i];
-          runLength = 1;
-        }
-      }
-      if (runLength >= 5) {
-        score += 3 + (runLength - 5);
-      }
-      return score;
-    };
-
-    for (let r = 0; r < size; r += 1) {
-      penalty += countRuns(grid[r]);
-    }
-    for (let c = 0; c < size; c += 1) {
-      const col = [];
-      for (let r = 0; r < size; r += 1) col.push(grid[r][c]);
-      penalty += countRuns(col);
-    }
-
-    // Rule 2: 2x2 blocks of same color
-    for (let r = 0; r < size - 1; r += 1) {
-      for (let c = 0; c < size - 1; c += 1) {
-        const val = grid[r][c];
-        if (val === grid[r][c + 1] && val === grid[r + 1][c] && val === grid[r + 1][c + 1]) {
-          penalty += 3;
-        }
-      }
-    }
-
-    // Rule 3: finder-like patterns in rows/cols
-    const patternPenalty = (line) => {
-      const pattern = [true, false, true, true, true, false, true];
-      for (let i = 0; i <= line.length - 7; i += 1) {
-        if (pattern.every((v, idx) => line[i + idx] === v)) {
-          const before = line.slice(Math.max(0, i - 4), i).every((v) => v === false);
-          const after = line.slice(i + 7, i + 11).every((v) => v === false);
-          if (before || after) {
-            return 40;
-          }
-        }
-      }
-      return 0;
-    };
-    for (let r = 0; r < size; r += 1) {
-      penalty += patternPenalty(grid[r]);
-    }
-    for (let c = 0; c < size; c += 1) {
-      const col = [];
-      for (let r = 0; r < size; r += 1) col.push(grid[r][c]);
-      penalty += patternPenalty(col);
-    }
-
-    // Rule 4: balance of dark modules
-    const totalModules = size * size;
-    let darkCount = 0;
-    for (let r = 0; r < size; r += 1) {
-      for (let c = 0; c < size; c += 1) {
-        if (grid[r][c]) darkCount += 1;
-      }
-    }
-    const ratio = Math.abs((darkCount * 100) / totalModules - 50) / 5;
-    penalty += ratio * 10;
-
-    return penalty;
-  };
-
-  const make = () => {
-    let bestModules = null;
-    let bestScore = Infinity;
-    for (let mask = 0; mask <= 7; mask += 1) {
-      const trial = makeImpl(mask);
-      const score = calculatePenalty(trial);
-      if (score < bestScore) {
-        bestScore = score;
-        bestModules = trial.map((row) => row.slice());
-      }
-    }
-    modules = bestModules;
-    moduleCount = bestModules.length;
-  };
-
-  const addData = (data) => {
-    dataList.push(QR8bitByte(data));
-  };
-
-  const isDark = (row, col) => modules[row][col];
-
-  return {
-    addData,
-    isDark,
-    getModuleCount: () => moduleCount,
-    make,
-  };
-};
-
-const QRPolynomialGenerate = (degree) => {
-  const poly = [1];
-  for (let i = 0; i < degree; i += 1) {
-    poly.push(0);
-    for (let j = poly.length - 1; j > 0; j -= 1) {
-      poly[j] = poly[j] ^ QRMath.gexp(i + QRMath.glog(poly[j - 1] || 1));
-    }
-    poly[0] = QRMath.gexp(i + QRMath.glog(poly[0]));
-  }
-  return poly;
-};
-
-const createBytes = (buffer, typeNumber) => {
-  const rsBlocks = QRRSBlock.getRSBlocks(typeNumber);
-  let offset = 0;
-  const maxDcCount = rsBlocks.reduce((acc, block) => Math.max(acc, block.dataCount), 0);
-  const dcdata = rsBlocks.map(() => []);
-  const ecdata = rsBlocks.map(() => []);
-
-  for (let r = 0; r < rsBlocks.length; r += 1) {
-    const dcCount = rsBlocks[r].dataCount;
-    const ecCount = rsBlocks[r].totalCount - dcCount;
-    for (let i = 0; i < dcCount; i += 1) {
-      dcdata[r][i] = buffer.buffer[i + offset];
-    }
-    offset += dcCount;
-    const rsPoly = QRPolynomialGenerate(ecCount);
-    const rawPoly = QRPolynomial(dcdata[r], 0);
-    const modPoly = rawPoly.mod(QRPolynomial(rsPoly, 0));
-    for (let i = 0; i < ecCount; i += 1) {
-      const modIndex = i + modPoly._num.length - ecCount;
-      ecdata[r][i] = modIndex >= 0 ? modPoly._num[modIndex] : 0;
-    }
-  }
-  const totalCodeCount = rsBlocks.reduce((sum, block) => sum + block.totalCount, 0);
-  const data = [];
-  for (let i = 0; i < totalCodeCount; i += 1) {
-    if (i < maxDcCount) {
-      for (let r = 0; r < rsBlocks.length; r += 1) {
-        if (i < dcdata[r].length) data.push(dcdata[r][i]);
-      }
-    } else {
-      for (let r = 0; r < rsBlocks.length; r += 1) {
-        if (i - maxDcCount < ecdata[r].length) data.push(ecdata[r][i - maxDcCount]);
-      }
-    }
-  }
-  return data;
-};
-
-const generateQrDataUrl = (text, size = 280) => {
-  const input = (text || '').toString();
-  const pickTypeNumber = () => {
-    for (let type = 2; type <= 10; type += 1) {
-      if (getTotalDataCount(type) > input.length + 8) {
-        return type;
-      }
-    }
-    return 10;
-  };
-  const qr = QRCodeModel(pickTypeNumber());
-  qr.addData(input);
-  qr.make();
-
-  const count = qr.getModuleCount();
-  const quietZone = 12; // larger quiet zone improves scan reliability
-  const moduleSize = Math.floor((size - quietZone * 2) / count) || 1;
-  const renderSize = moduleSize * count + quietZone * 2;
-  const canvas = document.createElement('canvas');
-  canvas.width = renderSize;
-  canvas.height = renderSize;
-  const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, renderSize, renderSize);
-  ctx.fillStyle = '#0f172a';
-
-  for (let r = 0; r < count; r += 1) {
-    for (let c = 0; c < count; c += 1) {
-      if (qr.isDark(r, c)) {
-        ctx.fillRect(quietZone + c * moduleSize, quietZone + r * moduleSize, moduleSize, moduleSize);
-      }
-    }
-  }
-  return canvas.toDataURL('image/png');
 };
 
 const MODEL_PRICE_RULES = [
@@ -1163,17 +602,6 @@ const normalizeStatusLabel = (value = '') => {
     return 'Checked Out';
   }
   return null;
-};
-
-const normalizeDateString = (value) => {
-  if (!value) {
-    return '';
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return '';
-  }
-  return date.toISOString().slice(0, 10);
 };
 
 const normalizeAssetStatus = (asset) => {
@@ -1342,7 +770,7 @@ const SOFTWARE_PORTFOLIO = [
     logo: SOFTWARE_LOGOS.m365,
     accent: { from: '#0ea5e9', to: '#2563eb' },
     description: 'Email, collaboration, Teams telephony, and Intune device management for the entire workforce.',
-    stack: ['Exchange', 'SharePoint', 'Teams', 'Intune'],
+    stack: ['Exchange', 'Teams', 'OneDrive', 'Intune'],
     deployment: 'Cloud',
     criticality: 'High',
   },
@@ -1390,6 +818,7 @@ const SOFTWARE_PORTFOLIO = [
     used: 205,
     costPerSeat: 18,
     renewal: '2025-07-01',
+    logo: SOFTWARE_LOGOS.cisco,
     accent: { from: '#0f766e', to: '#0ea5e9' },
     description: 'Unified VPN, Secure Client, and Umbrella protection for remote staff.',
     stack: ['AnyConnect', 'Secure Client', 'Umbrella DNS', 'Secure Endpoint'],
@@ -1406,6 +835,7 @@ const SOFTWARE_PORTFOLIO = [
     used: 465,
     costPerSeat: 6,
     renewal: '2025-05-30',
+    logo: SOFTWARE_LOGOS.barracuda,
     accent: { from: '#0284c7', to: '#0c4a6e' },
     description: 'Inbound filtering, archiving, and continuity for Microsoft 365 mailboxes.',
     stack: ['Impersonation Protect', 'Backup', 'Sentinel'],
@@ -1439,6 +869,7 @@ const SOFTWARE_PORTFOLIO = [
     used: 35,
     costPerSeat: 25,
     renewal: '2025-08-10',
+    logo: SOFTWARE_LOGOS.dragon,
     accent: { from: '#e11d48', to: '#fb923c' },
     description: 'Secure speech-to-text documentation for service coordinators.',
     stack: ['Dragon Professional', 'PowerMic'],
@@ -1455,6 +886,7 @@ const SOFTWARE_PORTFOLIO = [
     used: 154,
     costPerSeat: 28,
     renewal: '2025-06-01',
+    logo: SOFTWARE_LOGOS.hrms,
     accent: { from: '#9333ea', to: '#2563eb' },
     description: 'Payroll, benefits enrollment, and onboarding workflows.',
     stack: ['Onboarding', 'Talent', 'Benefits'],
@@ -1471,6 +903,7 @@ const SOFTWARE_PORTFOLIO = [
     used: 23,
     costPerSeat: 110,
     renewal: '2025-02-28',
+    logo: SOFTWARE_LOGOS.sage,
     accent: { from: '#16a34a', to: '#15803d' },
     description: 'Accounting, grants, and fixed-asset workflows.',
     stack: ['General Ledger', 'Purchasing', 'Fixed Assets'],
@@ -1483,10 +916,11 @@ const SOFTWARE_PORTFOLIO = [
     vendor: 'Zoom',
     owner: 'IT Operations',
     category: 'Meetings & UC',
-    seats: 220,
-    used: 214,
-    costPerSeat: 15,
-    renewal: '2025-05-01',
+    seats: 300,
+    used: 257,
+    annualCost: 48534,
+    costPerSeat: 162,
+    renewal: '2026-07-21',
     logo: SOFTWARE_LOGOS.zoom,
     accent: { from: '#2563eb', to: '#60a5fa' },
     description: 'Video conferencing, webinars, and digital signage feeds.',
@@ -1518,7 +952,7 @@ const buildEmployeeDirectory = (rows = employeeSheetData) =>
     directory[fullName] = {
       id: row['Employee ID'],
       department: row['Department'] || row['Company'] || 'UDS',
-      location: row['Location'] || row['Company'] || 'Field',
+      location: normalizeLocationLabel(row['Location'] || row['Company'] || 'Remote'),
       title: row['Job Title'] || '',
       email: row['E-mail Address'] || '',
       phone: row['Mobile Phone'] || '',
@@ -1559,140 +993,59 @@ const determineAssetStatus = (row, hasAssignee = false) => {
   return 'Available';
 };
 
-const SP_ASSET_FIELDS = {
-  assetName: 'Asset ID',
-  type: 'Asset Type',
-  model: 'Model',
-  assignedTo: 'Assigned To',
-  location: 'Location',
-  serialNumber: 'Serial Number',
-  purchaseDate: 'Purchase Date',
-  retiredDate: 'Retirement Date',
-  warrantyExpiry: 'Warranty Expiry',
-  department: 'Department',
-  cost: 'Cost',
-  id: 'ID',
-};
+const mapNormalizedAssetRow = (row = {}, index = 0, employeeDirectory = {}) => {
+  const assignedName = formatRosterName(
+    row.assignedTo || row.owner || row.contact || row.employee || row.user || row.contactId,
+  );
+  const hasAssignee = Boolean(assignedName && assignedName !== 'Unassigned');
+  const person = employeeDirectory[assignedName] || null;
+  const type = row.type || row.deviceType || 'Hardware';
+  const assetIdentifier = row.sheetId || row.assetName || row.deviceName || row.serialNumber || `Asset-${index + 1}`;
+  const inferredBrand = row.brand || (row.model ? row.model.split(' ')[0] : type);
+  const estimatedCost = estimateCost(type, row.model, inferredBrand);
+  const parsedCost = Number(row.cost);
+  const cost = Number.isFinite(parsedCost) && parsedCost > 0 ? parsedCost : estimatedCost;
+  const purchaseDate = row.purchaseDate || row.checkOutDate || '';
 
-const SP_EMPLOYEE_FIELDS = {
-  lastName: 'LastName',
-  firstName: 'FirstName',
-  id: 'Employee ID',
-  company: 'Company',
-  department: 'Department',
-  location: 'Location',
-  title: 'Job Title',
-  email: 'E-mail Address',
-  startDate: 'Start Date',
-  phone: 'Mobile Phone',
-  computer: 'Computer',
-  printer: 'Printer',
-  monitor: 'Monitor',
-  dock: 'Dock',
-  keyFob: 'Key Fob',
-};
-
-const getField = (row = {}, key = '') => {
-  if (!key) {
-    return undefined;
-  }
-  return row[key] ?? row[key.replace(/\s+/g, ' ')];
-};
-
-const mapSharePointAssetRow = (row = {}, index = 0) => {
-  const id = Number(getField(row, SP_ASSET_FIELDS.id) ?? index + 1);
-  const assetName =
-    getField(row, SP_ASSET_FIELDS.assetName) ||
-    getField(row, 'Title') ||
-    getField(row, SP_ASSET_FIELDS.serialNumber) ||
-    `Asset-${id}`;
-  const assignedTo = formatRosterName(getField(row, SP_ASSET_FIELDS.assignedTo) || '');
-  const purchaseDate = normalizeDateString(getField(row, SP_ASSET_FIELDS.purchaseDate));
   const baseAsset = {
-    id,
-    sheetId: assetName,
-    deviceName: assetName,
-    assetName,
-    type: getField(row, SP_ASSET_FIELDS.type) || 'Hardware',
-    model: getField(row, SP_ASSET_FIELDS.model) || getField(row, SP_ASSET_FIELDS.type) || 'Device',
-    serialNumber: getField(row, SP_ASSET_FIELDS.serialNumber) || assetName,
-    assignedTo,
-    department: getField(row, SP_ASSET_FIELDS.department) || 'UDS',
-    location: getField(row, SP_ASSET_FIELDS.location) || 'Field',
-    status: assignedTo ? 'Checked Out' : 'Available',
+    id: Number(row.id) || index + 1,
+    sheetId: row.sheetId || assetIdentifier,
+    deviceName: row.deviceName || row.assetName || row.serialNumber || assetIdentifier,
+    type,
+    assetName: row.assetName || assetIdentifier,
+    brand: inferredBrand,
+    model: row.model || row.deviceType || 'Device',
+    serialNumber: row.serialNumber || assetIdentifier,
+    assignedTo: hasAssignee ? assignedName : '',
+    department: row.department || person?.department || 'UDS',
+    location: normalizeLocationLabel(row.location || person?.location || 'Remote'),
+    status: row.status || (hasAssignee ? 'Checked Out' : 'Available'),
     purchaseDate,
-    retiredDate: normalizeDateString(getField(row, SP_ASSET_FIELDS.retiredDate)),
-    warrantyExpiry: normalizeDateString(getField(row, SP_ASSET_FIELDS.warrantyExpiry)),
-    cost: Number(getField(row, SP_ASSET_FIELDS.cost) || 0) || 0,
-    checkedOut: Boolean(assignedTo),
-    checkOutDate: purchaseDate || new Date().toISOString().slice(0, 10),
-    qrCode: getField(row, 'QR Code') || '',
+    warrantyExpiry: row.warrantyExpiry || '',
+    retiredDate: row.retiredDate || '',
+    cost,
+    checkedOut: row.checkedOut ?? hasAssignee,
+    checkOutDate: row.checkOutDate || (hasAssignee ? purchaseDate || '' : ''),
+    qrCode: row.qrCode || (row.serialNumber ? `QR-${row.serialNumber}` : assetIdentifier),
+    approvalStatus: row.approvalStatus || 'Approved',
   };
+
   return normalizeAssetStatus(baseAsset);
-};
-
-const buildSharePointAssetPayload = (asset = {}) => ({
-  [SP_ASSET_FIELDS.assetName]: asset.assetName || asset.deviceName || '',
-  [SP_ASSET_FIELDS.type]: asset.type || '',
-  [SP_ASSET_FIELDS.model]: asset.model || '',
-  [SP_ASSET_FIELDS.assignedTo]: asset.assignedTo || '',
-  [SP_ASSET_FIELDS.location]: asset.location || '',
-  [SP_ASSET_FIELDS.serialNumber]: asset.serialNumber || '',
-  [SP_ASSET_FIELDS.purchaseDate]: asset.purchaseDate || null,
-  [SP_ASSET_FIELDS.retiredDate]: asset.retiredDate || null,
-  [SP_ASSET_FIELDS.warrantyExpiry]: asset.warrantyExpiry || null,
-  [SP_ASSET_FIELDS.department]: asset.department || '',
-  [SP_ASSET_FIELDS.cost]: Number(asset.cost) || null,
-});
-
-const mapSharePointEmployeeRow = (row = {}, index = 0) => {
-  const firstName = formatPersonName(getField(row, SP_EMPLOYEE_FIELDS.firstName) || '');
-  const lastName = formatPersonName(getField(row, SP_EMPLOYEE_FIELDS.lastName) || '');
-  const name = `${firstName} ${lastName}`.trim() || getField(row, 'Title') || `Employee ${index + 1}`;
-  const id = getField(row, SP_EMPLOYEE_FIELDS.id) || name || index + 1;
-  const lookupKey = normalizeKey(id);
-  return {
-    id,
-    name,
-    title: getField(row, SP_EMPLOYEE_FIELDS.title) || 'Team member',
-    department: getField(row, SP_EMPLOYEE_FIELDS.department) || getField(row, SP_EMPLOYEE_FIELDS.company) || 'UDS',
-    location: getField(row, SP_EMPLOYEE_FIELDS.location) || getField(row, SP_EMPLOYEE_FIELDS.company) || 'Field',
-    email: getField(row, SP_EMPLOYEE_FIELDS.email) || '',
-    phone: getField(row, SP_EMPLOYEE_FIELDS.phone) || '',
-    startDate: normalizeDateString(getField(row, SP_EMPLOYEE_FIELDS.startDate)),
-    avatar: EMPLOYEE_PHOTOS[lookupKey],
-    lookupKey,
-  };
-};
-
-const buildSharePointEmployeePayload = (profile = {}) => {
-  const nameParts = (profile.name || '').trim().split(/\s+/);
-  const firstName = formatPersonName(nameParts[0] || '');
-  const lastName = formatPersonName(nameParts.slice(1).join(' '));
-  return {
-    [SP_EMPLOYEE_FIELDS.firstName]: firstName,
-    [SP_EMPLOYEE_FIELDS.lastName]: lastName,
-    [SP_EMPLOYEE_FIELDS.id]: profile.id || profile.lookupKey || profile.email || firstName || lastName,
-    [SP_EMPLOYEE_FIELDS.company]: profile.department || 'UDS',
-    [SP_EMPLOYEE_FIELDS.department]: profile.department || 'UDS',
-    [SP_EMPLOYEE_FIELDS.location]: profile.location || 'Field',
-    [SP_EMPLOYEE_FIELDS.title]: profile.title || 'Team member',
-    [SP_EMPLOYEE_FIELDS.email]: profile.email || '',
-    [SP_EMPLOYEE_FIELDS.startDate]: profile.startDate || null,
-    [SP_EMPLOYEE_FIELDS.phone]: profile.phone || '',
-    [SP_EMPLOYEE_FIELDS.computer]: profile.computer || '',
-    [SP_EMPLOYEE_FIELDS.printer]: profile.printer || '',
-    [SP_EMPLOYEE_FIELDS.monitor]: profile.monitor || '',
-    [SP_EMPLOYEE_FIELDS.dock]: profile.dock || '',
-    [SP_EMPLOYEE_FIELDS.keyFob]: profile.keyFob || '',
-  };
 };
 
 const buildAssetsFromSheet = (assetRows = assetSheetData, employeeRows = employeeSheetData) => {
   const employeeDirectory = buildEmployeeDirectory(employeeRows);
   return (assetRows || [])
-    .filter((row) => row['Device Name'] || row['Serial Num'] || row['Product Num'])
+    .filter((row) => {
+      if (!row) return false;
+      const hasRawColumns = row['Device Name'] || row['Serial Num'] || row['Product Num'];
+      const hasNormalizedColumns = row.assetName || row.serialNumber || row.deviceName || row.sheetId;
+      return hasRawColumns || hasNormalizedColumns;
+    })
     .map((row, index) => {
+      if (row.assetName || row.serialNumber || row.deviceName || row.sheetId) {
+        return mapNormalizedAssetRow(row, index, employeeDirectory);
+      }
       const assignedName = formatRosterName(row.ContactID);
       const hasAssignee = Boolean(assignedName && assignedName !== 'Unassigned');
       const person = employeeDirectory[assignedName] || null;
@@ -1713,7 +1066,7 @@ const buildAssetsFromSheet = (assetRows = assetSheetData, employeeRows = employe
         serialNumber: row['Serial Num'] || row['Product Num'] || row['Device Name'],
         assignedTo: hasAssignee ? assignedName : '',
         department: person?.department || 'UDS',
-        location: row.Combo445 || person?.location || 'Field',
+        location: normalizeLocationLabel(row.Combo445 || person?.location || 'Remote'),
         status: determineAssetStatus(row, hasAssignee),
         purchaseDate,
         warrantyExpiry,
@@ -1798,7 +1151,7 @@ const buildTeamSpotlight = (rows = employeeSheetData, limit = 8) =>
         name,
         title: row['Job Title'] || 'Team member',
         department: row['Department'] || row['Company'] || 'UDS',
-        location: row['Location'] || row['Company'] || 'Field',
+        location: normalizeLocationLabel(row['Location'] || row['Company'] || 'Remote'),
         email: row['E-mail Address'] || '',
         supervisor: row['Supervisor'] || row['Manager'] || '',
         supervisorEmail: row['Supervisor Email'] || '',
@@ -1811,7 +1164,6 @@ const buildTeamSpotlight = (rows = employeeSheetData, limit = 8) =>
 
 const BASE_ASSETS = buildAssetsFromSheet();
 const BASE_HISTORY = [];
-const BASE_TEAM = buildTeamSpotlight();
 const BASE_EMPLOYEE_GALLERY = buildTeamSpotlight(undefined, Number.MAX_SAFE_INTEGER);
 const buildCanonicalMap = (assets = []) =>
   assets.reduce((acc, asset) => {
@@ -1878,7 +1230,7 @@ const computeLifecycleReminders = (assets) => {
           overdue: diff < 0,
           warrantyExpiry: asset.warrantyExpiry,
           assignedTo: asset.assignedTo || 'Unassigned',
-          location: asset.location || 'Field',
+          location: normalizeLocationLabel(asset.location || 'Remote'),
           model: asset.model || asset.brand || 'Device',
         });
       }
@@ -1892,7 +1244,7 @@ const computeLifecycleReminders = (assets) => {
           overdue: true,
           warrantyExpiry: asset.warrantyExpiry,
           assignedTo: asset.assignedTo || 'Unassigned',
-          location: asset.location || 'Field',
+          location: normalizeLocationLabel(asset.location || 'Remote'),
           model: asset.model || asset.brand || 'Device',
         });
       }
@@ -2017,7 +1369,7 @@ const formatCurrency = (value) =>
 
 const formatDate = (value) => {
   if (!value) {
-    return 'â€”';
+    return 'N/A';
   }
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
@@ -2028,6 +1380,41 @@ const formatDate = (value) => {
     day: 'numeric',
     year: 'numeric',
   });
+};
+
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Unable to read file'));
+    reader.readAsDataURL(file);
+  });
+
+const uploadEmployeePhoto = async (file) => {
+  if (!file) {
+    return '';
+  }
+  if (!EMPLOYEE_PHOTO_UPLOAD_URL || typeof fetch !== 'function') {
+    return readFileAsDataUrl(file);
+  }
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await fetch(EMPLOYEE_PHOTO_UPLOAD_URL, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!response.ok) {
+    throw new Error('Photo upload failed. Please try again.');
+  }
+  const data = (await response.json().catch(() => ({}))) || {};
+  const uploadedUrl = data.url || data.secure_url || data.location || '';
+  if (uploadedUrl) {
+    return uploadedUrl;
+  }
+  if (EMPLOYEE_PHOTO_CDN) {
+    return `${EMPLOYEE_PHOTO_CDN}/${encodeURIComponent(file.name)}`;
+  }
+  throw new Error('Photo upload did not return a URL.');
 };
 
 const sendZoomAlert = async (title, message) => {
@@ -2160,7 +1547,7 @@ const computeLaptopRefreshReport = (assets = [], referenceInput = '') => {
         purchaseDate: asset.purchaseDate,
         ageYears,
         assignedTo: asset.assignedTo || 'Unassigned',
-        location: asset.location || 'Field',
+        location: normalizeLocationLabel(asset.location || 'Remote'),
         model: asset.model || `${asset.brand || 'Laptop'}`,
         brand: asset.brand || 'Unknown',
         status: getAssetDisplayStatus(asset),
@@ -2218,8 +1605,8 @@ const flattenReportPayload = (value, prefix = '', scalars = [], datasets = []) =
 const describeLaptopRepairIssue = (asset = {}, order = null) => {
   if (order) {
     const vendor = order.vendor || asset.brand || 'Vendor';
-    const eta = order.eta ? ` Â· ETA ${order.eta}` : '';
-    return `${order.status} Â· ${order.severity || 'Normal'} priority with ${vendor}${eta}`;
+    const eta = order.eta ? ` - ETA ${order.eta}` : '';
+    return `${order.status} - ${order.severity || 'Normal'} priority with ${vendor}${eta}`;
   }
   const reference = asset.serialNumber || asset.assetName || asset.deviceName || asset.id;
   const note = LAPTOP_REPAIR_NOTES[hashString(reference) % LAPTOP_REPAIR_NOTES.length];
@@ -2298,182 +1685,6 @@ const computeLaptopServiceSummary = (assets = [], workOrders = [], manualRepairs
   };
 };
 
-const computeInventoryHealth = (assets = [], history = []) => {
-  if (!assets.length) {
-    return {
-      dataQualityScore: 0,
-      auditReadyPercent: 0,
-      missingSerials: 0,
-      missingLocation: 0,
-      missingWarranty: 0,
-      missingOwner: 0,
-      qrMissing: 0,
-      maintenanceCount: 0,
-      retiredCount: 0,
-      warrantySoon: 0,
-      newAssets: 0,
-      auditCandidates: [],
-    };
-  }
-
-  const now = new Date();
-  const msInDay = 1000 * 60 * 60 * 24;
-  const missingSerials = assets.filter((asset) => !asset.serialNumber).length;
-  const missingLocation = assets.filter((asset) => !asset.location).length;
-  const missingWarranty = assets.filter((asset) => !asset.warrantyExpiry).length;
-  const missingOwner = assets.filter((asset) => !asset.assignedTo && getAssetDisplayStatus(asset) !== 'Retired').length;
-  const qrMissing = assets.filter((asset) => !asset.qrCode).length;
-  const maintenanceCount = assets.filter((asset) => getAssetDisplayStatus(asset) === 'Maintenance').length;
-  const retiredCount = assets.filter((asset) => getAssetDisplayStatus(asset) === 'Retired').length;
-  const warrantySoon = assets.filter((asset) => {
-    if (!asset.warrantyExpiry) {
-      return false;
-    }
-    const diffDays = Math.round((new Date(asset.warrantyExpiry) - now) / msInDay);
-    return diffDays >= -30 && diffDays <= 90;
-  }).length;
-  const newAssets = assets.filter((asset) => {
-    if (!asset.purchaseDate) {
-      return false;
-    }
-    const diffDays = Math.round((now - new Date(asset.purchaseDate)) / msInDay);
-    return diffDays >= 0 && diffDays <= 30;
-  }).length;
-
-  const auditCandidates = assets
-    .map((asset) => {
-      const status = getAssetDisplayStatus(asset);
-      const issues = [];
-      if (!asset.location) {
-        issues.push('Location missing');
-      }
-      if (!asset.serialNumber) {
-        issues.push('Serial missing');
-      }
-      if (!asset.warrantyExpiry) {
-        issues.push('No warranty date');
-      } else {
-        const diffDays = Math.round((new Date(asset.warrantyExpiry) - now) / msInDay);
-        if (diffDays >= 0 && diffDays <= 90) {
-          issues.push('Warranty expiring');
-        }
-      }
-      if (!asset.qrCode) {
-        issues.push('QR label needed');
-      }
-      if (!asset.assignedTo) {
-        issues.push('Unassigned');
-      }
-      if (issues.length === 0 || status === 'Retired') {
-        return null;
-      }
-      return {
-        id: asset.id,
-        name: asset.assetName || asset.deviceName || `Asset-${asset.id}`,
-        location: asset.location || 'Not set',
-        status,
-        issue: issues.slice(0, 2).join(' \u2022 '),
-        score: issues.length,
-      };
-    })
-    .filter(Boolean)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 6);
-
-  const auditReadyCount = assets.filter(
-    (asset) => asset.location && asset.serialNumber && asset.warrantyExpiry && getAssetDisplayStatus(asset) !== 'Retired',
-  ).length;
-  const dataQualityScore = Math.max(
-    0,
-    Math.min(
-      100,
-      Math.round(
-        100 - ((missingSerials + missingLocation + missingWarranty + qrMissing) / (assets.length * 4 || 1)) * 100,
-      ),
-    ),
-  );
-  const auditReadyPercent = Math.round((auditReadyCount / (assets.length || 1)) * 100);
-
-  return {
-    dataQualityScore,
-    auditReadyPercent,
-    missingSerials,
-    missingLocation,
-    missingWarranty,
-    missingOwner,
-    qrMissing,
-    maintenanceCount,
-    retiredCount,
-    warrantySoon,
-    newAssets,
-    auditCandidates,
-  };
-};
-
-const buildAuditRuns = (assets = [], insights = { topLocations: [] }) => {
-  const now = new Date();
-  const msInDay = 1000 * 60 * 60 * 24;
-  const warrantySoon = assets.filter((asset) => {
-    if (!asset.warrantyExpiry) {
-      return false;
-    }
-    const diffDays = Math.round((new Date(asset.warrantyExpiry) - now) / msInDay);
-    return diffDays >= 0 && diffDays <= 90 && getAssetDisplayStatus(asset) !== 'Retired';
-  }).length;
-  const newAssets = assets.filter((asset) => asset.purchaseDate && (now - new Date(asset.purchaseDate)) / msInDay <= 30).length;
-  const highValueAssets = assets.filter((asset) => Number(asset.cost || 0) >= 1500).length;
-  const unassigned = assets.filter((asset) => !asset.assignedTo && getAssetDisplayStatus(asset) !== 'Retired').length;
-  const locationTargets = (insights?.topLocations || []).map((entry) => `${entry.location} (${entry.count})`).slice(0, 3);
-
-  return [
-    {
-      id: 'monthly-floor',
-      title: 'Monthly floor walk',
-      priority: 'High',
-      due: 'This week',
-      count: locationTargets.length || assets.length,
-      description: 'Spot-check busiest sites, scan labels, and confirm each asset is physically present.',
-      scope: locationTargets,
-    },
-    {
-      id: 'high-value',
-      title: 'High-value custody',
-      priority: 'High',
-      due: '7 days',
-      count: highValueAssets,
-      description: 'Verify chain-of-custody for laptops, phones, or gear valued above $1,500.',
-      scope: ['Costing $1.5k+'],
-    },
-    {
-      id: 'warranty-window',
-      title: 'Warranty expirations',
-      priority: 'Medium',
-      due: '30 days',
-      count: warrantySoon,
-      description: 'Inspect devices before coverage ends and schedule proactive service if needed.',
-      scope: ['Expiring within 90 days'],
-    },
-    {
-      id: 'new-deployments',
-      title: 'New deployments',
-      priority: 'Medium',
-      due: '14 days',
-      count: newAssets,
-      description: 'Baseline photos, QR labels, and owner confirmation for recently purchased equipment.',
-      scope: ['Added in the last 30 days'],
-    },
-    {
-      id: 'unassigned',
-      title: 'Unassigned devices',
-      priority: 'Medium',
-      due: 'This week',
-      count: unassigned,
-      description: 'Attach owners and locations to gear floating between teams.',
-      scope: ['Assign and document location'],
-    },
-  ];
-};
-
 const CardShell = ({ title, icon: Icon, action, children }) => (
   <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
     <div className="mb-4 flex items-center justify-between">
@@ -2489,6 +1700,7 @@ const CardShell = ({ title, icon: Icon, action, children }) => (
 
 const PrimaryNav = ({
   onAdd,
+  onAddEmployee,
   activePage,
   onNavigate,
   onToggleTheme,
@@ -2517,7 +1729,7 @@ const PrimaryNav = ({
           </div>
           <span className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 sm:inline-flex">
             <ShieldCheck className="h-3.5 w-3.5" />
-            Live sync
+            Sync paused
           </span>
         </div>
         <div className="flex flex-1 flex-wrap items-start justify-end gap-2">
@@ -2544,29 +1756,30 @@ const PrimaryNav = ({
       </div>
       <div
         className={`flex w-full flex-wrap items-center justify-between gap-4 text-sm font-medium ${
-          isDarkMode ? 'text-slate-200' : 'text-slate-500'
-        }`}
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={onAdd}
-            className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+        isDarkMode ? 'text-slate-200' : 'text-slate-500'
+      }`}
+    >
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+        <button
+          onClick={onAdd}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-500 sm:w-auto"
+        >
+          <Monitor className="h-4 w-4" />
+          New asset
+        </button>
+        <button
+          onClick={onAddEmployee}
+          type="button"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-500 sm:w-auto"
           >
-            <Plus className="h-4 w-4" />
-            New asset
+            <Users className="h-4 w-4" />
+            New employee
           </button>
-          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-1.5">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500" />
-            <div>
-              <p className="text-xs font-semibold text-slate-700">Operations</p>
-              <p className="text-[11px] font-semibold text-slate-500">IT Department</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onOpenCommandPalette}
-            className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold transition ${
-              isDarkMode
+        <button
+          type="button"
+          onClick={onOpenCommandPalette}
+          className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold transition sm:w-auto ${
+            isDarkMode
                 ? 'border border-slate-700 text-slate-100 hover:border-slate-500'
                 : 'border border-slate-200 text-slate-600 hover:border-slate-300'
             }`}
@@ -2575,7 +1788,7 @@ const PrimaryNav = ({
             Command palette
           </button>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-4">
+        <div className="flex flex-wrap items-center justify-end gap-4 overflow-x-auto pb-1">
           {NAV_LINKS.map((item) => (
             <button
               key={item}
@@ -2772,10 +1985,10 @@ const OverviewAttentionPanel = ({ overdue = [], dueSoon = [], maintenance = [], 
               <div>
                 <p className="text-sm font-semibold text-slate-900">{reminder.assetName || reminder.model}</p>
                 <p className="text-xs text-slate-500">
-                  {reminder.type} • {reminder.overdue ? 'Overdue' : `${reminder.daysRemaining} days`}
+                  {reminder.type} - {reminder.overdue ? 'Overdue' : `${reminder.daysRemaining} days`}
                 </p>
                 <p className="text-xs text-slate-500">
-                  {reminder.location || 'Location TBD'} • {reminder.assignedTo || 'Unassigned'}
+                  {reminder.location || 'Location TBD'} - {reminder.assignedTo || 'Unassigned'}
                 </p>
               </div>
               <span
@@ -2837,7 +2050,7 @@ const OverviewActivityCard = ({ history = [], maintenance = [], lookupAsset }) =
             </div>
             <div>
               <p className="text-sm font-semibold text-slate-800">
-                {entry.action} • {lookupAsset ? lookupAsset(entry.assetId) : entry.assetId}
+                {entry.action} - {lookupAsset ? lookupAsset(entry.assetId) : entry.assetId}
               </p>
               <p className="text-xs text-slate-500">
                 {entry.date} | {entry.user}
@@ -2903,70 +2116,6 @@ const SpendHotspotsCard = ({ costByDepartment = [], topLocations = [] }) => {
     </CardShell>
   );
 };
-
-const TeamSpotlightPanel = ({ team = [], remoteShare, downloadHref }) => (
-  <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
-    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 p-5">
-      <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Employee Information Hub.xlsx</p>
-        <p className="text-lg font-semibold text-slate-900">Team spotlight</p>
-        <p className="text-sm text-slate-500">{remoteShare}% remote assignments</p>
-      </div>
-      <a
-        href={downloadHref}
-        download
-        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300"
-      >
-        <Download className="h-4 w-4" />
-        Roster
-      </a>
-    </div>
-    <ul className="divide-y divide-slate-100">
-      {team.map((member) => (
-        <li key={member.id} className="flex items-start gap-3 p-5">
-          {member.avatar ? (
-            <img src={member.avatar} alt={`${member.name} avatar`} className="h-12 w-12 rounded-2xl object-cover" />
-          ) : (
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-600">
-              {getInitials(member.name)}
-            </div>
-          )}
-          <div className="flex-1">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">{member.name}</p>
-                <p className="text-xs text-slate-500">{member.title}</p>
-              </div>
-              {member.startDate && <p className="text-[11px] text-slate-400">Since {formatDate(member.startDate)}</p>}
-            </div>
-            <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="h-3.5 w-3.5" />
-                {member.location}
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <Tag className="h-3.5 w-3.5" />
-                {member.department}
-              </span>
-            </div>
-            <div className="mt-2 text-xs text-blue-600">
-              {member.email && (
-                <a href={`mailto:${member.email}`} className="hover:underline">
-                  {member.email}
-                </a>
-              )}
-              {!member.email && member.phone && (
-                <a href={`tel:${member.phone}`} className="font-semibold text-blue-600 hover:underline">
-                  {member.phone}
-                </a>
-              )}
-            </div>
-          </div>
-        </li>
-      ))}
-    </ul>
-  </div>
-);
 
 const VendorCard = ({ vendor }) => {
   const accentFrom = vendor.accent?.from || '#0f172a';
@@ -3273,7 +2422,7 @@ const NetworkPrinterBoard = ({
       </div>
       {remaining > 0 && (
         <p className="px-5 py-4 text-xs text-slate-500">
-          +{remaining} additional printers tracked in SharePoint.
+          +{remaining} additional printers managed outside this view.
         </p>
       )}
     </div>
@@ -3333,15 +2482,28 @@ const SoftwareSuiteCard = ({ suite, onEdit, onDelete }) => {
   const perSeat = suite.seats ? Math.round((suite.cost || 0) / suite.seats) : 0;
   const accentFrom = suite.accent?.from || '#0f172a';
   const accentTo = suite.accent?.to || '#1d4ed8';
-  const gradientStyle = {
-    backgroundImage: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`,
-  };
-  const initials = getInitials(suite.software);
+  const vendorKey = normalizeKey(suite.vendor || '');
+  const softwareKey = normalizeKey((suite.software || '').replace(/[^a-z0-9]+/gi, ''));
+  const suiteLogo =
+    suite.logo ||
+    SOFTWARE_LOGOS[suite.id] ||
+    SOFTWARE_LOGOS[vendorKey] ||
+    SOFTWARE_LOGOS[softwareKey] ||
+    null;
+  const topStyle = suiteLogo
+    ? {
+        backgroundImage: `linear-gradient(135deg, rgba(15,23,42,0.75), rgba(29,78,216,0.75)), url(${suiteLogo})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }
+    : {
+        backgroundImage: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`,
+      };
 
   return (
     <div className="flex h-full flex-col justify-between rounded-3xl border border-slate-100 bg-white p-6 shadow-sm ring-1 ring-transparent transition hover:-translate-y-0.5 hover:shadow-xl hover:ring-blue-100">
       <div>
-        <div className="relative mb-5 overflow-hidden rounded-2xl border border-white/20 p-5 text-white shadow-inner" style={gradientStyle}>
+        <div className="relative mb-5 overflow-hidden rounded-2xl border border-white/20 p-5 text-white shadow-inner" style={topStyle}>
           {onEdit && (
             <div className="absolute right-3 top-3 flex gap-2">
               <button
@@ -3370,18 +2532,6 @@ const SoftwareSuiteCard = ({ suite, onEdit, onDelete }) => {
               <p className="mt-2 text-xl font-semibold leading-tight">{suite.software}</p>
               <p className="mt-1 text-xs text-white/80">{suite.owner}</p>
             </div>
-            {suite.logo ? (
-              <div className="flex h-14 w-24 items-center justify-center rounded-2xl bg-white/15 p-2 backdrop-blur">
-                <img
-                  src={suite.logo}
-                  alt={`${suite.software} logo`}
-                  className="max-h-10 w-auto object-contain drop-shadow-[0_10px_30px_rgba(15,23,42,0.35)]"
-                  loading="lazy"
-                />
-              </div>
-            ) : (
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 text-lg font-semibold text-white">{initials}</div>
-            )}
           </div>
         </div>
 
@@ -3599,13 +2749,20 @@ const SoftwareFormModal = ({ suite, onSubmit, onCancel }) => {
           </label>
           <label className="text-sm font-medium text-slate-700">
             Annual cost
-            <input
-              type="number"
-              value={form.cost}
-              onChange={(event) => update('cost', Number(event.target.value))}
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              min="0"
-            />
+            <div className="relative mt-2">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">$</span>
+              <input
+                type="number"
+                value={form.cost === '' ? '' : form.cost}
+                onChange={(event) => {
+                  const raw = event.target.value;
+                  update('cost', raw === '' ? '' : Number(raw));
+                }}
+                placeholder="0"
+                className="w-full rounded-2xl border border-slate-200 pl-7 pr-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                min="0"
+              />
+            </div>
           </label>
           <label className="text-sm font-medium text-slate-700">
             Deployment
@@ -3637,7 +2794,7 @@ const SoftwareFormModal = ({ suite, onSubmit, onCancel }) => {
               value={form.stackText}
               onChange={(event) => update('stackText', event.target.value)}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              placeholder="SharePoint, Teams, Intune"
+              placeholder="OneDrive, Teams, Intune"
             />
           </label>
         </div>
@@ -3728,10 +2885,10 @@ const LicenseCompliancePanel = ({ data = [] }) => {
         <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
           <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-5 py-3">Suite</th>
-              <th className="px-5 py-3">Used / Seats</th>
-              <th className="px-5 py-3">Delta</th>
-              <th className="px-5 py-3">Status</th>
+              <th className="px-5 py-3 whitespace-nowrap">Suite</th>
+              <th className="px-5 py-3 whitespace-nowrap">Used / Seats</th>
+              <th className="px-5 py-3 whitespace-nowrap">Delta</th>
+              <th className="px-5 py-3 whitespace-nowrap">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-slate-600">
@@ -3742,9 +2899,9 @@ const LicenseCompliancePanel = ({ data = [] }) => {
                   {item.used} / {item.seats}
                 </td>
                 <td className="px-5 py-3">{item.delta > 0 ? `+${item.delta}` : item.delta}</td>
-                <td className="px-5 py-3">
+                <td className="px-5 py-3 whitespace-nowrap">
                   <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    className={`rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${
                       item.status === 'Overused'
                         ? 'bg-rose-50 text-rose-600'
                         : item.status === 'At capacity'
@@ -3918,14 +3075,27 @@ const EmployeeDirectoryGrid = ({
   onEdit = () => {},
   onDelete = () => {},
   onPhoto = () => {},
+  downloadHref,
 }) => (
   <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
-    <div className="border-b border-slate-100 px-6 py-5">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">People ops</p>
-      <p className="text-lg font-semibold text-slate-900">Employee directory</p>
-      <p className="text-sm text-slate-500">
-        Displaying {members.length} of {totalCount} team members with photos and contact info
-      </p>
+    <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-6 py-5">
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">People ops</p>
+        <p className="text-lg font-semibold text-slate-900">Employee directory</p>
+        <p className="text-sm text-slate-500">
+          Displaying {members.length} of {totalCount} team members with photos and contact info
+        </p>
+      </div>
+      {downloadHref && (
+        <a
+          href={downloadHref}
+          download
+          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300"
+        >
+          <Download className="h-4 w-4" />
+          Roster
+        </a>
+      )}
     </div>
     <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
       {members.map((member) => {
@@ -4054,7 +3224,7 @@ const EmployeeDirectoryGrid = ({
                           <p className="text-sm font-semibold text-slate-900">
                             {assetId}
                             {showDeviceLabel && (
-                              <span className="text-xs font-normal text-slate-500"> Â· {deviceLabel}</span>
+                              <span className="text-xs font-normal text-slate-500"> - {deviceLabel}</span>
                             )}
                           </p>
                           <p className="text-[11px] text-slate-600">
@@ -4080,7 +3250,7 @@ const EmployeeDirectoryGrid = ({
                       <li key={`${suite.suiteId || suite.name}-${suite.licenseKey || ''}-${member.id}`} className="rounded-2xl border border-slate-100 bg-white p-3">
                         <p className="text-sm font-semibold text-slate-900">{suite.name}</p>
                         <p className="text-[11px] text-slate-600">
-                          <span className="font-semibold text-slate-700">Vendor:</span> {suite.vendor || '—'}
+                          <span className="font-semibold text-slate-700">Vendor:</span> {suite.vendor || 'N/A'}
                         </p>
                         {suite.licenseKey && (
                           <p className="text-[11px] text-slate-600">
@@ -4115,18 +3285,18 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
     loanerTotal = 0,
   } = data;
   return (
-    <div className="rounded-3xl border border-slate-100 bg-gradient-to-b from-white to-slate-50 p-6 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+    <div className="rounded-3xl border border-slate-100 bg-white/90 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800/60">
         <div className="flex flex-wrap items-center gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Repair desk</p>
-            <p className="text-xl font-semibold text-slate-900">Laptop service status</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400 dark:text-slate-500">Repair desk</p>
+            <p className="text-xl font-semibold text-slate-900 dark:text-white">Laptop service status</p>
           </div>
           {typeof onAddRepair === 'function' && (
             <button
               type="button"
               onClick={onAddRepair}
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600"
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600 dark:border-slate-700 dark:text-slate-200 dark:hover:border-blue-400"
             >
               <Plus className="h-4 w-4" />
               Add
@@ -4134,78 +3304,83 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
           )}
         </div>
         <div className="text-right">
-          <p className="text-xs uppercase tracking-widest text-slate-400">Avg age in repair</p>
-          <p className="text-2xl font-semibold text-slate-900">{avgRepairAgeMonths || 0} mo</p>
+          <p className="text-xs uppercase tracking-widest text-slate-400 dark:text-slate-500">Avg age in repair</p>
+          <p className="text-2xl font-semibold text-slate-900 dark:text-white">{avgRepairAgeMonths || 0} mo</p>
         </div>
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.5fr,1fr]">
-        <div className="rounded-2xl border border-slate-100 bg-white/80 p-4">
+        <div className="rounded-2xl border border-slate-100 bg-white/90 p-4 dark:border-slate-800 dark:bg-slate-800/70">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500">Laptops out for repair</p>
-              <p className="text-sm text-slate-600">{repairTotal} devices</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500 dark:text-slate-400">Laptops out for repair</p>
+              <p className="text-sm text-slate-600 dark:text-slate-200">{repairTotal} devices</p>
             </div>
-            <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+            <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-100">
               {repairTotal > 0 ? 'In progress' : 'All clear'}
             </span>
           </div>
           {repairs.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-500">No laptops currently staged at the depot.</p>
+            <p className="mt-4 text-sm text-slate-500 dark:text-slate-300">No laptops currently staged at the depot.</p>
           ) : (
             <ul className="mt-4 space-y-3">
               {repairs.map((item) => (
-                <li key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
+                <li
+                  key={item.id}
+                  className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-800/80"
+                >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-slate-900">{item.assetId}</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.assetId}</p>
                     <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-500">{item.status}</span>
+                      <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-500 dark:bg-slate-900/70 dark:text-slate-200">
+                        {item.status}
+                      </span>
                       {typeof onEditRepair === 'function' && (
                         <button
                           type="button"
                           onClick={() => onEditRepair(item)}
-                          className="rounded-full border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-600"
+                          className="rounded-full border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-600 dark:border-slate-700 dark:text-slate-200 dark:hover:border-blue-400"
                         >
                           Edit
                         </button>
                       )}
                     </div>
                   </div>
-                  <p className="mt-1 text-xs text-slate-500">{item.issue}</p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{item.issue}</p>
                   <p className="mt-1 text-xs text-slate-500">
-                    Assigned to <span className="font-semibold text-slate-900">{item.assignedTo}</span> Â· {item.model}
+                    Assigned to <span className="font-semibold text-slate-900">{item.assignedTo}</span> - {item.model}
                   </p>
                 </li>
               ))}
             </ul>
           )}
         </div>
-        <div className="rounded-2xl border border-slate-100 bg-white/80 p-4">
+        <div className="rounded-2xl border border-slate-100 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-800/70">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500">Loaner laptops</p>
-            <p className="text-sm font-semibold text-slate-900">
+            <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500 dark:text-slate-400">Loaner laptops</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">
               {loanerAvailableCount}/{loanerTotal} ready
             </p>
-            <p className="text-xs text-slate-500">Tap a device below to reserve or return it.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-300">Tap a device below to reserve or return it.</p>
           </div>
           <div className="mt-3">
             {loanersAvailable.length === 0 ? (
-              <p className="text-xs text-slate-400">No devices ready.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">No devices ready.</p>
             ) : (
               <ul className="space-y-2">
                 {loanersAvailable.map((loaner) => (
                   <li
                     key={loaner.id}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3"
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3 dark:border-emerald-900/40 dark:bg-emerald-900/30"
                   >
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">{loaner.assetId}</p>
-                      <p className="text-[11px] text-emerald-600">{loaner.location}</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{loaner.assetId}</p>
+                      <p className="text-[11px] text-emerald-600 dark:text-emerald-200">{loaner.location}</p>
                     </div>
                     {typeof onLoanerCheckout === 'function' && (
                       <button
                         type="button"
                         onClick={() => onLoanerCheckout(loaner.asset)}
-                        className="rounded-2xl border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-700 transition hover:border-emerald-300"
+                        className="rounded-2xl border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-700 transition hover:border-emerald-300 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100 dark:hover:border-emerald-700"
                       >
                         Check out
                       </button>
@@ -4215,25 +3390,28 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
               </ul>
             )}
           </div>
-          <div className="mt-4 border-t border-slate-100 pt-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500">Currently deployed</p>
+          <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800/60">
+            <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500 dark:text-slate-400">Currently deployed</p>
             {loanersDeployed.length === 0 ? (
-              <p className="mt-2 text-xs text-slate-500">No loaners currently checked out.</p>
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">No loaners currently checked out.</p>
             ) : (
               <ul className="mt-2 space-y-2">
                 {loanersDeployed.map((loaner) => (
-                  <li key={loaner.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                  <li
+                    key={loaner.id}
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/70"
+                  >
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">{loaner.assetId}</p>
-                      <p className="text-xs text-slate-500">
-                        Assigned to <span className="font-semibold text-slate-900">{loaner.assignedTo}</span> ? {loaner.location}
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{loaner.assetId}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-300">
+                        Assigned to <span className="font-semibold text-slate-900 dark:text-white">{loaner.assignedTo}</span> - {loaner.location}
                       </p>
                     </div>
                     {typeof onLoanerCheckin === 'function' && (
                       <button
                         type="button"
                         onClick={() => onLoanerCheckin(loaner.asset)}
-                        className="rounded-2xl border border-blue-200 bg-white px-3 py-1 text-xs font-semibold text-blue-700 transition hover:border-blue-300"
+                        className="rounded-2xl border border-blue-200 bg-white px-3 py-1 text-xs font-semibold text-blue-700 transition hover:border-blue-300 dark:border-blue-900 dark:bg-blue-900/30 dark:text-blue-200"
                       >
                         Check in
                       </button>
@@ -4242,8 +3420,8 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
                 ))}
               </ul>
             )}
-            <p className="mt-3 text-[11px] text-slate-400">
-              {loanerDeployedCount} out in the field ? keep at least 2 staged for emergencies.
+            <p className="mt-3 text-[11px] text-slate-400 dark:text-slate-500">
+              {loanerDeployedCount} out in the field - keep at least 2 staged for emergencies.
             </p>
           </div>
         </div>
@@ -4315,10 +3493,10 @@ const LaptopRefreshReport = ({ data, selectedDate, onDateChange, onExport }) => 
                   <span className="text-xs font-semibold text-slate-500">{row.ageYears.toFixed(1)} yrs</span>
                 </div>
                 <p className="text-xs text-slate-500">
-                  {row.model} · Purchased {formatDate(row.purchaseDate)}
+                  {row.model} - Purchased {formatDate(row.purchaseDate)}
                 </p>
                 <p className="text-xs text-slate-500">
-                  Assigned to <span className="font-semibold text-slate-900">{row.assignedTo}</span> Â· {row.location}
+                  Assigned to <span className="font-semibold text-slate-900">{row.assignedTo}</span> - {row.location}
                 </p>
               </div>
             ))}
@@ -4364,7 +3542,7 @@ const LicenseRiskReport = ({ data = [], onExport }) => {
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                {suite.used} / {suite.seats} seats Â· {suite.delta} buffer
+                {suite.used} / {suite.seats} seats - {suite.delta} buffer
               </p>
               <p className="text-xs text-slate-400">Owner: {suite.owner}</p>
             </li>
@@ -4420,7 +3598,7 @@ const LoanerCoverageReport = ({ data, onExport }) => {
             <ul className="mt-2 space-y-2">
               {data.loanersAvailable.map((loaner) => (
                 <li key={loaner.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-2 text-xs text-slate-600">
-                  <span className="font-semibold text-slate-900">{loaner.assetId}</span> Â· {loaner.location}
+                  <span className="font-semibold text-slate-900">{loaner.assetId}</span> - {loaner.location}
                 </li>
               ))}
             </ul>
@@ -4434,7 +3612,7 @@ const LoanerCoverageReport = ({ data, onExport }) => {
             <ul className="mt-2 space-y-2">
               {data.loanersDeployed.map((loaner) => (
                 <li key={loaner.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-2 text-xs text-slate-600">
-                  <span className="font-semibold text-slate-900">{loaner.assetId}</span> â†’ {loaner.assignedTo}
+                  <span className="font-semibold text-slate-900">{loaner.assetId}</span> {'->'} {loaner.assignedTo}
                 </li>
               ))}
             </ul>
@@ -4480,10 +3658,16 @@ const DepreciationForecastTable = ({ forecast = [] }) => (
   </CardShell>
 );
 
-const AssetFilters = ({ filters, onChange, onReset, types }) => (
-  <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-    <div className="flex flex-wrap items-center gap-3">
-      <div className="relative flex-1 min-w-[220px]">
+const AssetFilters = ({ filters, onChange, onReset, types, embedded = false }) => (
+  <div
+    className={`${
+      embedded
+        ? 'rounded-2xl border border-slate-100 bg-slate-50/60 p-4'
+        : 'rounded-2xl border border-slate-100 bg-white p-4 shadow-sm'
+    }`}
+  >
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-[2fr_repeat(3,minmax(0,1fr))] xl:items-center">
+      <div className="relative sm:col-span-2 xl:col-span-1">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           value={filters.search}
@@ -4495,7 +3679,7 @@ const AssetFilters = ({ filters, onChange, onReset, types }) => (
       <select
         value={filters.type}
         onChange={(event) => onChange('type', event.target.value)}
-        className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
       >
         <option value="all">All types</option>
         {types.map((type) => (
@@ -4507,7 +3691,7 @@ const AssetFilters = ({ filters, onChange, onReset, types }) => (
       <select
         value={filters.status}
         onChange={(event) => onChange('status', event.target.value)}
-        className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
       >
         <option value="all">All statuses</option>
         <option value="Available">Available</option>
@@ -4517,7 +3701,7 @@ const AssetFilters = ({ filters, onChange, onReset, types }) => (
       </select>
       <button
         onClick={onReset}
-        className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900 sm:col-span-2 lg:col-span-1"
       >
         <SlidersHorizontal className="h-4 w-4" />
         Reset filters
@@ -4532,10 +3716,10 @@ const AssetTable = ({
   onAction,
   onSelect = () => {},
   selectedId,
-  sharePointMode = false,
   qualityLookup = {},
   sortConfig,
   onSortChange,
+  isMobile = false,
 }) => {
   const toggleSort = (key) => {
     if (!onSortChange) return;
@@ -4552,6 +3736,104 @@ const AssetTable = ({
     return (
       <div className="rounded-2xl border border-dashed border-slate-200 bg-white/80 p-12 text-center text-sm text-slate-500">
         No assets match the selected filters. Try clearing filters or adjusting search.
+      </div>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <div className="space-y-3">
+        {assets.map((asset) => {
+          const Icon = assetTypeIcons[asset.type] || Monitor;
+          const isSelected = selectedId === asset.id;
+          const statusLabel = getAssetDisplayStatus(asset);
+          const subtitle = asset.model || asset.type || '';
+          const quality =
+            qualityLookup[asset.id] || { score: 100, issues: [], approvalStatus: asset.approvalStatus || 'Approved' };
+          const ready = quality.issues.length === 0 && quality.approvalStatus === 'Approved';
+          return (
+            <div
+              key={asset.id}
+              onClick={() => onSelect(asset)}
+              className={`rounded-2xl border p-4 shadow-sm transition ${
+                isSelected ? 'border-blue-200 bg-blue-50/70 ring-1 ring-blue-200' : 'border-slate-100 bg-white hover:border-blue-200'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-slate-100 p-2 text-slate-600">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">{asset.assetName}</p>
+                    {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+                    <p className="text-[11px] text-slate-400">{asset.serialNumber || 'No serial set'}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span
+                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                      statusClasses[statusLabel] || 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {statusLabel}
+                  </span>
+                  <div className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    {ready ? 'Ready' : 'Needs info'} | {quality.score}% complete
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-3 text-xs text-slate-600 sm:grid-cols-2">
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">Owner</p>
+                  <p className="font-semibold text-slate-800">{asset.assignedTo || 'Unassigned'}</p>
+                  <p className="text-[11px] text-slate-500">{asset.department || 'Department not set'}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-slate-400">Location</p>
+                  <p className="font-semibold text-slate-800">{asset.location || 'Not set'}</p>
+                  <p className="text-[11px] text-slate-500">
+                    Warranty: {asset.warrantyExpiry ? formatDate(asset.warrantyExpiry) : 'Not set'}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-slate-900">{formatCurrency(asset.cost)}</p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onAction(asset, asset.checkedOut ? 'checkin' : 'checkout');
+                    }}
+                    className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-600"
+                  >
+                    {asset.checkedOut ? 'Check In' : 'Check Out'}
+                  </button>
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onEdit(asset);
+                    }}
+                    className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-600"
+                    title="Edit asset"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onDelete(asset);
+                    }}
+                    className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600"
+                    title="Remove asset"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -4633,7 +3915,7 @@ const AssetTable = ({
                     {statusLabel}
                   </span>
                   <div className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                    {ready ? 'Ready' : 'Needs info'} · {quality.score}% complete
+                    {ready ? 'Ready' : 'Needs info'} - {quality.score}% complete
                   </div>
                 </td>
                   <td className="px-6 py-4 text-xs text-slate-500">
@@ -4754,179 +4036,12 @@ const ActivityPanel = ({ history, lookupAsset }) => (
   </CardShell>
 );
 
-const InventoryHealthPanel = ({ health, onStartAudit }) => {
-  const readiness = Math.max(0, Math.min(100, Math.round(health?.dataQualityScore || 0)));
-  const auditReady = Math.max(0, Math.min(100, Math.round(health?.auditReadyPercent || 0)));
-  const signals = [
-    { label: 'Missing serials', value: health?.missingSerials || 0 },
-    { label: 'No location', value: health?.missingLocation || 0 },
-    { label: 'No warranty date', value: health?.missingWarranty || 0 },
-    { label: 'Unassigned owners', value: health?.missingOwner || 0 },
-    { label: 'QR needed', value: health?.qrMissing || 0 },
-    { label: 'Maint/retired', value: `${health?.maintenanceCount || 0}/${health?.retiredCount || 0}` },
-  ];
-
-  return (
-    <CardShell
-      title="Inventory health"
-      icon={ShieldCheck}
-      action={
-        <button
-          type="button"
-          onClick={onStartAudit}
-          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600"
-        >
-          <ClipboardCheck className="h-4 w-4" />
-          Start audit
-        </button>
-      }
-    >
-      <div className="grid gap-4 lg:grid-cols-[1.3fr,1fr]">
-        <div className="space-y-4">
-          <div className="rounded-2xl bg-slate-900 p-5 text-white">
-            <p className="text-xs uppercase tracking-[0.3rem] text-white/60">Data quality</p>
-            <p className="mt-2 text-4xl font-semibold">{readiness}%</p>
-            <p className="text-sm text-white/70">Fields captured across the fleet</p>
-            <div className="mt-4 h-2 w-full rounded-full bg-white/10">
-              <div className="h-2 rounded-full bg-gradient-to-r from-blue-400 to-emerald-300" style={{ width: `${readiness}%` }} />
-            </div>
-            <div className="mt-4 flex items-center justify-between text-xs text-white/70">
-              <span>Audit-ready devices</span>
-              <span className="font-semibold text-white">{auditReady}% ready</span>
-            </div>
-          </div>
-        </div>
-        <div className="space-y-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500">Gaps to close</p>
-          <div className="grid grid-cols-2 gap-3">
-            {signals.map((signal) => (
-              <div
-                key={signal.label}
-                className="rounded-2xl border border-slate-100 bg-slate-50/60 p-3 text-sm font-semibold text-slate-800 shadow-inner"
-              >
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{signal.label}</p>
-                <p className="mt-1 text-lg">{signal.value}</p>
-              </div>
-            ))}
-          </div>
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 text-xs text-emerald-900">
-            <p className="font-semibold">Warranty window</p>
-            <p className="text-slate-700">
-              {health?.warrantySoon || 0} devices expire within 90 days; {health?.newAssets || 0} were added in the last month.
-            </p>
-          </div>
-        </div>
-      </div>
-    </CardShell>
-  );
-};
-
-const AuditRunBoard = ({ runs = [], onStartAudit }) => (
-  <CardShell
-    title="Audit queue"
-    icon={ClipboardList}
-    action={
-      <button
-        type="button"
-        onClick={onStartAudit}
-        className="rounded-2xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600"
-      >
-        Open hardware table
-      </button>
-    }
-  >
-    {runs.length === 0 ? (
-      <p className="text-sm text-slate-600">No audit runs queued. Start with a quick floor walk.</p>
-    ) : (
-      <div className="space-y-3">
-        {runs.map((run) => (
-          <div key={run.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 shadow-inner">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">{run.title}</p>
-                <p className="text-xs text-slate-600">{run.description}</p>
-                {run.scope?.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {run.scope.map((item) => (
-                      <span
-                        key={`${run.id}-${item}`}
-                        className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600 ring-1 ring-slate-200"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="text-right text-xs text-slate-500">
-                <p className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-700">{run.priority}</p>
-                <p className="mt-1 font-semibold text-slate-900">{run.count} devices</p>
-                <p className="text-slate-600">{run.due}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
-  </CardShell>
-);
-
-const MobileAuditCard = ({ inventoryHealth, onStartAudit }) => (
-  <div className="overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-slate-50 p-6 shadow-sm">
-    <div className="flex flex-wrap items-start justify-between gap-3">
-      <div className="flex items-center gap-2">
-        <div className="rounded-2xl bg-blue-100 p-3 text-blue-700">
-          <Smartphone className="h-5 w-5" />
-        </div>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-blue-700">Mobile audit-ready</p>
-          <p className="text-lg font-semibold text-slate-900">Walk the floor with your phone</p>
-          <p className="text-sm text-slate-600">
-            Use the hardware table on a mobile device to scan QR codes, update owners, and capture quick notes during monthly audits.
-          </p>
-        </div>
-      </div>
-      <button
-        type="button"
-        onClick={onStartAudit}
-        className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
-      >
-        <Smartphone className="h-4 w-4" />
-        Launch audit mode
-      </button>
-    </div>
-    <div className="mt-4 grid gap-3 md:grid-cols-3">
-      <div className="rounded-2xl border border-slate-100 bg-white/80 p-3 text-sm">
-        <p className="text-xs uppercase tracking-wide text-slate-500">Audit ready</p>
-        <p className="mt-1 text-2xl font-semibold text-slate-900">{inventoryHealth?.auditReadyPercent || 0}%</p>
-        <p className="text-xs text-slate-500">Have serials, owners, and warranty dates</p>
-      </div>
-      <div className="rounded-2xl border border-slate-100 bg-white/80 p-3 text-sm">
-        <p className="text-xs uppercase tracking-wide text-slate-500">Warranty window</p>
-        <p className="mt-1 text-2xl font-semibold text-slate-900">{inventoryHealth?.warrantySoon || 0}</p>
-        <p className="text-xs text-slate-500">Expiring within 90 days</p>
-      </div>
-      <div className="rounded-2xl border border-slate-100 bg-white/80 p-3 text-sm">
-        <p className="text-xs uppercase tracking-wide text-slate-500">QR to place</p>
-        <p className="mt-1 text-2xl font-semibold text-slate-900">{inventoryHealth?.qrMissing || 0}</p>
-        <p className="text-xs text-slate-500">Label-ready devices</p>
-      </div>
-    </div>
-    <div className="mt-4 grid gap-3 md:grid-cols-3">
-      {['Filter by location for each stop', 'Scan QR to open the record instantly', 'Capture photos and owner confirmations'].map((step) => (
-        <div key={step} className="rounded-2xl border border-slate-100 bg-white p-3 text-sm font-semibold text-slate-800 shadow-sm">
-          {step}
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
 const QrToolingPanel = ({
   qrInput,
   onQrInput,
   qrDataUrl,
   onCopy,
+  onExportPng,
   scanResult,
   scannerActive,
   onStartScanner,
@@ -4958,6 +4073,14 @@ const QrToolingPanel = ({
           className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Copy QR
+        </button>
+        <button
+          type="button"
+          onClick={onExportPng}
+          disabled={!qrDataUrl}
+          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Export PNG
         </button>
         <p className="text-xs text-slate-500">Share labels or onboarding links quickly.</p>
       </div>
@@ -5038,7 +4161,7 @@ const QrToolingPanel = ({
         </p>
       </div>
       <p className="text-[11px] text-slate-500">
-        Tip: scan to auto-select an asset for check in/out or audit confirmation, even while the desktop view stays on the table.
+        Tip: scan to auto-select an asset for check in/out or quick updates, even while the desktop view stays on the table.
       </p>
     </div>
   </div>
@@ -5218,7 +4341,7 @@ const PrinterFormModal = ({ printer, onSubmit, onCancel }) => {
   );
 };
 
-const MobileActionBar = ({ onAdd, onAudit, onWarranty, onFilters, onScan, mobileAuditMode }) => (
+const MobileActionBar = ({ onAdd, onWarranty, onFilters, onScan, onMenu }) => (
   <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-slate-200 bg-white/95 shadow-2xl backdrop-blur">
     <div className="mx-auto grid max-w-5xl grid-cols-2 items-center gap-2 px-4 py-3 text-sm font-semibold text-slate-700 sm:flex sm:flex-wrap sm:justify-between">
       <button
@@ -5231,37 +4354,35 @@ const MobileActionBar = ({ onAdd, onAudit, onWarranty, onFilters, onScan, mobile
       </button>
       <button
         type="button"
-        onClick={onAudit}
-        className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-3 py-2 ${
-          mobileAuditMode ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-700'
-        }`}
-      >
-        <Wrench className="h-4 w-4" />
-        {mobileAuditMode ? 'Audit on' : 'Audit'}
-      </button>
-      <button
-        type="button"
         onClick={onScan}
-        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-slate-700"
+        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700"
       >
         <Scan className="h-4 w-4" />
         Scan
       </button>
       <button
         type="button"
+        onClick={onFilters}
+        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-slate-700"
+      >
+        <Filter className="h-4 w-4" />
+        Filters
+      </button>
+      <button
+        type="button"
         onClick={onWarranty}
-        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 text-amber-800"
+        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800"
       >
         <CalendarClock className="h-4 w-4" />
         Warranty
       </button>
       <button
         type="button"
-        onClick={onFilters}
-        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white text-slate-700"
+        onClick={onMenu}
+        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-slate-700"
       >
-        <Filter className="h-4 w-4" />
-        Filters
+        <Menu className="h-4 w-4" />
+        Menu
       </button>
     </div>
   </div>
@@ -5270,7 +4391,6 @@ const MobileActionBar = ({ onAdd, onAudit, onWarranty, onFilters, onScan, mobile
 const AssetSpotlight = ({
   asset,
   onEdit,
-  sharePointMode = false,
   onApproveIntake,
   repairHistory = [],
   ownerHistory = [],
@@ -5350,12 +4470,10 @@ const AssetSpotlight = ({
                 <MapPin className="h-4 w-4 text-slate-400" />
                 <span>{asset.location || 'Not set'}</span>
               </div>
-              {!sharePointMode && (
-                <div className="flex items-center gap-2 text-slate-600">
-                  <Tag className="h-4 w-4 text-slate-400" />
-                  <span>{asset.qrCode || 'Not generated'}</span>
-                </div>
-              )}
+              <div className="flex items-center gap-2 text-slate-600">
+                <Tag className="h-4 w-4 text-slate-400" />
+                <span>{asset.qrCode || 'Not generated'}</span>
+              </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-slate-600">
@@ -5496,7 +4614,6 @@ const AssetSpotlightModal = ({
   repairHistory = [],
   ownerHistory = [],
   onEdit,
-  sharePointMode = false,
   onApproveIntake,
   onOpenAutomate,
   ownerContact,
@@ -5508,7 +4625,6 @@ const AssetSpotlightModal = ({
       <AssetSpotlight
         asset={asset}
         onEdit={onEdit}
-        sharePointMode={sharePointMode}
         onApproveIntake={onApproveIntake}
         repairHistory={repairHistory}
         ownerHistory={ownerHistory}
@@ -5537,7 +4653,6 @@ const AssetFormModal = ({
   asset,
   onSubmit,
   onCancel,
-  sharePointMode = false,
   suggestionListId,
   modelSuggestionListId,
   departmentSuggestionListId,
@@ -5572,14 +4687,15 @@ const AssetFormModal = ({
               onChange={(event) => update('type', event.target.value)}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
-              <option value="Laptop">Laptop</option>
               <option value="Desktop">Desktop</option>
-              <option value="Server">Server</option>
-              <option value="Storage">Storage</option>
-              <option value="Phone">Phone</option>
-              <option value="Monitor">Monitor</option>
-              <option value="Printer">Printer</option>
               <option value="Dock">Dock</option>
+              <option value="HotSpot">HotSpot</option>
+              <option value="KeyFob">KeyFob</option>
+              <option value="Laptop">Laptop</option>
+              <option value="Monitor">Monitor</option>
+              <option value="Phone">Phone</option>
+              <option value="Printer">Printer</option>
+              <option value="Tablet">Tablet</option>
             </select>
           </label>
           <label className="text-sm font-medium text-slate-700">
@@ -5675,28 +4791,31 @@ const AssetFormModal = ({
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
-          {!sharePointMode && (
-            <>
-              <label className="text-sm font-medium text-slate-700">
-                Cost
-                <input
-                  type="number"
-                  value={form.cost}
-                  onChange={(event) => update('cost', Number(event.target.value))}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
-              </label>
-              <label className="text-sm font-medium text-slate-700">
-                QR code value
-                <input
-                  value={form.qrCode}
-                  onChange={(event) => update('qrCode', event.target.value)}
-                  placeholder="QR-XXXXXX"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
-              </label>
-            </>
-          )}
+          <label className="text-sm font-medium text-slate-700">
+            Cost
+            <div className="relative mt-2">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">$</span>
+              <input
+                type="number"
+                value={form.cost === '' ? '' : form.cost}
+                onChange={(event) => {
+                  const raw = event.target.value;
+                  update('cost', raw === '' ? '' : Number(raw));
+                }}
+                placeholder="0"
+                className="w-full rounded-2xl border border-slate-200 pl-7 pr-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            QR code value
+            <input
+              value={form.qrCode}
+              onChange={(event) => update('qrCode', event.target.value)}
+              placeholder="QR-XXXXXX"
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
         </div>
         <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4 text-sm text-slate-700">
           <div className="flex items-center justify-between">
@@ -5967,27 +5086,97 @@ const EmployeeFormModal = ({
 }) => {
   const [form, setForm] = useState(employee || defaultEmployeeProfile);
   const [photoPreview, setPhotoPreview] = useState(employee?.avatar || '');
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+  const tempPhotoUrlRef = useRef(null);
 
   useEffect(() => {
+    if (tempPhotoUrlRef.current) {
+      URL.revokeObjectURL(tempPhotoUrlRef.current);
+      tempPhotoUrlRef.current = null;
+    }
     setForm(employee || defaultEmployeeProfile);
     setPhotoPreview(employee?.avatar || '');
+    setPhotoError('');
+    setUploadingPhoto(false);
   }, [employee]);
+  useEffect(
+    () => () => {
+      if (tempPhotoUrlRef.current) {
+        URL.revokeObjectURL(tempPhotoUrlRef.current);
+        tempPhotoUrlRef.current = null;
+      }
+    },
+    [],
+  );
 
   const update = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handlePhotoUpload = (event) => {
+  const handlePhotoUpload = async (event) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
+    if (tempPhotoUrlRef.current) {
+      URL.revokeObjectURL(tempPhotoUrlRef.current);
+      tempPhotoUrlRef.current = null;
+    }
     const objectUrl = URL.createObjectURL(file);
+    tempPhotoUrlRef.current = objectUrl;
     setPhotoPreview(objectUrl);
+    setPhotoError('');
+    setUploadingPhoto(true);
+    try {
+      const uploadedUrl = await uploadEmployeePhoto(file);
+      if (tempPhotoUrlRef.current) {
+        URL.revokeObjectURL(tempPhotoUrlRef.current);
+        tempPhotoUrlRef.current = null;
+      }
+      if (uploadedUrl) {
+        setPhotoPreview(uploadedUrl);
+        setForm((prev) => ({ ...prev, avatar: uploadedUrl }));
+      } else {
+        setPhotoError('Upload did not return a URL.');
+      }
+    } catch (error) {
+      try {
+        const dataUrl = await readFileAsDataUrl(file);
+        if (tempPhotoUrlRef.current) {
+          URL.revokeObjectURL(tempPhotoUrlRef.current);
+          tempPhotoUrlRef.current = null;
+        }
+        setPhotoPreview(dataUrl);
+        setForm((prev) => ({ ...prev, avatar: dataUrl }));
+        setPhotoError(
+          `${error?.message || 'Photo upload failed.'} Saved a local copy until the storage bucket is reachable.`,
+        );
+      } catch (readError) {
+        console.error('Photo upload failed and fallback read failed', readError);
+        setPhotoError(error?.message || 'Photo upload failed.');
+      }
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    if (tempPhotoUrlRef.current) {
+      URL.revokeObjectURL(tempPhotoUrlRef.current);
+      tempPhotoUrlRef.current = null;
+    }
+    setPhotoPreview('');
+    setForm((prev) => ({ ...prev, avatar: '' }));
+    setPhotoError('');
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    if (uploadingPhoto) {
+      setPhotoError('Please wait for the photo upload to finish.');
+      return;
+    }
     const trimmedName = form.name.trim();
     if (!trimmedName) {
       return;
@@ -5998,7 +5187,8 @@ const EmployeeFormModal = ({
     const shouldRefreshLookup = !employee?.id || normalizedOriginal !== normalizedName;
     const persistedLookup = employee?.lookupKey || form.lookupKey || '';
     const lookupKey = shouldRefreshLookup ? normalizedName : persistedLookup || normalizedName;
-    onSubmit({ ...form, name: trimmedName, avatar: photoPreview, lookupKey });
+    const avatar = form.avatar || photoPreview || '';
+    onSubmit({ ...form, name: trimmedName, avatar, lookupKey });
   };
 
   return (
@@ -6123,18 +5313,27 @@ const EmployeeFormModal = ({
             </div>
             <div className="flex flex-1 flex-col items-center gap-3 sm:items-start">
               <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:border-blue-300">
-                <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-                Upload photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoUpload}
+                  disabled={uploadingPhoto}
+                />
+                {uploadingPhoto ? 'Uploading...' : 'Upload photo'}
               </label>
               {photoPreview && (
                 <button
                   type="button"
-                  onClick={() => setPhotoPreview('')}
+                  onClick={handleRemovePhoto}
                   className="text-xs font-semibold text-rose-600 hover:text-rose-500"
+                  disabled={uploadingPhoto}
                 >
                   Remove photo
                 </button>
               )}
+              {photoError && <p className="text-xs text-rose-600">{photoError}</p>}
+              {!photoError && uploadingPhoto && <p className="text-xs text-slate-500">Uploading to secure storage...</p>}
             </div>
           </div>
         </div>
@@ -6146,7 +5345,11 @@ const EmployeeFormModal = ({
           >
             Cancel
           </button>
-          <button type="submit" className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500">
+          <button
+            type="submit"
+            disabled={uploadingPhoto}
+            className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+          >
             {form?.id ? 'Save changes' : 'Add employee'}
           </button>
         </div>
@@ -6256,7 +5459,6 @@ const App = () => {
   const [warrantyModalOpen, setWarrantyModalOpen] = useState(false);
   const [laptopRefreshDate, setLaptopRefreshDate] = useState(() => new Date().toISOString().slice(0, 10));
   const sentWarrantyAlertRef = useRef(new Set());
-  const [sharePointError, setSharePointError] = useState(null);
   useEffect(() => {
     setAssets((prev) => {
       const canonicalMap = buildCanonicalMap(prev);
@@ -6312,23 +5514,37 @@ const App = () => {
           return nextAsset;
         }
         changed = true;
-        const updatedAsset = { ...statusAdjusted, cost: refreshedCost };
-        const canonicalName = getCanonicalAssetName(updatedAsset, canonicalMap);
-        if (canonicalName && canonicalName !== updatedAsset.assetName) {
+        const adjustedAsset = { ...statusAdjusted, cost: refreshedCost };
+        const canonicalName = getCanonicalAssetName(adjustedAsset, canonicalMap);
+        if (canonicalName && canonicalName !== adjustedAsset.assetName) {
           return {
-            ...updatedAsset,
+            ...adjustedAsset,
             assetName: canonicalName,
             deviceName: canonicalName,
-            sheetId: updatedAsset.sheetId || canonicalName,
+            sheetId: adjustedAsset.sheetId || canonicalName,
           };
         }
-        return updatedAsset;
+        return adjustedAsset;
       });
       return changed ? normalized : prev;
     });
   }, [setAssets]);
 
-  const licenseBuckets = useMemo(() => softwareSuites, [softwareSuites]);
+  const licenseBuckets = useMemo(
+    () =>
+      softwareSuites.map((suite) => {
+        const vendorKey = normalizeKey(suite.vendor || '');
+        const softwareKey = normalizeKey((suite.software || '').replace(/[^a-z0-9]+/gi, ''));
+        const logo =
+          suite.logo ||
+          SOFTWARE_LOGOS[suite.id] ||
+          SOFTWARE_LOGOS[vendorKey] ||
+          SOFTWARE_LOGOS[softwareKey] ||
+          '';
+        return { ...suite, logo };
+      }),
+    [softwareSuites],
+  );
   const maintenanceRecords = useMemo(() => buildMaintenanceFromAssets(assets), [assets]);
   const sheetInsights = useMemo(() => computeSheetInsights(assets), [assets]);
   const vendorProfiles = useMemo(() => buildVendorProfiles(assets), [assets]);
@@ -6362,7 +5578,6 @@ const App = () => {
       { title: 'Verizon lines', count: verizonCount, note: 'Active smartphones' },
     ];
   }, [vendorProfiles]);
-  const teamSpotlight = useMemo(() => BASE_TEAM, []);
   const [employeeGallery, setEmployeeGallery] = usePersistentState(STORAGE_KEYS.employees, BASE_EMPLOYEE_GALLERY);
   useEffect(() => {
     let cancelled = false;
@@ -6423,57 +5638,6 @@ const App = () => {
       cancelled = true;
     };
   }, [setEmployeeGallery]);
-  const sharePointEnabled = false; // Temporarily disable SharePoint until it's re-enabled.
-  const sharePointAssetList = null;
-  const sharePointEmployeeList = null;
-  const shouldFetchAssets = sharePointEnabled && Boolean(sharePointAssetList);
-  const shouldFetchEmployees = sharePointEnabled && Boolean(sharePointEmployeeList);
-
-  useEffect(() => {
-    if (!shouldFetchAssets && !shouldFetchEmployees) {
-      setSharePointError(null);
-      return undefined;
-    }
-    let mounted = true;
-    setSharePointError(null);
-    const loadLists = async () => {
-      try {
-        const [assetRows, employeeRows] = await Promise.all([
-          shouldFetchAssets ? fetchSharePointListItems(sharePointAssetList) : Promise.resolve(null),
-          shouldFetchEmployees ? fetchSharePointListItems(sharePointEmployeeList) : Promise.resolve(null),
-        ]);
-        if (!mounted) {
-          return;
-        }
-        if (employeeRows) {
-          setEmployeeGallery((employeeRows || []).map(mapSharePointEmployeeRow));
-        }
-        if (assetRows) {
-          const updatedAssets = (assetRows || []).map(mapSharePointAssetRow);
-          setAssets(updatedAssets);
-        }
-        setSharePointError(null);
-      } catch (error) {
-        if (!mounted) {
-          return;
-        }
-        console.error('SharePoint synchronization failed', error);
-        setSharePointError(error?.message || 'SharePoint sync failed');
-      }
-    };
-    loadLists();
-    return () => {
-      mounted = false;
-    };
-  }, [
-    shouldFetchAssets,
-    shouldFetchEmployees,
-    sharePointAssetList,
-    sharePointEmployeeList,
-    setAssets,
-    setEmployeeGallery,
-    setSharePointError,
-  ]);
   useEffect(() => {
     if (keyFobNormalizedRef.current) {
       return;
@@ -6543,8 +5707,6 @@ const App = () => {
       .slice(0, 5)
       .map(([name, value]) => ({ name, value }));
   }, [assets]);
-  const inventoryHealth = useMemo(() => computeInventoryHealth(assets, history), [assets, history]);
-  const auditRuns = useMemo(() => buildAuditRuns(assets, sheetInsights), [assets, sheetInsights]);
   const depreciationTrend = useMemo(() => {
     const horizon = 6;
     const now = new Date();
@@ -6633,7 +5795,6 @@ const App = () => {
   const [employeePage, setEmployeePage] = useState(1);
   const [employeeForm, setEmployeeForm] = useState(null);
   const [expandedEmployeeId, setExpandedEmployeeId] = useState(null);
-  const [mobileAuditMode, setMobileAuditMode] = useState(false);
   const [printerForm, setPrinterForm] = useState(null);
   const [assetSort, setAssetSort] = useState({ key: 'assetName', direction: 'asc' });
   const [assetPageSize, setAssetPageSize] = useState(() => {
@@ -6672,6 +5833,47 @@ const App = () => {
   const modelSuggestionListId = 'asset-model-suggestions';
   const departmentSuggestionListId = 'asset-department-suggestions';
   const locationSuggestionListId = 'asset-location-suggestions';
+  useEffect(() => {
+    let cancelled = false;
+    const loadAssetsFromWorkbook = async () => {
+      try {
+        const assetSources = [EXCEL_EXPORTS.assets, '/Tables/Asset List 11-18-25.xlsx', '/Tables/Asset%20List%2011-18-25.xlsx'];
+        let buffer = null;
+        for (const url of assetSources) {
+          try {
+            const response = await fetch(url);
+            if (response.ok) {
+              buffer = await response.arrayBuffer();
+              break;
+            }
+          } catch (error) {
+            console.warn('Asset workbook fetch failed for', url, error);
+          }
+        }
+        if (!buffer) {
+          return;
+        }
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        if (!sheet) {
+          return;
+        }
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        const normalizedAssets = buildAssetsFromSheet(rows, employeeSheetData);
+        if (!cancelled && Array.isArray(normalizedAssets) && normalizedAssets.length > 0) {
+          setAssets(normalizedAssets);
+          setAssetPage(1);
+        }
+      } catch (error) {
+        console.error('Failed to load Asset List workbook', error);
+      }
+    };
+    loadAssetsFromWorkbook();
+    return () => {
+      cancelled = true;
+    };
+  }, [setAssets, setAssetPage]);
   const containerStyle = useMemo(
     () => (isMobile ? { width: '100%', maxWidth: '100%', margin: '0 auto' } : undefined),
     [isMobile],
@@ -6683,6 +5885,7 @@ const App = () => {
   const [terminationEmployee, setTerminationEmployee] = useState('');
   const [repairTicketForm, setRepairTicketForm] = useState(null);
   const [photoLightbox, setPhotoLightbox] = useState(null);
+  const normalizedLocationsRef = useRef(false);
 
   const assetQualityMap = useMemo(
     () =>
@@ -6696,6 +5899,15 @@ const App = () => {
       }, {}),
     [assets],
   );
+  const baseEmployeeLocationMap = useMemo(() => {
+    return employeeSheetData.reduce((acc, row) => {
+      const key = normalizeKey(row['Employee ID'] || `${row['First Name']} ${row['Last Name'] || ''}`);
+      if (!key) return acc;
+      const location = normalizeLocationLabel(row['Location'] || row['Company'] || 'Remote');
+      acc[key] = location;
+      return acc;
+    }, {});
+  }, []);
   const employeeNames = useMemo(
     () =>
       Array.from(new Set(employeeGallery.map((member) => member.name).filter(Boolean))).sort((a, b) =>
@@ -6772,6 +5984,10 @@ const App = () => {
       setNewHireDepartment(departmentOptions[0]);
     }
   }, [departmentOptions, newHireDepartment]);
+  const remoteAssetCount = useMemo(
+    () => assets.filter((asset) => normalizeLocationLabel(asset.location) === 'Remote').length,
+    [assets],
+  );
   const employeeLookupByName = useMemo(() => {
     return employeeGallery.reduce((acc, member) => {
       acc[normalizeKey(member.name || '')] = member;
@@ -6823,6 +6039,25 @@ const App = () => {
       setTerminationEmployee(employeeNames[0]);
     }
   }, [employeeNames, terminationEmployee]);
+  useEffect(() => {
+    if (normalizedLocationsRef.current) return;
+    normalizedLocationsRef.current = true;
+    setAssets((prev) =>
+      prev.map((asset) => {
+        const normalized = normalizeLocationLabel(asset.location);
+        return normalized === asset.location ? asset : { ...asset, location: normalized };
+      }),
+    );
+    setEmployeeGallery((prev) =>
+      prev.map((member) => {
+        const normalizedKey = normalizeKey(member.id || member.lookupKey || member.name);
+        const baseLocation = baseEmployeeLocationMap[normalizedKey] || '';
+        const normalized = normalizeLocationLabel(member.location);
+        const nextLocation = baseLocation || normalized;
+        return nextLocation && nextLocation !== member.location ? { ...member, location: nextLocation } : member;
+      }),
+    );
+  }, [baseEmployeeLocationMap, setAssets, setEmployeeGallery]);
 
   const filteredAssets = useMemo(() => {
     const query = filters.search.toLowerCase();
@@ -6858,21 +6093,8 @@ const App = () => {
       return 0;
     });
 
-    if (!mobileAuditMode) {
-      return sorted;
-    }
-
-    return sorted.filter((asset) => {
-      const qualityIssues = assetQualityMap[asset.id]?.issues?.length || 0;
-      const soonWarranty =
-        asset.warrantyExpiry &&
-        (() => {
-          const diff = new Date(asset.warrantyExpiry) - new Date();
-          return diff >= 0 && diff / (1000 * 60 * 60 * 24) <= 60;
-        })();
-      return qualityIssues > 0 || soonWarranty;
-    });
-  }, [assetQualityMap, assetSort.direction, assetSort.key, assets, filters, mobileAuditMode]);
+    return sorted;
+  }, [assetSort.direction, assetSort.key, assets, filters]);
   const ASSET_PAGE_SIZE = assetPageSize;
   const totalAssetPages = Math.max(1, Math.ceil(filteredAssets.length / ASSET_PAGE_SIZE));
   useEffect(() => {
@@ -7081,7 +6303,17 @@ const App = () => {
         ? { label: 'Zoom Workplace', type: 'Software', reason: 'Meetings and voice' }
         : null;
     const kit = [laptop, ...baseKit, zoomAccess, ...extras].filter(Boolean);
-    return kit.map((item) => ({
+    const cableAddOns = kit.flatMap((item) => {
+      if (item.type === 'Monitor') {
+        return [{ label: 'HDMI cable', type: 'Accessory', reason: 'Required for monitor connectivity' }];
+      }
+      if (item.type === 'Printer') {
+        return [{ label: 'USB printer cable', type: 'Accessory', reason: 'Required for local printing' }];
+      }
+      return [];
+    });
+    const combined = [...kit, ...cableAddOns];
+    return combined.map((item) => ({
       ...item,
       available: item.type && availableByType[item.type] !== undefined ? availableByType[item.type] : null,
     }));
@@ -7187,13 +6419,6 @@ const App = () => {
   }, [isDarkMode]);
 
   useEffect(() => {
-    if (isMobile) {
-      setMobileAuditMode(true);
-      setActivePage('Hardware');
-    }
-  }, [isMobile]);
-
-  useEffect(() => {
     if (typeof window === 'undefined') return undefined;
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
@@ -7248,13 +6473,24 @@ const App = () => {
       setQrDataUrl('');
       return;
     }
-    try {
-      const url = generateQrDataUrl(qrInput, 260);
-      setQrDataUrl(url);
-    } catch (error) {
-      console.error('QR generation failed', error);
-      setQrDataUrl('');
-    }
+    let cancelled = false;
+    const generate = async () => {
+      try {
+        const url = await generateQrDataUrl(qrInput, 400);
+        if (!cancelled) {
+          setQrDataUrl(url);
+        }
+      } catch (error) {
+        console.error('QR generation failed', error);
+        if (!cancelled) {
+          setQrDataUrl('');
+        }
+      }
+    };
+    generate();
+    return () => {
+      cancelled = true;
+    };
   }, [qrInput]);
 
   useEffect(() => {
@@ -7321,6 +6557,10 @@ const App = () => {
               }
             } else {
               const videoEl = videoRef.current;
+              if (!videoEl || videoEl.readyState < 2) {
+                scanLoopRef.current = requestAnimationFrame(tick);
+                return;
+              }
               const width = videoEl.videoWidth || videoEl.clientWidth;
               const height = videoEl.videoHeight || videoEl.clientHeight;
               if (width && height) {
@@ -7339,7 +6579,7 @@ const App = () => {
                   const ctx = canvas.getContext('2d');
                   ctx.drawImage(videoEl, 0, 0, targetWidth, targetHeight);
                   const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
-                  const code = jsQR(imageData.data, targetWidth, targetHeight, { inversionAttempts: 'dontInvert' });
+              const code = jsQR(imageData.data, targetWidth, targetHeight, { inversionAttempts: 'attemptBoth' });
                   if (code?.data) {
                     finishDetection(code.data, 'QR detected via fallback scanner.');
                     return;
@@ -7577,29 +6817,6 @@ const App = () => {
     }
     setSoftwareSuites((prev) => prev.filter((suite) => suite.id !== id));
   };
-  const handleStartAudit = useCallback(() => {
-    setActivePage('Hardware');
-    setFilters((prev) => ({ ...prev, status: 'all' }));
-    setMobileAuditMode(true);
-    if (typeof window === 'undefined') {
-      return;
-    }
-    const section = document.getElementById('asset-table');
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [setFilters]);
-  const handleToggleMobileAudit = useCallback(() => {
-    setMobileAuditMode((prev) => !prev);
-    setActivePage('Hardware');
-    if (typeof window === 'undefined') {
-      return;
-    }
-    const section = document.getElementById('asset-table');
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, []);
   const handleApproveIntake = useCallback(
     (asset) => {
       if (!asset) {
@@ -7791,7 +7008,7 @@ const App = () => {
     const items = [];
     assets.forEach((asset) => {
       const label = asset.assetName || asset.deviceName || asset.serialNumber || 'Asset';
-      const subtitle = `${asset.type || ''} • ${asset.serialNumber || ''}`.trim();
+      const subtitle = `${asset.type || ''} - ${asset.serialNumber || ''}`.trim();
       items.push({ id: asset.id, kind: 'asset', label, subtitle });
       items.push({ id: asset.id, kind: 'automate', label: `Open Automate: ${label}`, subtitle: subtitle || 'Automate deep link' });
     });
@@ -7804,7 +7021,7 @@ const App = () => {
         id: member.id || member.name,
         kind: 'employee',
         label: member.name,
-        subtitle: `${member.title || ''} • ${member.department || ''}`,
+        subtitle: `${member.title || ''} - ${member.department || ''}`,
       });
     });
     return items;
@@ -7873,7 +7090,7 @@ const App = () => {
       brand: derivedBrand,
       assetName: normalizedAssetName,
       deviceName: normalizedDeviceName,
-      id: sharePointEnabled ? payload.id ?? null : payload.id ?? Date.now(),
+      id: payload.id ?? Date.now(),
       cost: Number.isFinite(providedCost) && providedCost > 0 ? providedCost : estimatedCost,
       qrCode: payload.qrCode || `QR-${payload.serialNumber || payload.id}`,
     };
@@ -7902,31 +7119,6 @@ const App = () => {
         return [...prev, normalized];
       });
     };
-
-    if (sharePointEnabled) {
-      try {
-        const payloadForSharePoint = buildSharePointAssetPayload(enrichedPayload);
-        const hasSharePointId = Number.isFinite(Number(enrichedPayload.id));
-        const response = hasSharePointId
-          ? await updateSharePointListItem(sharePointAssetList, enrichedPayload.id, payloadForSharePoint)
-          : await createSharePointListItem(sharePointAssetList, payloadForSharePoint);
-        const mergedAsset =
-          response && typeof response === 'object'
-            ? mapSharePointAssetRow(response)
-            : { ...enrichedPayload, id: hasSharePointId ? enrichedPayload.id : Date.now() };
-        upsertLocalAsset(mergedAsset);
-        setSharePointError(null);
-        setAssetForm(null);
-        return;
-      } catch (error) {
-        console.error('SharePoint asset sync failed', error);
-        setSharePointError(error?.message || 'SharePoint sync failed');
-        // Allow offline/local save so edits aren't blocked when SharePoint is unavailable.
-        upsertLocalAsset(enrichedPayload);
-        setAssetForm(null);
-        return;
-      }
-    }
 
     upsertLocalAsset(enrichedPayload);
     setAssetForm(null);
@@ -7981,7 +7173,6 @@ const App = () => {
     setActivePage('Hardware');
     if (matchedAsset) {
       setSelectedAssetId(matchedAsset.id);
-      setMobileAuditMode(true);
       setActionState({
         asset: matchedAsset,
         mode: matchedAsset.checkedOut ? 'checkin' : 'checkout',
@@ -8041,18 +7232,6 @@ const App = () => {
     if (!window.confirm(`Delete ${asset.assetName || `${asset.brand} ${asset.model}`}?`)) {
       return;
     }
-    if (sharePointEnabled && asset?.id) {
-      try {
-        await deleteSharePointListItem(sharePointAssetList, asset.id);
-        setAssets((prev) => prev.filter((item) => item.id !== asset.id));
-        setSharePointError(null);
-        return;
-      } catch (error) {
-        console.error('SharePoint delete failed', error);
-        setSharePointError(error?.message || 'SharePoint delete failed');
-        return;
-      }
-    }
     setAssets((prev) => prev.filter((item) => item.id !== asset.id));
   };
 
@@ -8062,7 +7241,7 @@ const App = () => {
       return;
     }
     const trimmedName = profile.name.trim();
-    const baseId = profile.id ?? (sharePointEnabled ? null : `emp-${Date.now()}`);
+    const baseId = profile.id ?? `emp-${Date.now()}`;
     const lookupKey = profile.lookupKey || normalizeKey(trimmedName);
     const payload = {
       ...defaultEmployeeProfile,
@@ -8082,30 +7261,6 @@ const App = () => {
         return [member, ...prev];
       });
     };
-
-    if (sharePointEnabled) {
-      try {
-        const payloadForSharePoint = buildSharePointEmployeePayload(payload);
-        const hasSharePointId = Boolean(payload.id);
-        const response = hasSharePointId
-          ? await updateSharePointListItem(sharePointEmployeeList, payload.id, payloadForSharePoint)
-          : await createSharePointListItem(sharePointEmployeeList, payloadForSharePoint);
-        const merged =
-          response && typeof response === 'object'
-            ? mapSharePointEmployeeRow(response)
-            : { ...payload, id: payload.id || `emp-${Date.now()}` };
-        upsertLocalEmployee(merged);
-        setSharePointError(null);
-        setEmployeeForm(null);
-        setExpandedEmployeeId(merged.id);
-        return;
-      } catch (error) {
-        console.error('SharePoint employee sync failed', error);
-        setSharePointError(error?.message || 'SharePoint sync failed');
-        return;
-      }
-    }
-
     upsertLocalEmployee(payload);
     setEmployeeForm(null);
     setExpandedEmployeeId(payload.id);
@@ -8118,25 +7273,11 @@ const App = () => {
     if (!window.confirm(`Remove ${member.name || 'this employee'} from the directory?`)) {
       return;
     }
-    if (sharePointEnabled && member?.id) {
-      try {
-        await deleteSharePointListItem(sharePointEmployeeList, member.id);
-        setEmployeeGallery((prev) => prev.filter((item) => item.id !== member.id));
-        setExpandedEmployeeId((prev) => (prev === member.id ? null : prev));
-        setSharePointError(null);
-        return;
-      } catch (error) {
-        console.error('SharePoint employee delete failed', error);
-        setSharePointError(error?.message || 'SharePoint delete failed');
-        return;
-      }
-    }
     setEmployeeGallery((prev) => prev.filter((item) => item.id !== member.id));
     setExpandedEmployeeId((prev) => (prev === member.id ? null : prev));
   };
 
   const handleActionSubmit = async ({ assetId, mode, user, notes, date }) => {
-    let updatedAsset = null;
     setAssets((prev) =>
       prev.map((asset) => {
         if (asset.id !== assetId) {
@@ -8144,26 +7285,22 @@ const App = () => {
         }
         if (mode === 'checkout') {
           const nextStatus = asset.status === 'Maintenance' || asset.status === 'Retired' ? asset.status : 'Checked Out';
-          const normalized = normalizeAssetStatus({
+          return normalizeAssetStatus({
             ...asset,
             assignedTo: user,
             status: nextStatus,
             checkedOut: true,
             checkOutDate: date,
           });
-          updatedAsset = normalized;
-          return normalized;
         }
         const resetStatus = asset.status === 'Maintenance' || asset.status === 'Retired' ? asset.status : 'Available';
-        const normalized = normalizeAssetStatus({
+        return normalizeAssetStatus({
           ...asset,
           assignedTo: '',
           status: resetStatus,
           checkedOut: false,
           checkOutDate: '',
         });
-        updatedAsset = normalized;
-        return normalized;
       }),
     );
 
@@ -8178,16 +7315,6 @@ const App = () => {
         date,
       },
     ]);
-
-    if (sharePointEnabled && updatedAsset?.id) {
-      try {
-        await updateSharePointListItem(sharePointAssetList, updatedAsset.id, buildSharePointAssetPayload(updatedAsset));
-        setSharePointError(null);
-      } catch (error) {
-        console.error('SharePoint update failed', error);
-        setSharePointError(error?.message || 'SharePoint sync failed');
-      }
-    }
 
     setActionState(null);
   };
@@ -8222,6 +7349,15 @@ const App = () => {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
+  };
+  const handleExportQrPng = () => {
+    if (!qrDataUrl) return;
+    const link = document.createElement('a');
+    link.href = qrDataUrl;
+    link.download = `qr-code-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   };
 
   const handleOpenHelpDeskPortal = useCallback(() => {
@@ -8297,18 +7433,18 @@ const App = () => {
       onAction: () => setAssetForm(defaultAsset),
     },
     {
-      title: 'Start mobile audit',
-      description: 'Walk a site with your phone, scan QR codes, and reconcile owners.',
-      icon: Smartphone,
-      actionLabel: 'Open audit table',
-      onAction: handleStartAudit,
+      title: 'Scan asset label',
+      description: 'Use your camera to jump into a device record without scrolling the table.',
+      icon: Scan,
+      actionLabel: 'Start scanner',
+      onAction: handleStartScanner,
     },
     {
-      title: 'Plan monthly audit',
-      description: 'Queue locations, warranty expirations, and high-value devices.',
-      icon: ClipboardCheck,
-      actionLabel: 'Build run list',
-      onAction: handleStartAudit,
+      title: 'Warranty review',
+      description: 'See devices expiring soon and clear alerts after you act.',
+      icon: CalendarClock,
+      actionLabel: 'Open alerts',
+      onAction: () => setWarrantyModalOpen(true),
     },
     {
       title: 'Share executive snapshot',
@@ -8322,7 +7458,6 @@ const App = () => {
   const menuNavItems = [
     { label: 'Overview', onClick: () => handleJumpToSection('Overview', 'overview-hero') },
     { label: 'Hardware', onClick: () => handleJumpToSection('Hardware', 'hardware-hero') },
-    { label: 'Audit', onClick: () => handleJumpToSection('Audit', 'audit-hero') },
     { label: 'Employees', onClick: () => handleJumpToSection('Employees', 'employees-hero') },
     { label: 'Reports', onClick: () => handleJumpToSection('Reports', 'reports-hero') },
     { label: 'Software', onClick: () => handleJumpToSection('Software', 'software-hero') },
@@ -8334,9 +7469,6 @@ const App = () => {
     { label: 'Quick actions', onClick: () => handleJumpToSection('Overview', 'overview-actions') },
     { label: 'QR tools', onClick: () => handleJumpToSection('Overview', 'qr-tools-overview') },
     { label: 'Asset table', onClick: () => handleJumpToSection('Hardware', 'asset-table') },
-    { label: 'Network printers', onClick: () => handleJumpToSection('Hardware', 'network-printers') },
-    { label: 'Audit run board', onClick: () => handleJumpToSection('Audit', 'audit-board') },
-    { label: 'Mobile audit card', onClick: () => handleJumpToSection('Audit', 'audit-mobile') },
     { label: 'Employee directory', onClick: () => handleJumpToSection('Employees', 'employee-directory') },
     { label: 'Reports gallery', onClick: () => handleJumpToSection('Reports', 'reports-hero') },
     { label: 'Software suites', onClick: () => handleJumpToSection('Software', 'software-hero') },
@@ -8370,14 +7502,6 @@ const App = () => {
         setMenuOpen(false);
       },
       icon: Download,
-    },
-    {
-      label: 'Start audit',
-      onClick: () => {
-        setMenuOpen(false);
-        handleStartAudit();
-      },
-      icon: Wrench,
     },
     {
       label: 'Warranty alerts',
@@ -8471,9 +7595,9 @@ const App = () => {
         const title = reminder.overdue
           ? 'Warranty expired'
           : `Warranty expiring in ${reminder.daysRemaining} days`;
-        const details = `${reminder.assetName || 'Device'} • ${reminder.location || 'Location TBD'} • Owner: ${
+        const details = `${reminder.assetName || 'Device'} - ${reminder.location || 'Location TBD'} - Owner: ${
           reminder.assignedTo || 'Unassigned'
-        } • Expires ${formatDate(reminder.warrantyExpiry)}`;
+        } - Expires ${formatDate(reminder.warrantyExpiry)}`;
         await sendZoomAlert(title, details);
       }
     };
@@ -8517,6 +7641,16 @@ const App = () => {
         value: maintenanceWorkOrders.length,
         subline: 'Active maintenance tickets',
       },
+      {
+        label: 'Remote fleet',
+        value: remoteAssetCount,
+        subline: 'Devices assigned to remote/hybrid staff',
+      },
+      {
+        label: 'Employees active',
+        value: employeeGallery.length,
+        subline: `${employeeDepartmentCount} departments`,
+      },
     ],
     [
       dueSoonAlerts.length,
@@ -8527,6 +7661,9 @@ const App = () => {
       licenseInsights.used,
       maintenanceWorkOrders.length,
       overdueAlerts.length,
+      remoteAssetCount,
+      employeeDepartmentCount,
+      employeeGallery.length,
       stats.newThisYear,
       warrantyAlerts30.length,
     ],
@@ -8559,7 +7696,7 @@ const App = () => {
     return { buckets, unknown, summary };
   }, [assets]);
 
-  const auditReadinessReport = useMemo(() => {
+  const dataQualityReport = useMemo(() => {
     const issues = assets
       .map((asset) => ({ asset, issues: assetQualityMap[asset.id]?.issues || [] }))
       .filter((entry) => entry.issues.length > 0);
@@ -8639,7 +7776,7 @@ const App = () => {
       totals: stats,
       license: licenseInsights,
       maintenance: { open: maintenanceWorkOrders.length },
-      audit: { gaps: Object.keys(assetQualityMap).length },
+      dataQuality: { gaps: Object.keys(assetQualityMap).length },
     }),
     [assetQualityMap, licenseInsights, maintenanceWorkOrders.length, stats],
   );
@@ -8681,9 +7818,9 @@ const App = () => {
         payload: lifecycleAgingReport,
       },
       {
-        title: 'Audit readiness gaps',
+        title: 'Data quality gaps',
         description: 'Assets missing serials, locations, owners, or models.',
-        payload: auditReadinessReport,
+        payload: dataQualityReport,
       },
       {
         title: 'Utilization and idle pool',
@@ -8727,7 +7864,7 @@ const App = () => {
       },
     ],
     [
-      auditReadinessReport,
+      dataQualityReport,
       costByDepartment,
       executiveSnapshotReport,
       financialRollupReport,
@@ -8776,7 +7913,7 @@ const App = () => {
 
   return (
     <div
-      className={`min-h-screen overflow-x-hidden pb-16 ${
+      className={`min-h-screen overflow-x-hidden pb-24 sm:pb-16 ${
         isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-gradient-to-b from-slate-50 via-slate-100 to-slate-50 text-slate-900'
       }`}
     >
@@ -8784,14 +7921,15 @@ const App = () => {
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8" style={containerStyle}>
         <PrimaryNav
           onAdd={() => setAssetForm(defaultAsset)}
+          onAddEmployee={handleAddEmployee}
           onExport={handleExport}
           activePage={activePage}
-        onNavigate={setActivePage}
-        onToggleTheme={handleToggleTheme}
-        isDarkMode={isDarkMode}
-        onOpenMenu={() => setMenuOpen(true)}
-        onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-      />
+          onNavigate={setActivePage}
+          onToggleTheme={handleToggleTheme}
+          isDarkMode={isDarkMode}
+          onOpenMenu={() => setMenuOpen(true)}
+          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+        />
         <datalist id={employeeSuggestionListId}>
           {employeeNames.map((name) => (
             <option key={`employee-suggestion-${name}`} value={name} />
@@ -8812,11 +7950,6 @@ const App = () => {
             <option key={`location-suggestion-${location}`} value={location} />
           ))}
         </datalist>
-        {sharePointError && (
-          <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            SharePoint sync failed: {sharePointError}
-          </div>
-        )}
         {isOffline && (
           <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Offline mode: changes will queue locally until you reconnect.
@@ -8845,29 +7978,42 @@ const App = () => {
                   Live audit logs
                 </span>
               </div>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <button
-                  onClick={() => setAssetForm(defaultAsset)}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add hardware
-                </button>
-                <button
-                  onClick={handleExport}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-                >
-                  <Share2 className="h-4 w-4" />
-                  Share snapshot
-                </button>
-                <button
-                  type="button"
-                  onClick={handleOpenHelpDeskPortal}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-white/20"
-                >
-                  <ArrowRightLeft className="h-4 w-4" />
-                  Open HelpDesk Portal
-                </button>
+              <div className="mt-10 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-sm shadow-inner backdrop-blur">
+                  <p className="text-xs uppercase tracking-widest text-white/50">Snapshot</p>
+                  <p className="mt-1 text-lg font-semibold text-white">Share executive view</p>
+                  <button
+                    onClick={handleExport}
+                    className="mt-3 inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    Export data
+                  </button>
+                </div>
+                <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-sm shadow-inner backdrop-blur">
+                  <p className="text-xs uppercase tracking-widest text-white/50">Support</p>
+                  <p className="mt-1 text-lg font-semibold text-white">Open HelpDesk Portal</p>
+                  <button
+                    type="button"
+                    onClick={handleOpenHelpDeskPortal}
+                    className="mt-3 inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
+                  >
+                    <ArrowRightLeft className="h-4 w-4" />
+                    Launch portal
+                  </button>
+                </div>
+                <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-sm shadow-inner backdrop-blur">
+                  <p className="text-xs uppercase tracking-widest text-white/50">Watchlist</p>
+                  <p className="mt-1 text-lg font-semibold text-white">Warranty alerts</p>
+                  <button
+                    type="button"
+                    onClick={() => setWarrantyModalOpen(true)}
+                    className="mt-3 inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
+                  >
+                    <CalendarClock className="h-4 w-4" />
+                    View alerts
+                  </button>
+                </div>
               </div>
               <div className="mt-8 grid gap-4 sm:grid-cols-3">
                 <div>
@@ -8960,7 +8106,7 @@ const App = () => {
                 <div>
                   <p className="font-semibold text-slate-900">Mobile-ready dashboard</p>
                   <p className="text-xs text-slate-500">
-                    Tap the action bar to add hardware, toggle audit mode, or jump to warranty alerts.
+                    Tap the action bar to add hardware, scan QR codes, or jump to warranty alerts.
                   </p>
                 </div>
               </div>
@@ -9001,33 +8147,6 @@ const App = () => {
               ))}
             </section>
 
-            {mobileAuditMode && (
-              <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-slate-800">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-slate-900">Mobile audit mode</p>
-                    <p className="text-xs text-slate-600">Showing devices needing attention or nearing warranty. Scan and update owners/locations in the table below.</p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setFilters({ search: '', type: 'all', status: 'all' })}
-                      className="rounded-2xl border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:border-blue-300"
-                    >
-                      Reset filters
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleToggleMobileAudit}
-                      className="rounded-2xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300"
-                    >
-                      Exit mobile mode
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
             <section className="mb-8 grid gap-4 md:grid-cols-3">
               {hardwareSpotlights.map((item) => (
                 <DeviceSpotlightCard key={`hardware-${item.title}`} {...item} onStatClick={handleSpotlightFilter} />
@@ -9035,29 +8154,12 @@ const App = () => {
             </section>
 
             <section id="asset-table" className="mb-10">
-              <div className="space-y-4">
-                <AssetFilters
-                  filters={filters}
-                  onChange={handleFilterChange}
-                  onReset={() => setFilters({ search: '', type: 'all', status: 'all' })}
-                  types={typeOptions}
-                />
-                {(filters.search || filters.type !== 'all' || filters.status !== 'all') && (
-                  <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50/70 px-3 py-2 text-xs text-slate-700">
-                    <span className="font-semibold text-slate-600">Active filters:</span>
-                    {filters.search && <span className="rounded-full bg-white px-2 py-1">Search: {filters.search}</span>}
-                    {filters.type !== 'all' && <span className="rounded-full bg-white px-2 py-1">Type: {filters.type}</span>}
-                    {filters.status !== 'all' && <span className="rounded-full bg-white px-2 py-1">Status: {filters.status}</span>}
-                    <button
-                      type="button"
-                      onClick={() => setFilters({ search: '', type: 'all', status: 'all' })}
-                      className="rounded-full bg-slate-200 px-2 py-1 font-semibold text-slate-700 hover:bg-slate-300"
-                    >
-                      Clear
-                    </button>
+              <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-500">Hardware table</p>
+                    <p className="text-xs text-slate-500">Filter, search, and add devices from the same surface.</p>
                   </div>
-                )}
-                <div className="flex justify-end">
                   <button
                     type="button"
                     onClick={() => setAssetForm(defaultAsset)}
@@ -9067,51 +8169,63 @@ const App = () => {
                     New asset
                   </button>
                 </div>
-                <div className="space-y-3">
-                  <AssetTable
-                    assets={pagedAssets}
-                    onEdit={setAssetForm}
-                    onDelete={handleDeleteAsset}
-                    onAction={(asset, mode) => setActionState({ asset, mode })}
-                    onSelect={handleRowSelect}
-                    selectedId={selectedAssetId}
-                    sharePointMode={sharePointEnabled}
-                    qualityLookup={assetQualityMap}
-                    sortConfig={assetSort}
-                    onSortChange={handleSortChange}
+                <div className="space-y-3 p-4">
+                  <AssetFilters
+                    embedded
+                    filters={filters}
+                    onChange={handleFilterChange}
+                    onReset={() => setFilters({ search: '', type: 'all', status: 'all' })}
+                    types={typeOptions}
                   />
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white/70 px-4 py-3 text-sm text-slate-700">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-slate-500">Page size</span>
-                      <select
-                        value={assetPageSize}
-                        onChange={(event) => setAssetPageSize(Number(event.target.value) || 15)}
-                        className="h-9 rounded-xl border border-slate-200 bg-white px-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  {(filters.search || filters.type !== 'all' || filters.status !== 'all') && (
+                    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50/70 px-3 py-2 text-xs text-slate-700">
+                      <span className="font-semibold text-slate-600">Active filters:</span>
+                      {filters.search && <span className="rounded-full bg-white px-2 py-1">Search: {filters.search}</span>}
+                      {filters.type !== 'all' && <span className="rounded-full bg-white px-2 py-1">Type: {filters.type}</span>}
+                      {filters.status !== 'all' && <span className="rounded-full bg-white px-2 py-1">Status: {filters.status}</span>}
+                      <button
+                        type="button"
+                        onClick={() => setFilters({ search: '', type: 'all', status: 'all' })}
+                        className="rounded-full bg-slate-200 px-2 py-1 font-semibold text-slate-700 hover:bg-slate-300"
                       >
-                        {[10, 15, 25, 50].map((size) => (
-                          <option key={size} value={size}>
-                            {size}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="text-xs text-slate-500">Total: {filteredAssets.length}</span>
+                        Clear
+                      </button>
                     </div>
-                    <PaginationControls align="end" page={assetPage} totalPages={totalAssetPages} onPageChange={setAssetPage} />
+                  )}
+                  <div className="space-y-3">
+                    <AssetTable
+                      assets={pagedAssets}
+                      onEdit={setAssetForm}
+                      onDelete={handleDeleteAsset}
+                      onAction={(asset, mode) => setActionState({ asset, mode })}
+                      onSelect={handleRowSelect}
+                      selectedId={selectedAssetId}
+                      qualityLookup={assetQualityMap}
+                      sortConfig={assetSort}
+                      onSortChange={handleSortChange}
+                      isMobile={isMobile}
+                    />
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 text-sm text-slate-700">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-slate-500">Page size</span>
+                        <select
+                          value={assetPageSize}
+                          onChange={(event) => setAssetPageSize(Number(event.target.value) || 15)}
+                          className="h-9 rounded-xl border border-slate-200 bg-white px-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        >
+                          {[10, 15, 25, 50].map((size) => (
+                            <option key={size} value={size}>
+                              {size}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="text-xs text-slate-500">Total: {filteredAssets.length}</span>
+                      </div>
+                      <PaginationControls align="end" page={assetPage} totalPages={totalAssetPages} onPageChange={setAssetPage} />
+                    </div>
                   </div>
                 </div>
               </div>
-            </section>
-
-            <section id="network-printers" className="mb-10">
-              <NetworkPrinterBoard
-                printers={networkPrinters}
-                onAdd={handleAddPrinter}
-                onEdit={handleEditPrinter}
-                onDelete={handleDeletePrinter}
-                onTest={handleTestPrinter}
-                onReport={handleReportPrinter}
-                enableSearch
-              />
             </section>
 
             <section className="grid gap-6">
@@ -9131,77 +8245,17 @@ const App = () => {
               <QrToolingPanel
                 qrInput={qrInput}
                 onQrInput={setQrInput}
-                qrDataUrl={qrDataUrl}
-                onCopy={() => {
-                  if (!qrDataUrl) return;
-                  navigator.clipboard?.writeText(qrDataUrl);
-                }}
-                scanResult={scanResult}
-                scannerActive={scannerActive}
-                onStartScanner={handleStartScanner}
-                onStopScanner={handleStopScanner}
-                onUseScanResult={handleUseScanResult}
-                onManualInput={setManualScanInput}
-                manualScanInput={manualScanInput}
-                scanMessage={scanMessage}
-                scannerError={scannerError}
-                videoRef={videoRef}
-              />
-            </section>
-          </>
-        )}
-
-        {activePage === 'Audit' && (
-          <>
-            <section id="audit-hero" className="mb-8 rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Audit</p>
-              <h2 className="mt-2 text-3xl font-semibold text-slate-900">Mobile-ready audit lane</h2>
-              <p className="mt-2 text-sm text-slate-600">
-                Use this page on your phone to scan QR codes, confirm assets, and open the hardware table for quick check in/out.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold">
-                <button
-                  type="button"
-                  onClick={handleStartAudit}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-white shadow-sm transition hover:bg-blue-500"
-                >
-                  <Wrench className="h-4 w-4" />
-                  Start mobile audit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWarrantyModalOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-amber-800 transition hover:border-amber-300"
-                >
-                  <CalendarClock className="h-4 w-4" />
-                  Warranty alerts
-                </button>
-              </div>
-            </section>
-
-            <section id="audit-board" className="mb-8 grid gap-6 xl:grid-cols-[1.6fr,1fr]">
-              <InventoryHealthPanel health={inventoryHealth} onStartAudit={handleStartAudit} />
-              <AuditRunBoard runs={auditRuns} onStartAudit={handleStartAudit} />
-            </section>
-
-            <section id="audit-mobile" className="mb-8">
-              <MobileAuditCard inventoryHealth={inventoryHealth} onStartAudit={handleStartAudit} />
-            </section>
-
-            <section id="qr-tools-audit" className="mb-8">
-              <QrToolingPanel
-                qrInput={qrInput}
-                onQrInput={setQrInput}
-                qrDataUrl={qrDataUrl}
-                onCopy={() => {
-                  if (!qrDataUrl) return;
-                  navigator.clipboard?.writeText(qrDataUrl);
-                }}
-                scanResult={scanResult}
-                scannerActive={scannerActive}
-                onStartScanner={handleStartScanner}
-                onStopScanner={handleStopScanner}
-                onUseScanResult={handleUseScanResult}
+            qrDataUrl={qrDataUrl}
+            onCopy={() => {
+              if (!qrDataUrl) return;
+              navigator.clipboard?.writeText(qrDataUrl);
+            }}
+            onExportPng={handleExportQrPng}
+            scanResult={scanResult}
+            scannerActive={scannerActive}
+            onStartScanner={handleStartScanner}
+            onStopScanner={handleStopScanner}
+            onUseScanResult={handleUseScanResult}
                 onManualInput={setManualScanInput}
                 manualScanInput={manualScanInput}
                 scanMessage={scanMessage}
@@ -9254,7 +8308,7 @@ const App = () => {
               </div>
             </section>
 
-            <section id="employee-directory" className="grid gap-6 lg:grid-cols-[1.7fr,1fr]">
+            <section id="employee-directory" className="grid gap-6">
               <div className="space-y-4">
                 <EmployeeDirectoryGrid
                   members={displayedEmployees}
@@ -9266,12 +8320,12 @@ const App = () => {
                   onEdit={(member) => setEmployeeForm({ ...member })}
                   onDelete={handleDeleteEmployee}
                   onPhoto={handleOpenPhoto}
+                  downloadHref={EXCEL_EXPORTS.employees}
                 />
                 <div className="rounded-2xl border border-slate-100 bg-white/70 px-4 py-3">
                   <PaginationControls align="center" page={employeePage} totalPages={totalEmployeePages} onPageChange={setEmployeePage} />
                 </div>
               </div>
-              <TeamSpotlightPanel team={teamSpotlight} remoteShare={sheetInsights.remoteShare} downloadHref={EXCEL_EXPORTS.employees} />
             </section>
 
             <section className="mb-8 grid gap-6 lg:grid-cols-2">
@@ -9368,7 +8422,7 @@ const App = () => {
                   ))}
                 </div>
                 <p className="mt-4 text-xs text-slate-500">
-                  Location: {newHireLocation || 'Unspecified'} • Mode: {newHireRemote ? 'Remote/Hybrid' : 'On-site'}
+                  Location: {newHireLocation || 'Unspecified'} - Mode: {newHireRemote ? 'Remote/Hybrid' : 'On-site'}
                 </p>
               </div>
 
@@ -9401,7 +8455,7 @@ const App = () => {
                       <div>
                         <p className="font-semibold text-slate-900">{asset.assetName || asset.model || 'Asset'}</p>
                         <p className="text-xs text-slate-500">
-                          {asset.type || 'Device'} • {asset.serialNumber || 'No serial'}
+                          {asset.type || 'Device'} - {asset.serialNumber || 'No serial'}
                         </p>
                       </div>
                       <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600">
@@ -9648,7 +8702,7 @@ const App = () => {
                 printers={networkPrinters}
                 limit={8}
                 title="Network printer routing"
-                subtitle="SharePoint table snapshot powering vendor escalations."
+                subtitle="Local routing data; cloud sync will return when available."
                 onAdd={handleAddPrinter}
                 onEdit={handleEditPrinter}
                 onDelete={handleDeletePrinter}
@@ -9752,7 +8806,7 @@ const App = () => {
                           </span>
                         </div>
                         <p className="mt-1 text-xs text-slate-500">
-                          {suite.used} used / {suite.seats} seats Â· {suite.delta < 0 ? `${Math.abs(suite.delta)} over capacity` : `${suite.delta} seats free`}
+                          {suite.used} used / {suite.seats} seats - {suite.delta < 0 ? `${Math.abs(suite.delta)} over capacity` : `${suite.delta} seats free`}
                         </p>
                         {suite.expiryDate && <p className="text-xs text-slate-500">Renewal: {suite.expiryDate}</p>}
                       </li>
@@ -9791,7 +8845,6 @@ const App = () => {
           repairHistory={assetRepairHistory}
           ownerHistory={assetOwnerHistory}
           onEdit={setAssetForm}
-          sharePointMode={sharePointEnabled}
           onApproveIntake={handleApproveIntake}
           onOpenAutomate={handleOpenAutomate}
           ownerContact={ownerContact}
@@ -9802,7 +8855,6 @@ const App = () => {
           asset={assetForm}
           onSubmit={handleSaveAsset}
           onCancel={() => setAssetForm(null)}
-          sharePointMode={sharePointEnabled}
           suggestionListId={employeeSuggestionListId}
           modelSuggestionListId={modelSuggestionListId}
           departmentSuggestionListId={departmentSuggestionListId}
@@ -9976,12 +9028,10 @@ const App = () => {
       )}
       {isMobile && (
         <MobileActionBar
-          mobileAuditMode={mobileAuditMode}
           onAdd={() => {
             setAssetForm(defaultAsset);
             setActivePage('Hardware');
           }}
-          onAudit={handleToggleMobileAudit}
           onScan={handleStartScanner}
           onWarranty={() => setWarrantyModalOpen(true)}
           onFilters={() => {
@@ -9992,6 +9042,7 @@ const App = () => {
               section.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
           }}
+          onMenu={() => setMenuOpen(true)}
         />
       )}
     </div>
@@ -9999,6 +9050,9 @@ const App = () => {
 };
 
 export default App;
+
+
+
 
 
 
