@@ -51,9 +51,27 @@ module.exports = async (req, res) => {
   const savedState = cookies.duo_state;
   const username = cookies.duo_username;
 
-  if (!state || !duo_code || state !== savedState) {
+  if (!state || !duo_code) {
     res.statusCode = 400;
-    res.end('Invalid state or missing duo_code');
+    res.end('Missing state or duo_code parameter');
+    return;
+  }
+
+  if (!savedState) {
+    res.statusCode = 400;
+    res.end('Missing duo_state cookie - session may have expired');
+    return;
+  }
+
+  if (state !== savedState) {
+    res.statusCode = 400;
+    res.end('State mismatch - possible CSRF attack');
+    return;
+  }
+
+  if (!username || typeof username !== 'string' || !username.trim()) {
+    res.statusCode = 400;
+    res.end('Missing or invalid username from session');
     return;
   }
 
@@ -62,7 +80,7 @@ module.exports = async (req, res) => {
     const client = new duoClient.Client(clientId, clientSecret, apiHost, redirectUri);
     
     // Exchange duo_code for authentication result
-    const decodedToken = await client.exchangeAuthorizationCodeFor2FAResult(duo_code, username);
+    const decodedToken = await client.exchangeAuthorizationCodeFor2FAResult(duo_code, username.trim());
     
     // Create session
     const sessionPayload = {
@@ -95,6 +113,13 @@ module.exports = async (req, res) => {
     res.setHeader('Location', '/');
     res.end();
   } catch (error) {
+    console.error('Duo authentication error:', {
+      message: error.message,
+      stack: error.stack,
+      username: username,
+      hasState: !!state,
+      hasDuoCode: !!duo_code,
+    });
     res.statusCode = 500;
     res.end(`Authentication failed: ${error.message}`);
   }
