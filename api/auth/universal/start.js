@@ -20,6 +20,15 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // Get username from query parameter
+    const username = req.query.username;
+    
+    if (!username || typeof username !== 'string' || !username.trim()) {
+      res.statusCode = 400;
+      res.end('Username is required');
+      return;
+    }
+
     // Generate state for CSRF protection
     const state = crypto.randomBytes(32).toString('hex');
     
@@ -28,13 +37,12 @@ module.exports = async (req, res) => {
     const client = new duoClient.Client(clientId, clientSecret, apiHost, redirectUri);
     
     // Generate authorization URL
-    const username = req.query.username || 'user'; // You can collect this from a form
-    const authUrl = await client.createAuthUrl(username, state);
+    const authUrl = await client.createAuthUrl(username.trim(), state);
 
     // Store state in cookie for verification
     res.setHeader('Set-Cookie', [
       `duo_state=${state}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=300`,
-      `duo_username=${username}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=300`
+      `duo_username=${username.trim()}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=300`
     ]);
 
     res.statusCode = 302;
