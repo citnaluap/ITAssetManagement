@@ -2100,14 +2100,14 @@ const PaginationControls = ({ page, totalPages, onPageChange, align = 'between' 
 };
 
 const SnapshotMetricsRow = ({ metrics = [] }) => (
-  <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-    <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Daily signals</p>
-    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <div className="glass-card rounded-3xl p-6 shadow-lg">
+    <p className="text-[11px] font-bold uppercase tracking-[0.35rem] bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Daily signals</p>
+    <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
       {metrics.map((metric) => (
-        <div key={metric.label} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
-          <p className="text-xs uppercase tracking-widest text-slate-400">{metric.label}</p>
-          <p className="mt-1 text-2xl font-semibold text-slate-900">{metric.value}</p>
-          <p className="text-xs text-slate-500">{metric.subline}</p>
+        <div key={metric.label} className="metric-card p-5">
+          <p className="text-xs font-bold uppercase tracking-widest text-purple-500">{metric.label}</p>
+          <p className="metric-value mt-2">{metric.value}</p>
+          <p className="metric-label mt-1">{metric.subline}</p>
         </div>
       ))}
       {metrics.length === 0 && <p className="text-sm text-slate-500">No live metrics available.</p>}
@@ -3292,7 +3292,7 @@ const EmployeeDirectoryGrid = ({
         </a>
       )}
     </div>
-    <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-6 p-6 sm:grid-cols-2 lg:grid-cols-3">
       {members.map((member) => {
         const isExpanded = expandedId === member.id;
         const assignments = getAssignments(member);
@@ -3301,9 +3301,9 @@ const EmployeeDirectoryGrid = ({
         const licenseCount = licenses.length;
         const supervisorLabel = member.supervisor || 'Not set';
         const cardClasses = [
-          'rounded-2xl border p-4 shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50',
-          'cursor-pointer select-none',
-          isExpanded ? 'border-blue-200 bg-blue-50/80' : 'border-slate-100 bg-white',
+          'rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200',
+          'cursor-pointer select-none hover:shadow-md hover:border-purple-300',
+          isExpanded ? 'ring-2 ring-purple-400 border-purple-400' : '',
         ].join(' ');
         const handleKeyDown = (event) => {
           if (event.key === 'Enter' || event.key === ' ') {
@@ -3322,64 +3322,72 @@ const EmployeeDirectoryGrid = ({
             onClick={() => onToggle(member.id)}
             onKeyDown={handleKeyDown}
           >
-            <div className="flex items-start gap-4">
+            <div className="flex items-start gap-3">
                 {member.avatar ? (
                   <img
                     src={member.avatar}
                     alt={member.name}
                     loading="lazy"
-                    className="h-12 w-12 cursor-zoom-in rounded-2xl object-cover"
+                    className="h-16 w-16 rounded-xl object-cover cursor-zoom-in flex-shrink-0 border-2 border-purple-200"
                     onClick={(event) => {
                       event.stopPropagation();
                       onPhoto(member);
                     }}
                   />
                 ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-600">
+                  <div className="h-16 w-16 flex items-center justify-center rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 text-sm font-bold text-purple-700 flex-shrink-0 border-2 border-purple-200">
                     {getInitials(member.name)}
                   </div>
                 )}
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-slate-900">{member.name}</p>
-                <p className="text-xs text-slate-500">{member.title}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-900 truncate">{member.name}</p>
+                <p className="text-xs text-purple-600 font-medium truncate">{member.title}</p>
                 {member.email ? (
-                  <p className="mt-1 text-xs">
+                  <p className="mt-1.5 text-xs truncate">
                     <a
                       href={`mailto:${member.email}`}
                       onClick={(event) => event.stopPropagation()}
-                      className="font-semibold text-blue-600 hover:underline"
+                      className="text-blue-600 hover:text-purple-600 transition-colors"
                     >
                       {member.email}
                     </a>
                   </p>
                 ) : (
-                  <p className="mt-1 text-xs text-slate-400">No email on file</p>
+                  <p className="mt-1.5 text-xs text-slate-400">No email on file</p>
                 )}
-                <p className="mt-2 text-xs text-slate-500">{member.department}</p>
-                <p className="text-xs text-slate-400">{member.location}</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Supervisor: <span className="font-semibold text-slate-800">{supervisorLabel}</span>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 text-[11px] font-medium border border-purple-200">
+                    <MapPin className="h-3 w-3" />
+                    {member.location}
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[11px] font-medium border border-blue-200">
+                    <Users className="h-3 w-3" />
+                    {member.department}
+                  </span>
+                </div>
+                <p className="mt-2 text-[11px] text-slate-600">
+                  <span className="font-semibold">Supervisor:</span> {supervisorLabel}
                 </p>
                 {member.phone && (
-                  <p className="mt-1 text-[11px] text-slate-400">
+                  <p className="mt-1 text-[11px]">
                     <a
                       href={`tel:${member.phone}`}
                       onClick={(event) => event.stopPropagation()}
-                      className="font-semibold text-blue-600 hover:underline"
+                      className="text-blue-600 hover:text-purple-600 transition-colors"
                     >
                       {member.phone}
                     </a>
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex flex-col gap-1">
                 <button
                   type="button"
                   onClick={(event) => {
                     event.stopPropagation();
                     onEdit(member);
                   }}
-                  className="rounded-full p-2 text-slate-400 transition hover:bg-blue-50 hover:text-blue-600"
+                  className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all"
                   title="Edit employee"
                 >
                   <Edit2 className="h-4 w-4" />
@@ -3390,7 +3398,7 @@ const EmployeeDirectoryGrid = ({
                     event.stopPropagation();
                     onDelete(member);
                   }}
-                  className="rounded-full p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                  className="rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all"
                   title="Delete employee"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -3398,15 +3406,15 @@ const EmployeeDirectoryGrid = ({
               </div>
             </div>
             {isExpanded && (
-              <div className="mt-4 rounded-2xl border border-slate-100 bg-white/90 p-4">
-                <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-500">
+              <div className="mt-4 rounded-xl border border-purple-100 bg-purple-50/30 p-4">
+                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-purple-700 mb-3">
                   <span>Assigned assets</span>
-                  <span>{assignmentCount}</span>
+                  <span className="rounded-full bg-purple-100 px-2 py-0.5">{assignmentCount}</span>
                 </div>
                 {assignmentCount === 0 ? (
-                  <p className="mt-3 text-xs text-slate-500">No asset assignments from the current inventory.</p>
+                  <p className="text-xs text-slate-500">No asset assignments.</p>
                 ) : (
-                  <ul className="mt-3 space-y-2">
+                  <ul className="space-y-2">
                     {assignments.map((asset) => {
                       const deviceLabel = asset.deviceName || asset.assetName || `Asset ${asset.id}`;
                       const assetId = asset.sheetId || asset.assetName || `Asset-${asset.id}`;
@@ -3415,41 +3423,41 @@ const EmployeeDirectoryGrid = ({
                       const showDeviceLabel =
                         deviceLabel && deviceLabel.toLowerCase() !== (assetId || '').toLowerCase();
                       return (
-                        <li key={asset.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                        <li key={asset.id} className="rounded-lg border border-blue-100 bg-white p-3">
                           <p className="text-sm font-semibold text-slate-900">
                             {assetId}
                             {showDeviceLabel && (
-                              <span className="text-xs font-normal text-slate-500"> - {deviceLabel}</span>
+                              <span className="text-xs font-normal text-slate-600"> - {deviceLabel}</span>
                             )}
                           </p>
                           <p className="text-[11px] text-slate-600">
-                            <span className="font-semibold text-slate-700">Model:</span> {modelLabel}
+                            <span className="font-semibold">Model:</span> {modelLabel}
                           </p>
                           <p className="text-[11px] text-slate-600">
-                            <span className="font-semibold text-slate-700">Serial:</span> {serialLabel}
+                            <span className="font-semibold">Serial:</span> {serialLabel}
                           </p>
                         </li>
                       );
                     })}
                   </ul>
                 )}
-                <div className="mt-5 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-500">
+                <div className="mt-4 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-purple-700 mb-3">
                   <span>Assigned software</span>
-                  <span>{licenseCount}</span>
+                  <span className="rounded-full bg-purple-100 px-2 py-0.5">{licenseCount}</span>
                 </div>
                 {licenseCount === 0 ? (
-                  <p className="mt-3 text-xs text-slate-500">No software licenses found for this employee.</p>
+                  <p className="text-xs text-slate-500">No software licenses.</p>
                 ) : (
-                  <ul className="mt-3 space-y-2">
+                  <ul className="space-y-2">
                     {licenses.map((suite) => (
-                      <li key={`${suite.suiteId || suite.name}-${suite.licenseKey || ''}-${member.id}`} className="rounded-2xl border border-slate-100 bg-white p-3">
+                      <li key={`${suite.suiteId || suite.name}-${suite.licenseKey || ''}-${member.id}`} className="rounded-lg border border-emerald-100 bg-white p-3">
                         <p className="text-sm font-semibold text-slate-900">{suite.name}</p>
                         <p className="text-[11px] text-slate-600">
-                          <span className="font-semibold text-slate-700">Vendor:</span> {suite.vendor || 'N/A'}
+                          <span className="font-semibold">Vendor:</span> {suite.vendor || 'N/A'}
                         </p>
                         {suite.licenseKey && (
                           <p className="text-[11px] text-slate-600">
-                            <span className="font-semibold text-slate-700">Key:</span> {suite.licenseKey}
+                            <span className="font-semibold">Key:</span> {suite.licenseKey}
                           </p>
                         )}
                       </li>

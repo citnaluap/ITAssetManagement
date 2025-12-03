@@ -45,10 +45,11 @@ body {
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   
   background:
-    radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.15), transparent 30%),
-    radial-gradient(circle at 85% 20%, rgba(236, 72, 153, 0.12), transparent 35%),
-    radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.10), transparent 40%),
-    linear-gradient(180deg, #fafbff 0%, #f0f4ff 20%, #e8f0ff 50%, #f0f5ff 80%, #fafcff 100%);
+    radial-gradient(circle at 10% 10%, rgba(139, 92, 246, 0.25), transparent 25%),
+    radial-gradient(circle at 90% 15%, rgba(236, 72, 153, 0.22), transparent 30%),
+    radial-gradient(circle at 50% 85%, rgba(59, 130, 246, 0.18), transparent 35%),
+    radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.15), transparent 30%),
+    linear-gradient(135deg, #f0f9ff 0%, #f5f3ff 25%, #fdf4ff 50%, #eff6ff 75%, #f0fdfa 100%);
   background-attachment: fixed;
   color: #0f172a;
   
@@ -74,21 +75,21 @@ body::before {
   background-image: 
     repeating-linear-gradient(
       0deg,
-      rgba(99, 102, 241, 0.02) 0px,
+      rgba(139, 92, 246, 0.04) 0px,
       transparent 1px,
-      transparent 40px,
-      rgba(99, 102, 241, 0.02) 41px
+      transparent 30px,
+      rgba(139, 92, 246, 0.04) 31px
     ),
     repeating-linear-gradient(
       90deg,
-      rgba(236, 72, 153, 0.02) 0px,
+      rgba(236, 72, 153, 0.04) 0px,
       transparent 1px,
-      transparent 40px,
-      rgba(236, 72, 153, 0.02) 41px
+      transparent 30px,
+      rgba(236, 72, 153, 0.04) 31px
     );
   pointer-events: none;
   z-index: 1;
-  opacity: 0.6;
+  opacity: 0.8;
 }
 
 #root {
@@ -438,13 +439,15 @@ html.theme-dark code {
 .glass-card {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(250, 252, 255, 0.95));
   box-shadow:
-    0 30px 70px rgba(15, 23, 42, 0.08),
-    0 10px 24px rgba(99, 102, 241, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 0 60px rgba(99, 102, 241, 0.03);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
-  backdrop-filter: blur(24px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+    0 40px 100px rgba(99, 102, 241, 0.12),
+    0 20px 40px rgba(236, 72, 153, 0.08),
+    0 10px 20px rgba(59, 130, 246, 0.06),
+    inset 0 2px 0 rgba(255, 255, 255, 0.9),
+    inset 0 0 80px rgba(139, 92, 246, 0.04);
+  -webkit-backdrop-filter: blur(30px) saturate(220%);
+  backdrop-filter: blur(30px) saturate(220%);
+  border: 2px solid;
+  border-image: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.2), rgba(59, 130, 246, 0.25)) 1;
 }
 
 .hover-lift {
@@ -457,12 +460,12 @@ html.theme-dark code {
 }
 
 .hover-lift:hover {
-  transform: translateY(-6px) scale(1.01);
+  transform: translateY(-4px) scale(1.01);
   box-shadow: 
-    0 35px 80px rgba(15, 23, 42, 0.12),
-    0 15px 35px rgba(99, 102, 241, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  border-color: rgba(99, 102, 241, 0.3) !important;
+    0 25px 60px rgba(99, 102, 241, 0.15),
+    0 12px 30px rgba(236, 72, 153, 0.1),
+    inset 0 2px 0 rgba(255, 255, 255, 1);
+  border-color: rgba(139, 92, 246, 0.4) !important;
 }
 
 .btn-primary {
