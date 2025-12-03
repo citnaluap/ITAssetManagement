@@ -1293,7 +1293,7 @@ const buildTeamSpotlight = (rows = employeeSheetData, limit = 8) =>
         location: normalizeLocationLabel(row['Location'] || row['Company'] || 'Remote'),
         email: row['E-mail Address'] || '',
         supervisor: row['Supervisor'] || row['Manager'] || '',
-        supervisorEmail: row['Supervisor Email'] || '',
+        supervisorEmail: row["Supervisor's Email"] || row['Supervisor Email'] || row['Manager Email Address'] || row['Manager Email'] || '',
         phone: row['Mobile Phone'] || '',
         startDate: row['Start Date'] || '',
         avatar: EMPLOYEE_PHOTOS[avatarKey],
@@ -1604,6 +1604,15 @@ const getAssetQualityIssues = (asset = {}) => {
   if (!asset.model) {
     issues.push('Model missing');
   }
+  if (!asset.location) {
+    issues.push('Location missing');
+  }
+  if (!asset.assignedTo) {
+    issues.push('Assigned to missing');
+  }
+  if (!asset.status) {
+    issues.push('Status missing');
+  }
   return issues;
 };
 
@@ -1613,6 +1622,9 @@ const getAssetQualityScore = (asset = {}) => {
     asset.assetName || asset.sheetId || asset.id,
     asset.serialNumber,
     asset.model,
+    asset.location,
+    asset.assignedTo,
+    asset.status,
   ];
   const total = fields.length;
   const missing = fields.reduce((acc, value) => acc + (value ? 0 : 1), 0);
@@ -2428,7 +2440,7 @@ const NetworkPrinterBoard = ({
   };
 
   return (
-    <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+    <div className="min-w-0 max-w-full overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 p-5">
         <div>
           <p className="text-lg font-semibold text-slate-900">{title}</p>
@@ -3039,27 +3051,27 @@ const LicenseCompliancePanel = ({ data = [] }) => {
           className="rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
         />
       </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
+      <div className="overflow-x-auto pb-1">
+        <table className="w-full divide-y divide-slate-100 text-left text-sm">
           <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <tr>
               <th className="px-5 py-3 whitespace-nowrap">Suite</th>
-              <th className="px-5 py-3 whitespace-nowrap">Used / Seats</th>
-              <th className="px-5 py-3 whitespace-nowrap">Delta</th>
-              <th className="px-5 py-3 whitespace-nowrap">Status</th>
+              <th className="px-5 py-3 whitespace-nowrap text-center">Used / Seats</th>
+              <th className="px-5 py-3 whitespace-nowrap text-center">Delta</th>
+              <th className="px-5 py-3 pr-6 whitespace-nowrap text-right">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-slate-600">
             {filtered.map((item) => (
               <tr key={item.software}>
                 <td className="px-5 py-3 font-semibold text-slate-900">{item.software}</td>
-                <td className="px-5 py-3">
+                <td className="px-5 py-3 text-center">
                   {item.used} / {item.seats}
                 </td>
-                <td className="px-5 py-3">{item.delta > 0 ? `+${item.delta}` : item.delta}</td>
-                <td className="px-5 py-3 whitespace-nowrap">
+                <td className="px-5 py-3 text-center">{item.delta > 0 ? `+${item.delta}` : item.delta}</td>
+                <td className="px-5 py-3 pr-6 whitespace-nowrap text-right">
                   <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${
+                    className={`inline-block rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${
                       item.status === 'Overused'
                         ? 'bg-rose-50 text-rose-600'
                         : item.status === 'At capacity'
@@ -3160,19 +3172,19 @@ const MaintenanceWorkflowBoard = ({ workOrders = [] }) => {
   };
 
   return (
-    <div className="rounded-3xl border border-slate-100 bg-gradient-to-b from-slate-50 to-white shadow-xl ring-1 ring-slate-100">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 px-6 py-6">
+    <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 px-6 py-5">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Maintenance</p>
-          <p className="text-2xl font-semibold text-slate-900">Work order board</p>
+          <p className="text-lg font-semibold text-slate-900">Work order board</p>
           <p className="text-sm text-slate-500">Track vendor SLAs, attachments, ETA, and technician notes.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 text-xs font-semibold">
-          <span className="rounded-2xl bg-slate-900 text-white px-3 py-1.5 shadow-md">Total {totals.total}</span>
+        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+          <span className="rounded-full bg-slate-900 text-white px-3 py-1 shadow-sm">Total {totals.total}</span>
           {columns.map((col) => (
             <span
               key={col.key}
-              className={`rounded-2xl border border-slate-200 bg-white px-3 py-1.5 text-slate-700 shadow-inner ${col.chip}`}
+              className={`rounded-full border border-slate-200 px-3 py-1 text-slate-700 ${col.chip}`}
             >
               {col.label}: {totals[col.key] || 0}
             </span>
@@ -3180,25 +3192,25 @@ const MaintenanceWorkflowBoard = ({ workOrders = [] }) => {
         </div>
       </div>
 
-      <div className="grid gap-6 p-6">
+      <div className="grid gap-4 p-6">
         {columns.map((status) => {
           const items = workOrders.filter((order) => order.status === status.key);
           return (
             <div
               key={status.key}
-              className={`relative overflow-hidden rounded-2xl border border-slate-100 bg-gradient-to-b ${status.color} p-5 shadow-sm min-w-[260px]`}
+              className={`relative overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 p-4 min-w-[260px]`}
             >
               <div className="mb-3 flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-[0.2rem] text-slate-500">{status.label}</p>
-                <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600 shadow-inner">
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 border border-slate-200">
                   {items.length} open
                 </span>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {items.map((order) => (
                   <div
                     key={order.id}
-                    className="rounded-3xl border border-white/70 bg-white p-4 shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-blue-200"
+                    className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm transition hover:border-blue-200"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -4829,6 +4841,8 @@ const AssetFormModal = ({
   modelSuggestionListId,
   departmentSuggestionListId,
   locationSuggestionListId,
+  departmentSuggestionOptions,
+  locationSuggestionOptions,
 }) => {
   const [form, setForm] = useState(asset || defaultAsset);
 
@@ -4859,11 +4873,11 @@ const AssetFormModal = ({
               onChange={(event) => update('type', event.target.value)}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
+              <option value="Computer">Computer</option>
               <option value="Desktop">Desktop</option>
               <option value="Dock">Dock</option>
               <option value="HotSpot">HotSpot</option>
               <option value="KeyFob">KeyFob</option>
-              <option value="Laptop">Laptop</option>
               <option value="Monitor">Monitor</option>
               <option value="Phone">Phone</option>
               <option value="Printer">Printer</option>
@@ -4898,21 +4912,33 @@ const AssetFormModal = ({
           </label>
           <label className="text-sm font-medium text-slate-700">
             Department
-            <input
+            <select
               value={form.department}
               onChange={(event) => update('department', event.target.value)}
-              list={departmentSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
+            >
+              <option value="">Select a department...</option>
+              {departmentSuggestionOptions.map((dept) => (
+                <option key={`asset-dept-${dept}`} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="text-sm font-medium text-slate-700">
             Location
-            <input
+            <select
               value={form.location}
               onChange={(event) => update('location', event.target.value)}
-              list={locationSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
+            >
+              <option value="">Select a location...</option>
+              {locationSuggestionOptions.map((location) => (
+                <option key={`asset-location-${location}`} value={location}>
+                  {location}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="text-sm font-medium text-slate-700">
             Assigned to
@@ -5256,6 +5282,9 @@ const EmployeeFormModal = ({
   modelSuggestionListId,
   employeeSuggestionListId,
   jobTitleSuggestionListId,
+  departmentSuggestionOptions,
+  locationSuggestionOptions,
+  jobTitleSuggestionOptions,
 }) => {
   const [form, setForm] = useState(employee || defaultEmployeeProfile);
   const [photoPreview, setPhotoPreview] = useState(employee?.avatar || '');
@@ -5366,7 +5395,7 @@ const EmployeeFormModal = ({
 
   return (
     <ModalShell title={form?.id ? 'Edit employee' : 'New employee'} onClose={onCancel}>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="text-sm font-medium text-slate-700">
             Full name
@@ -5381,31 +5410,48 @@ const EmployeeFormModal = ({
           </label>
           <label className="text-sm font-medium text-slate-700">
             Role or title
-            <input
+            <select
               value={form.title}
               onChange={(event) => update('title', event.target.value)}
-              placeholder="Service Coordinator"
-              list={jobTitleSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
+            >
+              <option value="">Select a role...</option>
+              {jobTitleSuggestionOptions.map((title) => (
+                <option key={`role-option-${title}`} value={title}>
+                  {title}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="text-sm font-medium text-slate-700">
             Department
-            <input
+            <select
               value={form.department}
               onChange={(event) => update('department', event.target.value)}
-              list={departmentSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
+            >
+              <option value="">Select a department...</option>
+              {departmentSuggestionOptions.map((dept) => (
+                <option key={`dept-option-${dept}`} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="text-sm font-medium text-slate-700">
             Location
-            <input
+            <select
               value={form.location}
               onChange={(event) => update('location', event.target.value)}
-              list={locationSuggestionListId}
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
+            >
+              <option value="">Select a location...</option>
+              {locationSuggestionOptions.map((location) => (
+                <option key={`location-option-${location}`} value={location}>
+                  {location}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="text-sm font-medium text-slate-700">
             Email
@@ -5440,6 +5486,8 @@ const EmployeeFormModal = ({
             <input
               value={form.computer}
               onChange={(event) => update('computer', event.target.value)}
+              name="employee-computer"
+              autoComplete="new-password"
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -5448,6 +5496,8 @@ const EmployeeFormModal = ({
             <input
               value={form.printer}
               onChange={(event) => update('printer', event.target.value)}
+              name="employee-printer"
+              autoComplete="new-password"
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -5456,6 +5506,8 @@ const EmployeeFormModal = ({
             <input
               value={form.monitor}
               onChange={(event) => update('monitor', event.target.value)}
+              name="employee-monitor"
+              autoComplete="new-password"
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -5464,6 +5516,8 @@ const EmployeeFormModal = ({
             <input
               value={form.dock}
               onChange={(event) => update('dock', event.target.value)}
+              name="employee-dock"
+              autoComplete="new-password"
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -6185,6 +6239,8 @@ const App = () => {
           if (!cancelled) {
             setEmployeeGallery((prev) => {
               const merged = [...normalizedRoster];
+              const seen = new Set(normalizedRoster.map(m => normalizeKey(m.id || m.lookupKey || m.name)).filter(Boolean));
+              
               prev.forEach((member) => {
                 const key = normalizeKey(member.id || member.lookupKey || member.name);
                 if (!key || seen.has(key)) {
@@ -6193,7 +6249,22 @@ const App = () => {
                 seen.add(key);
                 merged.push(member);
               });
-              return merged;
+              
+              // Preserve supervisor data from previous state when not in new data
+              return merged.map(newMember => {
+                const key = normalizeKey(newMember.id || newMember.lookupKey || newMember.name);
+                const existingMember = prev.find(m => normalizeKey(m.id || m.lookupKey || m.name) === key);
+                
+                // If new data doesn't have supervisor info but existing data does, preserve it
+                if (existingMember && !newMember.supervisor && existingMember.supervisor) {
+                  return {
+                    ...newMember,
+                    supervisor: existingMember.supervisor,
+                    supervisorEmail: existingMember.supervisorEmail,
+                  };
+                }
+                return newMember;
+              });
             });
           }
           break;
@@ -6207,6 +6278,95 @@ const App = () => {
       cancelled = true;
     };
   }, [setEmployeeGallery]);
+  
+  useEffect(() => {
+    let cancelled = false;
+    const loadSupervisorData = async () => {
+      const orgChartSources = [
+        '/Tables/HUB and Org Chart 11-25.xlsx',
+        `${PUBLIC_URL}/tables/${encodeURIComponent('HUB and Org Chart 11-25.xlsx')}`,
+      ];
+      for (const url of orgChartSources) {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            continue;
+          }
+          const buffer = await response.arrayBuffer();
+          const workbook = XLSX.read(buffer, { type: 'array' });
+          const sheetNames = workbook.SheetNames || [];
+          const sheetName = sheetNames[0];
+          if (!sheetName) continue;
+          
+          const sheet = workbook.Sheets[sheetName];
+          if (!sheet) continue;
+          
+          const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+          if (!rows.length) continue;
+          
+          // Create supervisor lookup by employee ID and name
+          const supervisorLookup = {};
+          rows.forEach((row) => {
+            const firstName = (row['First Name'] || '').toString().trim();
+            const lastName = (row['Last Name'] || '').toString().trim();
+            const employeeId = (row['Employee ID'] || '').toString().trim();
+            const supervisor = (row['Supervisor'] || '').toString().trim();
+            const supervisorEmail = (row["Supervisor's Email"] || '').toString().trim();
+            
+            if (!firstName && !lastName && !employeeId) return;
+            
+            const name = `${formatPersonName(firstName)} ${formatPersonName(lastName)}`.trim();
+            
+            // Store by both employee ID and normalized name
+            const nameKey = normalizeKey(name);
+            const idKey = normalizeKey(employeeId);
+            
+            const supervisorData = {
+              supervisor,
+              supervisorEmail,
+            };
+            
+            if (nameKey) {
+              supervisorLookup[nameKey] = supervisorData;
+            }
+            if (idKey) {
+              supervisorLookup[idKey] = supervisorData;
+            }
+          });
+          
+          // Update employee gallery with supervisor data
+          if (!cancelled && Object.keys(supervisorLookup).length > 0) {
+            setEmployeeGallery((prev) => 
+              prev.map((member) => {
+                const nameKey = normalizeKey(member.name || '');
+                const idKey = normalizeKey(member.id || '');
+                
+                // Try matching by ID first, then by name
+                const supervisorData = supervisorLookup[idKey] || supervisorLookup[nameKey];
+                
+                if (supervisorData && (supervisorData.supervisor || supervisorData.supervisorEmail)) {
+                  return {
+                    ...member,
+                    supervisor: supervisorData.supervisor || member.supervisor,
+                    supervisorEmail: supervisorData.supervisorEmail || member.supervisorEmail,
+                  };
+                }
+                return member;
+              })
+            );
+          }
+          break;
+        } catch (error) {
+          console.warn('Org chart fetch failed for', url, error);
+        }
+      }
+    };
+    loadSupervisorData();
+    return () => {
+      cancelled = true;
+    };
+  }, [setEmployeeGallery]);
+  
   const containerStyle = useMemo(
     () => (isMobile ? { width: '100%', maxWidth: '100%', margin: '0 auto' } : undefined),
     [isMobile],
@@ -6250,6 +6410,18 @@ const App = () => {
   );
   const formatRoleLabel = (value = '') =>
     normalizeKey(value) === 'servicecoordinator' ? 'Service Coordinator' : value.trim();
+  const employeeHubJobTitles = useMemo(() => {
+    const seen = new Set();
+    const titles = [];
+    employeeSheetData.forEach((row) => {
+      const raw = formatRoleLabel(row['Job Title'] || '');
+      const key = normalizeKey(raw);
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      titles.push(raw);
+    });
+    return titles.sort((a, b) => safeLocaleCompare(a, b));
+  }, []);
   const roleOptions = useMemo(() => {
     const titles = employeeGallery.map((member) => member.title || '').filter(Boolean);
     const seen = new Set();
@@ -6271,24 +6443,36 @@ const App = () => {
     const uniqueTitles = filtered.sort((a, b) => safeLocaleCompare(a, b));
     return uniqueTitles;
   }, [employeeGallery]);
-  useEffect(() => {
-    if (!roleOptions.length) {
-      if (newHireRole) {
-        setNewHireRole('');
-      }
-      return;
-    }
-    const normalized = normalizeKey(newHireRole || '');
-    const inList = roleOptions.some((role) => normalizeKey(role) === normalized);
-    if (!inList) {
-      setNewHireRole(roleOptions[0]);
-    } else if (normalized === 'servicecoordinator' && newHireRole !== 'Service Coordinator') {
-      setNewHireRole('Service Coordinator');
-    }
-  }, [newHireRole, roleOptions]);
   const modelOptions = useMemo(() => {
     const isKeyFob = (value = '') => /key\s*fob/i.test(value);
     const isUnbrandedLatitude = (value = '') => /latitude/i.test(value) && !/^dell\s+latitude/i.test(value.trim());
+    const isSevenDigitPattern = (value = '') => /^\d{7}(\s+\d{7})*$/.test(String(value || '').trim());
+    const isPhoneNumber = (value = '') => {
+      const str = String(value || '');
+      return /\(\d{3}\)\s*\d{3}-\d{4}/.test(str) || /\d{3}-\d{3}-\d{4}/.test(str);
+    };
+    const containsMonitor = (value = '') => /monitor/i.test(String(value || '')) || /mointor/i.test(String(value || ''));
+    const isGenericTerm = (value = '') => {
+      const trimmed = String(value || '').trim().toLowerCase();
+      return ['computer', 'dock', 'ipad'].includes(trimmed);
+    };
+    const isInvalidAssetPattern = (value = '') => {
+      const trimmed = String(value || '').trim();
+      // Match patterns like LAPOP503, LATOP374, AELAPTOP013, LATOP428
+      return /^(lapop|latop|aelaptop)\d+$/i.test(trimmed);
+    };
+    const isAssetId = (value = '') => {
+      const trimmed = String(value || '').trim();
+      // Match single asset ID like "Laptop450"
+      if (/^(laptop|desktop|computer|monitor|printer|phone|tablet|ipad|dock|server|storage)\d+$/i.test(trimmed)) {
+        return true;
+      }
+      // Match multiple asset IDs separated by spaces like "Monitor121 Monitor081"
+      if (/^((laptop|desktop|computer|monitor|printer|phone|tablet|ipad|dock|server|storage)\d+\s*)+$/i.test(trimmed)) {
+        return true;
+      }
+      return false;
+    };
     const employeeModels = employeeGallery.flatMap((member) =>
       [member.computer, member.printer, member.monitor, member.dock, member.keyFob].filter(Boolean),
     );
@@ -6296,7 +6480,7 @@ const App = () => {
       new Set(
         [...assets.map((asset) => asset.model), ...employeeModels]
           .filter(Boolean)
-          .filter((model) => !isKeyFob(model) && !isUnbrandedLatitude(model)),
+          .filter((model) => !isKeyFob(model) && !isUnbrandedLatitude(model) && !isSevenDigitPattern(model) && !isAssetId(model) && !isPhoneNumber(model) && !containsMonitor(model) && !isGenericTerm(model) && !isInvalidAssetPattern(model)),
       ),
     ).sort((a, b) => safeLocaleCompare(a, b));
   }, [assets, employeeGallery]);
@@ -6307,6 +6491,18 @@ const App = () => {
       ),
     [employeeGallery],
   );
+  const employeeHubDepartments = useMemo(() => {
+    const seen = new Set();
+    const list = [];
+    employeeSheetData.forEach((row) => {
+      const dept = (row['Department'] || row['Company'] || '').trim();
+      const key = normalizeKey(dept);
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      list.push(dept);
+    });
+    return list.sort((a, b) => safeLocaleCompare(a, b));
+  }, []);
   const locationOptions = useMemo(
     () =>
       Array.from(new Set(employeeGallery.map((member) => member.location).filter(Boolean))).sort((a, b) =>
@@ -6314,31 +6510,58 @@ const App = () => {
       ),
     [employeeGallery],
   );
-  const newHireLocationOptions = useMemo(
-    () => locationOptions.filter((location) => normalizeKey(location) !== 'hq'),
-    [locationOptions],
-  );
+  const employeeHubLocations = useMemo(() => {
+    const seen = new Set();
+    const list = [];
+    employeeSheetData.forEach((row) => {
+      const location = normalizeLocationLabel(row['Location'] || row['Company'] || 'Remote');
+      const key = normalizeKey(location);
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      list.push(location);
+    });
+    return list.sort((a, b) => safeLocaleCompare(a, b));
+  }, []);
+  const departmentSuggestionOptions = employeeHubDepartments.length ? employeeHubDepartments : departmentOptions;
+  const locationSuggestionOptions = employeeHubLocations.length ? employeeHubLocations : locationOptions;
+  const jobTitleSuggestionOptions = employeeHubJobTitles.length ? employeeHubJobTitles : roleOptions;
   useEffect(() => {
-    if (!newHireDepartment && departmentOptions.length > 0) {
-      setNewHireDepartment(departmentOptions[0]);
+    if (!jobTitleSuggestionOptions.length) {
+      if (newHireRole) {
+        setNewHireRole('');
+      }
+      return;
     }
-  }, [departmentOptions, newHireDepartment]);
+    const normalized = normalizeKey(newHireRole || '');
+    const inList = jobTitleSuggestionOptions.some((role) => normalizeKey(role) === normalized);
+    if (!inList) {
+      setNewHireRole(jobTitleSuggestionOptions[0]);
+    } else if (normalized === 'servicecoordinator' && newHireRole !== 'Service Coordinator') {
+      setNewHireRole('Service Coordinator');
+    }
+  }, [newHireRole, jobTitleSuggestionOptions]);
+  useEffect(() => {
+    if (!newHireDepartment && departmentSuggestionOptions.length > 0) {
+      setNewHireDepartment(departmentSuggestionOptions[0]);
+    }
+  }, [departmentSuggestionOptions, newHireDepartment]);
   useEffect(() => {
     const normalizedSelection = normalizeKey(newHireLocation || '');
+    const filteredLocations = locationSuggestionOptions.filter((location) => normalizeKey(location) !== 'hq');
     if (normalizedSelection && normalizedSelection !== 'hq') {
-      const inList = newHireLocationOptions.some(
+      const inList = filteredLocations.some(
         (location) => normalizeKey(location) === normalizedSelection,
       );
       if (inList) {
         return;
       }
     }
-    if (newHireLocationOptions.length > 0) {
-      setNewHireLocation(newHireLocationOptions[0]);
+    if (filteredLocations.length > 0) {
+      setNewHireLocation(filteredLocations[0]);
     } else if (newHireLocation) {
       setNewHireLocation('');
     }
-  }, [newHireLocation, newHireLocationOptions]);
+  }, [newHireLocation, locationSuggestionOptions]);
   const remoteAssetCount = useMemo(
     () => assets.filter((asset) => normalizeLocationLabel(asset.location) === 'Remote').length,
     [assets],
@@ -6534,6 +6757,7 @@ const App = () => {
     [orderedEmployees, employeePage],
   );
   const employeeAssignments = useMemo(() => {
+    // Build lookup from asset.assignedTo field
     const lookup = assets.reduce((acc, asset) => {
       const key = normalizeKey(asset.assignedTo || '');
       if (!key) {
@@ -6545,6 +6769,49 @@ const App = () => {
       acc[key].push(asset);
       return acc;
     }, {});
+    
+    // Also check Employee Hub data for assigned assets
+    employeeGallery.forEach((member) => {
+      const memberKey = member.lookupKey || normalizeKey(member.name || '');
+      if (!memberKey) return;
+      
+      // Get asset IDs from Employee Hub columns
+      const hubAssets = [
+        member.computer,
+        member.printer,
+        member.monitor,
+        member.dock,
+        member.keyFob
+      ].filter(Boolean);
+      
+      // Match these to actual assets
+      hubAssets.forEach((assetId) => {
+        const normalized = normalizeKey(assetId);
+        if (!normalized) return;
+        
+        // Find matching asset by various fields
+        const matchingAsset = assets.find((asset) => {
+          const assetKeys = [
+            normalizeKey(asset.assetName || ''),
+            normalizeKey(asset.deviceName || ''),
+            normalizeKey(asset.sheetId || ''),
+            normalizeKey(asset.serialNumber || '')
+          ].filter(Boolean);
+          return assetKeys.includes(normalized);
+        });
+        
+        if (matchingAsset) {
+          if (!lookup[memberKey]) {
+            lookup[memberKey] = [];
+          }
+          // Avoid duplicates
+          if (!lookup[memberKey].some((a) => a.id === matchingAsset.id)) {
+            lookup[memberKey].push(matchingAsset);
+          }
+        }
+      });
+    });
+    
     Object.values(lookup).forEach((list) =>
       list.sort((a, b) => {
         const nameA = (a.deviceName || a.assetName || '').toLowerCase();
@@ -6556,7 +6823,7 @@ const App = () => {
       }),
     );
     return lookup;
-  }, [assets]);
+  }, [assets, employeeGallery]);
   const getEmployeeAssignments = useCallback(
     (member) => {
       if (!member) {
@@ -6751,6 +7018,18 @@ const App = () => {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    
+    // Bypass auth in development mode when API is not available
+    const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+    const skipAuth = isDevelopment && !apiBaseUrl;
+    
+    if (skipAuth) {
+      setAuthUser({ name: 'Dev User', email: 'dev@udservices.org', sub: 'dev', expiresAt: Date.now() + 86400000 });
+      setAuthLoading(false);
+      setAuthError('');
+      return;
+    }
+    
     const fetchSession = async () => {
       setAuthLoading(true);
       try {
@@ -6777,7 +7056,7 @@ const App = () => {
       }
     };
     fetchSession();
-  }, [buildApiUrl]);
+  }, [buildApiUrl, apiBaseUrl]);
 
   useEffect(() => {
     const syncViewport = () => {
@@ -8427,17 +8706,17 @@ const App = () => {
           ))}
         </datalist>
         <datalist id={departmentSuggestionListId}>
-          {departmentOptions.map((dept) => (
+          {departmentSuggestionOptions.map((dept) => (
             <option key={`department-suggestion-${dept}`} value={dept} />
           ))}
         </datalist>
         <datalist id={locationSuggestionListId}>
-          {locationOptions.map((location) => (
+          {locationSuggestionOptions.map((location) => (
             <option key={`location-suggestion-${location}`} value={location} />
           ))}
         </datalist>
         <datalist id={jobTitleSuggestionListId}>
-          {roleOptions.map((title) => (
+          {jobTitleSuggestionOptions.map((title) => (
             <option key={`title-suggestion-${title}`} value={title} />
           ))}
         </datalist>
@@ -8834,22 +9113,11 @@ const App = () => {
                 }}
                 className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
-                {(() => {
-                  const raw = roleOptions;
-                  const seen = new Set();
-                  const normalizedList = [];
-                  raw.forEach((role) => {
-                    const label = formatRoleLabel(role);
-                    const key = normalizeKey(label);
-                    if (key === 'servicecoordinator' && label !== 'Service Coordinator') {
-                      return;
-                    }
-                    if (seen.has(key)) return;
-                    seen.add(key);
-                    normalizedList.push(label);
-                  });
-                  return normalizedList.map((role) => <option key={role}>{role}</option>);
-                })()}
+                {jobTitleSuggestionOptions.map((role) => (
+                  <option key={`newhire-role-${role}`} value={role}>
+                    {role}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -8859,12 +9127,11 @@ const App = () => {
                 onChange={(event) => setNewHireDepartment(event.target.value)}
                 className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
-                {[...departmentOptions, newHireDepartment]
-                  .filter(Boolean)
-                  .filter((value, index, arr) => arr.indexOf(value) === index)
-                  .map((dept) => (
-                    <option key={dept}>{dept}</option>
-                  ))}
+                {departmentSuggestionOptions.map((dept) => (
+                  <option key={`newhire-dept-${dept}`} value={dept}>
+                    {dept}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -8874,15 +9141,12 @@ const App = () => {
                 onChange={(event) => setNewHireLocation(event.target.value)}
                 className="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
-                {[...newHireLocationOptions, newHireLocation]
-                  .filter(Boolean)
+                {locationSuggestionOptions
                   .filter((value) => normalizeKey(value) !== 'hq')
-                  .filter(
-                    (value, index, arr) =>
-                      arr.findIndex((item) => normalizeKey(item) === normalizeKey(value)) === index,
-                  )
                   .map((location) => (
-                    <option key={location}>{location}</option>
+                    <option key={`newhire-location-${location}`} value={location}>
+                      {location}
+                    </option>
                   ))}
               </select>
             </div>
@@ -8979,10 +9243,11 @@ const App = () => {
                               const serial = asset.serialNumber || 'No serial';
                               return `- ${name} (${type}, Serial: ${serial})`;
                             });
+                      const supervisorFirstName = (terminationProfile.supervisor || '').split(' ')[0];
                       const body = encodeURIComponent(
-                        `Hi ${terminationProfile.supervisor || ''},\n\nWe're processing offboarding for ${terminationEmployee}. Please confirm return of the assets below; our IT team will handle disabling accounts and permissions.\n\nAssets:\n${assetLines.join(
+                        `Hi ${supervisorFirstName || terminationProfile.supervisor || ''},\n\nI hope you're doing well! I wanted to reach out regarding ${terminationEmployee}'s offboarding process.\n\nWould you mind helping us coordinate the return of the following assets? Once we have them back, our IT team will take care of wrapping up account access and permissions.\n\nAssets to return:\n${assetLines.join(
                           '\n',
-                        )}\n\nThank you.`,
+                        )}\n\nThanks so much for your help with this! Let me know if you have any questions.\n\nBest,`,
                       );
                       window.location.href = `mailto:${terminationProfile.supervisorEmail}?subject=${subject}&body=${body}`;
                     }}
@@ -9068,16 +9333,15 @@ const App = () => {
               </div>
             </section>
 
-            <section className="mb-8 grid gap-6 xl:grid-cols-3">
-              <div className="space-y-4 xl:col-span-2">
+            <section className="mb-8 grid gap-6 xl:grid-cols-[1.6fr,1fr]">
+              <div className="space-y-4">
                 <AnalyticsInsightsPanel costData={costByDepartment} depreciation={depreciationTrend} />
                 <DepreciationForecastTable forecast={depreciationForecast} />
               </div>
               <LicenseCompliancePanel data={licenseCompliance} />
             </section>
 
-\n
-            <section className="mb-8 grid gap-6 lg:grid-cols-[2fr,1fr]">
+            <section className="mb-8 grid gap-6 xl:grid-cols-[1.6fr,1fr]">
               <CardShell title="Report catalog" icon={Download}>
                 <div className="grid gap-4">
                   {reportCatalog.map((report) => (
@@ -9362,6 +9626,8 @@ const App = () => {
           modelSuggestionListId={modelSuggestionListId}
           departmentSuggestionListId={departmentSuggestionListId}
           locationSuggestionListId={locationSuggestionListId}
+          departmentSuggestionOptions={departmentSuggestionOptions}
+          locationSuggestionOptions={locationSuggestionOptions}
         />
       )}
       {employeeForm && (
@@ -9374,6 +9640,9 @@ const App = () => {
           modelSuggestionListId={modelSuggestionListId}
           employeeSuggestionListId={employeeSuggestionListId}
           jobTitleSuggestionListId={jobTitleSuggestionListId}
+          departmentSuggestionOptions={departmentSuggestionOptions}
+          locationSuggestionOptions={locationSuggestionOptions}
+          jobTitleSuggestionOptions={jobTitleSuggestionOptions}
         />
       )}
       {actionState && (
