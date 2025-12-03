@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
   const clientId = process.env.DUO_CLIENT_ID;
   const clientSecret = process.env.DUO_CLIENT_SECRET;
   const apiHost = process.env.DUO_API_HOST; // e.g., api-xxxxxxxx.duosecurity.com
-  const redirectUri = process.env.DUO_REDIRECT_URI || 'https://it-asset-management-ten.vercel.app/auth/callback';
+  const redirectUri = process.env.DUO_REDIRECT_URI || 'https://it-asset-management-ten.vercel.app/api/auth/universal/callback';
 
   console.log('Duo config check:', {
     hasClientId: !!clientId,
@@ -19,6 +19,8 @@ module.exports = async (req, res) => {
     hasApiHost: !!apiHost,
     apiHost: apiHost,
     redirectUri: redirectUri,
+    clientIdValue: clientId,
+    clientSecretValue: clientSecret?.substring(0, 5) + '...',
   });
 
   if (!clientId || !clientSecret || !apiHost) {
@@ -51,7 +53,14 @@ module.exports = async (req, res) => {
     
     // Create request for Duo Universal Prompt
     const duoClient = require('@duosecurity/duo_universal');
-    const client = new duoClient.Client(clientId, clientSecret, apiHost, redirectUri);
+    // Client constructor: (clientId, clientSecret, apiHost, redirectUri, useDuoCodeAttribute = true)
+    const client = new duoClient.Client(
+      clientId, 
+      clientSecret, 
+      apiHost, 
+      redirectUri,
+      true  // useDuoCodeAttribute - use duo_code in callback (default/recommended)
+    );
     
     console.log('Duo client created, generating auth URL for username:', username.trim());
     
