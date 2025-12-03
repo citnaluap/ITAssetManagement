@@ -48,62 +48,68 @@ import automateMap from './data/automateMap.json';
 
 const DARK_MODE_STYLES = `
   html.theme-dark body {
-    background: radial-gradient(circle at 20% 20%, rgba(59,130,246,0.08), transparent 25%),
-      radial-gradient(circle at 80% 0%, rgba(34,211,238,0.08), transparent 20%),
-      #0b1224;
-    color: #e2e8f0;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(88, 181, 255, 0.12), transparent 35%),
+      radial-gradient(circle at 85% 10%, rgba(255, 122, 195, 0.10), transparent 30%),
+      linear-gradient(180deg, #0b1224 0%, #0d162d 45%, #0a1226 100%);
+    color: #e9edf7;
   }
   html.theme-dark .bg-white,
+  html.theme-dark .bg-white\\/50,
+  html.theme-dark .bg-white\\/60,
   html.theme-dark .bg-white\\/70,
   html.theme-dark .bg-white\\/80,
   html.theme-dark .bg-white\\/90 {
-    background-color: #0f172a !important;
+    background-color: #101827 !important;
   }
   html.theme-dark .bg-slate-50,
   html.theme-dark .bg-slate-50\\/60,
   html.theme-dark .bg-slate-50\\/70,
   html.theme-dark .bg-slate-50\\/80,
-  html.theme-dark .bg-slate-50\\/90 {
-    background-color: #0b1224 !important;
+  html.theme-dark .bg-slate-50\\/90,
+  html.theme-dark .bg-slate-100,
+  html.theme-dark .bg-slate-100\\/70,
+  html.theme-dark .bg-slate-200 {
+    background-color: #0f172a !important;
   }
-  html.theme-dark .bg-blue-50 { background-color: rgba(59,130,246,0.12) !important; color: #bfdbfe; }
+  html.theme-dark .bg-blue-50 { background-color: rgba(59,130,246,0.18) !important; color: #cfe1ff; }
+  html.theme-dark .border-slate-50,
   html.theme-dark .border-slate-100,
   html.theme-dark .border-slate-200 {
-    border-color: #1f2937 !important;
+    border-color: #1f2c46 !important;
   }
   html.theme-dark .divide-slate-100,
   html.theme-dark .divide-slate-200 {
-    border-color: #1f2937 !important;
+    border-color: #1f2c46 !important;
   }
   html.theme-dark .ring-slate-100,
   html.theme-dark .ring-slate-200 {
-    --tw-ring-color: #1f2937 !important;
+    --tw-ring-color: #1f2c46 !important;
   }
   html.theme-dark .text-slate-900,
   html.theme-dark .text-slate-800,
-  html.theme-dark .text-slate-700 { color: #e2e8f0 !important; }
-  html.theme-dark .text-slate-600 { color: #cbd5e1 !important; }
-  html.theme-dark .text-slate-500 { color: #94a3b8 !important; }
-  html.theme-dark .text-slate-400 { color: #cbd5e1 !important; }
-  html.theme-dark .text-slate-300 { color: #e2e8f0 !important; }
-  html.theme-dark .shadow-sm { box-shadow: 0 20px 60px rgba(0,0,0,0.45) !important; }
-  html.theme-dark .shadow-inner { box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 14px 50px rgba(0,0,0,0.35) !important; }
-  html.theme-dark .bg-white\\/70,
-  html.theme-dark .bg-white\\/80,
-  html.theme-dark .bg-white\\/90 { background-color: #111827 !important; }
-  html.theme-dark .bg-slate-100,
-  html.theme-dark .bg-slate-100\\/70,
-  html.theme-dark .bg-slate-200 { background-color: #0f172a !important; }
+  html.theme-dark .text-slate-700 { color: #e9edf7 !important; }
+  html.theme-dark .text-slate-600 { color: #cfd8e7 !important; }
+  html.theme-dark .text-slate-500 { color: #a5b4cf !important; }
+  html.theme-dark .text-slate-400 { color: #b9c7df !important; }
+  html.theme-dark .text-slate-300 { color: #e9edf7 !important; }
+  html.theme-dark .shadow-sm { box-shadow: 0 18px 55px rgba(0,0,0,0.5) !important; }
+  html.theme-dark .shadow-inner { box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 16px 50px rgba(0,0,0,0.38) !important; }
   html.theme-dark input,
   html.theme-dark select,
   html.theme-dark textarea {
     background-color: #0f172a !important;
-    color: #e2e8f0 !important;
-    border-color: #1f2937 !important;
+    color: #e9edf7 !important;
+    border-color: #1f2c46 !important;
   }
   html.theme-dark input::placeholder,
   html.theme-dark textarea::placeholder {
-    color: #94a3b8 !important;
+    color: #a5b4cf !important;
+  }
+  html.theme-dark .glass-card {
+    background: linear-gradient(145deg, rgba(16, 24, 39, 0.96), rgba(15, 23, 42, 0.9)) !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55) !important;
+    border: 1px solid #1f2c46 !important;
   }
 `;
 
@@ -1843,11 +1849,11 @@ const sortLoaners = (collection) =>
 };
 
 const CardShell = ({ title, icon: Icon, action, children }) => (
-  <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+  <div className="glass-card hover-lift rounded-3xl border border-slate-100 bg-white p-6 shadow-lg transition-all duration-300">
     <div className="mb-4 flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        {Icon && <Icon className="h-5 w-5 text-slate-500" />}
-        <p className="text-sm font-semibold text-slate-800">{title}</p>
+      <div className="flex items-center gap-3">
+        {Icon && <div className="rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 p-2.5 shadow-inner"><Icon className="h-5 w-5 text-blue-600" /></div>}
+        <p className="text-sm font-bold text-slate-900 tracking-tight">{title}</p>
       </div>
       {action}
     </div>
@@ -1866,9 +1872,10 @@ const PrimaryNav = ({
   onOpenCommandPalette,
 }) => (
   <nav
-    className={`mb-10 rounded-2xl px-5 py-4 backdrop-blur ${
-      isDarkMode ? 'border border-slate-800 bg-slate-900/70 text-slate-100' : 'border border-slate-100 bg-white/70 text-slate-500'
+    className={`mb-10 glass-card rounded-3xl px-6 py-5 backdrop-blur-xl shadow-2xl transition-all duration-500 ${
+      isDarkMode ? 'border border-slate-700 bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 text-slate-100' : 'border border-slate-200/50 bg-gradient-to-br from-white/95 via-blue-50/30 to-white/95 text-slate-500'
     }`}
+    style={{ backdropFilter: 'blur(20px) saturate(180%)' }}
   >
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -1919,7 +1926,8 @@ const PrimaryNav = ({
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
         <button
           onClick={onAdd}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-500 sm:w-auto"
+          className="btn-primary inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg hover-lift hover:shadow-xl hover:shadow-emerald-500/50 transition-all duration-300 sm:w-auto"
+          style={{ letterSpacing: '0.025em' }}
         >
           <Monitor className="h-4 w-4" />
           New asset
@@ -1927,7 +1935,8 @@ const PrimaryNav = ({
         <button
           onClick={onAddEmployee}
           type="button"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-500 sm:w-auto"
+            className="btn-primary inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg hover-lift hover:shadow-xl hover:shadow-blue-500/50 transition-all duration-300 sm:w-auto"
+            style={{ letterSpacing: '0.025em' }}
           >
             <Users className="h-4 w-4" />
             New employee
@@ -1935,11 +1944,12 @@ const PrimaryNav = ({
         <button
           type="button"
           onClick={onOpenCommandPalette}
-          className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2 text-xs font-semibold transition sm:w-auto ${
+          className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-2.5 text-xs font-bold shadow-md hover-lift transition-all duration-300 sm:w-auto ${
             isDarkMode
-                ? 'border border-slate-700 text-slate-100 hover:border-slate-500'
-                : 'border border-slate-200 text-slate-600 hover:border-slate-300'
+                ? 'border border-slate-600 bg-gradient-to-br from-slate-800 to-slate-900 text-slate-100 hover:border-slate-500 hover:shadow-lg'
+                : 'border border-slate-300 bg-gradient-to-br from-white to-slate-50 text-slate-700 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-200/50'
             }`}
+            style={{ letterSpacing: '0.025em' }}
           >
             <Search className="h-4 w-4" />
             Command palette
@@ -1950,13 +1960,14 @@ const PrimaryNav = ({
             <button
               key={item}
               onClick={() => onNavigate?.(item)}
-              className={`transition ${isDarkMode ? 'hover:text-white' : 'hover:text-slate-900'} ${
-                activePage === item ? (isDarkMode ? 'text-white' : 'text-slate-900') : ''
+              className={`nav-pill relative transition ${isDarkMode ? 'hover:text-white' : 'hover:text-slate-900'} ${
+                activePage === item ? 'is-active' : ''
               }`}
               type="button"
               aria-current={activePage === item ? 'page' : undefined}
             >
-              {item}
+              <span className="glow" aria-hidden />
+              <span className="relative z-10">{item}</span>
             </button>
           ))}
         </div>
@@ -2019,9 +2030,9 @@ const DeviceSpotlightCard = ({ title, stats = [], stat, description, image, meta
   const displayStats = stats.length ? stats : stat ? [{ label: stat }] : [];
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-slate-900 text-white shadow-sm">
-      {image && <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-45" />}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-slate-900/70 to-blue-900/50" />
+    <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-900 text-white shadow-2xl hover-lift transition-all duration-500">
+      {image && <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-40 transition-opacity duration-700 hover:opacity-50" />}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-blue-900/80 to-purple-900/70" />
       <div className="relative flex h-full flex-col justify-between p-5">
         <div>
           {meta && <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/60">{meta}</p>}
@@ -2280,7 +2291,7 @@ const VendorCard = ({ vendor }) => {
   const imageSrc = vendor.image || VENDOR_IMAGES[vendor.id] || MEDIA.devices.computer;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-xl ring-1 ring-slate-100">
+    <div className="glass-card flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/50 bg-white shadow-2xl ring-1 ring-slate-100 hover-lift transition-all duration-500 hover:ring-2 hover:ring-blue-300/50">
       <div className="relative h-48 w-full overflow-hidden">
         <img src={imageSrc} alt={`${vendor.name} visual`} className="h-full w-full object-cover" loading="lazy" />
         <div className="absolute inset-0" style={{ backgroundImage: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`, opacity: 0.85 }} />
@@ -2634,10 +2645,10 @@ const SoftwareSuiteCard = ({ suite, onEdit, onDelete }) => {
   const { status, delta } = getLicenseHealth(suite.seats, suite.used);
   const badgeStyle =
     status === 'Overused'
-      ? 'bg-rose-50 text-rose-700'
+      ? 'badge badge-danger'
       : status === 'At capacity'
-        ? 'bg-amber-50 text-amber-700'
-        : 'bg-emerald-50 text-emerald-700';
+        ? 'badge badge-warning'
+        : 'badge badge-success';
   const spareLabel = delta < 0 ? `${Math.abs(delta)} seats over` : `${delta} seats free`;
   const perSeat = suite.seats ? Math.round((suite.cost || 0) / suite.seats) : 0;
   const accentFrom = suite.accent?.from || '#0f172a';
@@ -2652,7 +2663,7 @@ const SoftwareSuiteCard = ({ suite, onEdit, onDelete }) => {
     null;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm ring-1 ring-transparent transition hover:-translate-y-0.5 hover:shadow-xl hover:ring-blue-100">
+    <div className="glass-card flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/50 bg-white shadow-2xl ring-1 ring-transparent transition-all duration-500 hover:-translate-y-2 hover:shadow-3xl hover:ring-2 hover:ring-blue-400/50">
       <div className="relative h-52 w-full overflow-hidden">
         {suiteLogo ? (
           <>
@@ -7033,7 +7044,7 @@ const App = () => {
     const fetchSession = async () => {
       setAuthLoading(true);
       try {
-        const resp = await fetch(buildApiUrl('/api/auth/duo/me'), { credentials: 'include' });
+        const resp = await fetch(buildApiUrl('/api/auth/universal/me'), { credentials: 'include' });
         if (resp.ok) {
           const isJson = (resp.headers.get('content-type') || '').includes('application/json');
           if (!isJson) {
@@ -8625,14 +8636,20 @@ const App = () => {
   const handleLogout = useCallback(() => {
     setAuthUser(null);
     setAuthError('');
-    fetch(buildApiUrl('/api/auth/duo/logout'), { method: 'POST', credentials: 'include' }).catch(() => {});
+    fetch(buildApiUrl('/api/auth/universal/logout'), { method: 'POST', credentials: 'include' }).catch(() => {});
   }, [buildApiUrl]);
 
-  const beginDuoLogin = useCallback(() => {
+  const [loginUsername, setLoginUsername] = React.useState('');
+
+  const beginDuoLogin = useCallback((e) => {
+    e?.preventDefault();
     if (typeof window === 'undefined') return;
-    const returnTo = `${window.location.pathname}${window.location.search}`;
-    window.location.href = buildApiUrl(`/api/auth/duo/start?returnTo=${encodeURIComponent(returnTo)}`);
-  }, [buildApiUrl]);
+    if (!loginUsername.trim()) {
+      setAuthError('Please enter a username');
+      return;
+    }
+    window.location.href = buildApiUrl(`/api/auth/universal/start?username=${encodeURIComponent(loginUsername.trim())}`);
+  }, [buildApiUrl, loginUsername]);
 
   useEffect(() => {
     if (!authUser?.expiresAt) return;
@@ -8656,20 +8673,33 @@ const App = () => {
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 via-slate-100 to-slate-50 px-4">
         <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-lg">
           <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Login</p>
-          <h1 className="mt-3 text-2xl font-semibold text-slate-900">Secure Duo sign-in</h1>
+          <h1 className="mt-3 text-2xl font-semibold text-slate-900">Duo Universal Prompt</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Continue with Duo SSO to access the UDS Asset Management dashboard.
+            Enter your username to continue with Duo 2FA verification.
           </p>
           {authError && <p className="mt-3 rounded-2xl bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700">{authError}</p>}
-          <button
-            type="button"
-            onClick={beginDuoLogin}
-            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
-          >
-            Continue with Duo
-          </button>
+          <form onSubmit={beginDuoLogin} className="mt-6">
+            <label htmlFor="username" className="block text-sm font-medium text-slate-700">
+              Username
+            </label>
+            <input
+              type="text"
+              id="username"
+              value={loginUsername}
+              onChange={(e) => setLoginUsername(e.target.value)}
+              placeholder="Enter your username"
+              className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              autoFocus
+            />
+            <button
+              type="submit"
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
+            >
+              Continue with Duo
+            </button>
+          </form>
           <p className="mt-3 text-[11px] uppercase tracking-[0.25rem] text-slate-400">
-            Secured by Duo (redirect handled server-side)
+            Secured by Duo Universal Prompt
           </p>
         </div>
       </div>
@@ -8678,23 +8708,30 @@ const App = () => {
 
   return (
     <div
-      className={`min-h-screen overflow-x-hidden pb-24 sm:pb-16 ${
+      className={`app-canvas min-h-screen overflow-x-hidden pb-24 sm:pb-16 ${
         isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-gradient-to-b from-slate-50 via-slate-100 to-slate-50 text-slate-900'
       }`}
     >
       <style>{DARK_MODE_STYLES}</style>
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8" style={containerStyle}>
-        <PrimaryNav
-          onAdd={() => setAssetForm(defaultAsset)}
-          onAddEmployee={handleAddEmployee}
-          onExport={handleExport}
-          activePage={activePage}
-          onNavigate={setActivePage}
-          onToggleTheme={handleToggleTheme}
-          isDarkMode={isDarkMode}
-          onOpenMenu={() => setMenuOpen(true)}
-          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
-        />
+      <div className="ambient-layer">
+        <div className="ambient-orb blue" style={{ width: '42vw', height: '42vw', top: '-12vh', left: '-8vw' }} />
+        <div className="ambient-orb pink" style={{ width: '36vw', height: '36vw', bottom: '-10vh', right: '4vw' }} />
+        <div className="ambient-orb gold" style={{ width: '28vw', height: '28vw', top: '32vh', right: '55vw' }} />
+        <div className="grid-overlay" />
+      </div>
+      <div className="relative z-10">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8" style={containerStyle}>
+          <PrimaryNav
+            onAdd={() => setAssetForm(defaultAsset)}
+            onAddEmployee={handleAddEmployee}
+            onExport={handleExport}
+            activePage={activePage}
+            onNavigate={setActivePage}
+            onToggleTheme={handleToggleTheme}
+            isDarkMode={isDarkMode}
+            onOpenMenu={() => setMenuOpen(true)}
+            onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+          />
         <datalist id={employeeSuggestionListId}>
           {employeeNames.map((name) => (
             <option key={`employee-suggestion-${name}`} value={name} />
@@ -8728,101 +8765,114 @@ const App = () => {
 
         {activePage === 'Overview' && (
           <>
-        <section id="overview-hero" className="mb-8 grid gap-6 lg:grid-cols-[2fr,1fr]">
-          <div className="relative overflow-hidden rounded-3xl bg-slate-900 p-8 text-white shadow-lg">
-            <img src={MEDIA.hero} alt="UDS operations" className="absolute inset-0 h-full w-full object-cover opacity-40" />
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-blue-900/70" />
-            <div className="relative">
-              <p className="text-sm font-semibold uppercase tracking-[0.3rem] text-white/60">Asset command center</p>
-              <h1 className="mt-3 text-3xl font-semibold leading-tight">One command center for every asset lifecycle</h1>
-              <p className="mt-3 text-sm text-white/70">
-                Monitor procurement, deployment, and renewals from a single, human-friendly surface. Everything updates in real time so you can make confident decisions.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3 text-xs font-semibold">
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  Compliance ready
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1">
-                  <ArrowRightLeft className="h-3.5 w-3.5" />
-                  Live audit logs
-                </span>
+        <section id="overview-hero" className="mb-10 grid gap-6 lg:grid-cols-[2fr,1fr]">
+          <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 p-8 text-white shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ring-white/10 neon-grid">
+            <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
+            <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
+            <div className="relative space-y-5">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/70 shadow-sm backdrop-blur">
+                <Sparkles className="h-4 w-4" />
+                Asset command center
               </div>
-              <div className="mt-10 grid gap-3 sm:grid-cols-3">
+              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div className="max-w-3xl">
+                  <h1 className="text-4xl font-semibold leading-tight md:text-5xl">One command surface for every asset lifecycle</h1>
+                  <p className="mt-3 text-base text-white/75">
+                    Monitor procurement, deployment, and renewals from a single, human-friendly surface. Everything updates in real time so you can make confident decisions.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2 text-right text-sm font-semibold text-white/70">
+                  <span className="inline-flex items-center justify-end gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.2rem]">
+                    <ShieldCheck className="h-4 w-4" />
+                    Compliance ready
+                  </span>
+                  <span className="inline-flex items-center justify-end gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.2rem]">
+                    <ArrowRightLeft className="h-4 w-4" />
+                    Live audit logs
+                  </span>
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-sm shadow-inner backdrop-blur">
-                  <p className="text-xs uppercase tracking-widest text-white/50">Snapshot</p>
+                  <p className="text-[11px] uppercase tracking-[0.3rem] text-white/60">Snapshot</p>
                   <p className="mt-1 text-lg font-semibold text-white">Share executive view</p>
                   <button
                     onClick={handleExport}
-                    className="mt-3 inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
+                    className="btn-primary mt-3 inline-flex items-center gap-2 rounded-xl border border-white/25 bg-gradient-to-r from-white/25 via-white/10 to-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/40"
                   >
                     <Share2 className="h-4 w-4" />
                     Export data
                   </button>
                 </div>
                 <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-sm shadow-inner backdrop-blur">
-                  <p className="text-xs uppercase tracking-widest text-white/50">Support</p>
+                  <p className="text-[11px] uppercase tracking-[0.3rem] text-white/60">Support</p>
                   <p className="mt-1 text-lg font-semibold text-white">Open HelpDesk Portal</p>
                   <button
                     type="button"
                     onClick={handleOpenHelpDeskPortal}
-                    className="mt-3 inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
+                    className="btn-primary mt-3 inline-flex items-center gap-2 rounded-xl border border-white/25 bg-gradient-to-r from-white/20 via-white/10 to-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/40"
                   >
                     <ArrowRightLeft className="h-4 w-4" />
                     Launch portal
                   </button>
                 </div>
                 <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-sm shadow-inner backdrop-blur">
-                  <p className="text-xs uppercase tracking-widest text-white/50">Watchlist</p>
+                  <p className="text-[11px] uppercase tracking-[0.3rem] text-white/60">Watchlist</p>
                   <p className="mt-1 text-lg font-semibold text-white">Warranty alerts</p>
                   <button
                     type="button"
                     onClick={() => setWarrantyModalOpen(true)}
-                    className="mt-3 inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
+                    className="btn-primary mt-3 inline-flex items-center gap-2 rounded-xl border border-white/25 bg-gradient-to-r from-white/20 via-white/10 to-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/40"
                   >
                     <CalendarClock className="h-4 w-4" />
                     View alerts
                   </button>
                 </div>
               </div>
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                <div>
-                  <p className="text-xs uppercase tracking-widest text-white/50">Assets tracked</p>
-                  <p className="mt-1 text-2xl font-semibold">{stats.total}</p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                  <p className="text-[11px] uppercase tracking-[0.3rem] text-white/60">Assets tracked</p>
+                  <p className="mt-2 text-3xl font-semibold">{stats.total}</p>
                 </div>
-                <div>
-                  <p className="text-xs uppercase tracking-widest text-white/50">Inventory value</p>
-                  <p className="mt-1 text-2xl font-semibold">{formatCurrency(stats.totalValue)}</p>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                  <p className="text-[11px] uppercase tracking-[0.3rem] text-white/60">Inventory value</p>
+                  <p className="mt-2 text-3xl font-semibold">{formatCurrency(stats.totalValue)}</p>
                 </div>
-                <div>
-                  <p className="text-xs uppercase tracking-widest text-white/50">Warranty alerts</p>
-                  <p className="mt-1 text-2xl font-semibold">{stats.expiringSoon}</p>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+                  <p className="text-[11px] uppercase tracking-[0.3rem] text-white/60">Warranty alerts</p>
+                  <p className="mt-2 text-3xl font-semibold">{stats.expiringSoon}</p>
                 </div>
               </div>
             </div>
           </div>
-          <div className="rounded-3xl border border-slate-900/60 bg-slate-900 p-6 text-white shadow-inner">
-            <p className="text-xs font-semibold uppercase tracking-[0.3rem] text-white/60">Fleet health</p>
-            <p className="mt-3 text-4xl font-semibold">{utilization}%</p>
-            <p className="text-sm text-white/70">Checked out utilisation</p>
-            <div className="mt-4 h-2 w-full rounded-full bg-white/10">
-              <div
-                className="h-2 rounded-full bg-gradient-to-r from-blue-400 to-teal-300"
-                style={{ width: `${utilization}%` }}
-              />
+          <div className="relative overflow-hidden rounded-[32px] border border-slate-900/70 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900 p-6 text-white shadow-[0_18px_60px_rgba(2,6,23,0.5)] ring-1 ring-blue-500/15">
+            <div className="absolute inset-0 opacity-40">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.2),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(236,72,153,0.18),transparent_30%)] blur-3xl" />
             </div>
-            <div className="mt-6 space-y-4 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-white/70">Active hardware</span>
-                <span className="font-semibold">{stats.available} available</span>
+            <div className="relative">
+              <p className="text-xs font-semibold uppercase tracking-[0.3rem] text-white/60">Fleet health</p>
+              <p className="mt-3 text-4xl font-semibold">{utilization}%</p>
+              <p className="text-sm text-white/70">Checked out utilisation</p>
+              <div className="mt-4 h-2 w-full rounded-full bg-white/10">
+                <div
+                  className="h-2 rounded-full bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-300 shadow-[0_0_0_6px_rgba(59,130,246,0.2)]"
+                  style={{ width: `${utilization}%` }}
+                />
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-white/70">Checked out</span>
-                <span className="font-semibold">{stats.checkedOut} devices</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-white/70">License usage</span>
-                <span className="font-semibold">{licenseInsights.percent}% of {licenseInsights.seats} seats</span>
+              <div className="mt-6 space-y-4 text-sm">
+                <div className="flex items-center justify-between rounded-2xl bg-white/5 px-3 py-2">
+                  <span className="text-white/70">Active hardware</span>
+                  <span className="font-semibold">{stats.available} available</span>
+                </div>
+                <div className="flex items-center justify-between rounded-2xl bg-white/5 px-3 py-2">
+                  <span className="text-white/70">Checked out</span>
+                  <span className="font-semibold">{stats.checkedOut} devices</span>
+                </div>
+                <div className="flex items-center justify-between rounded-2xl bg-white/5 px-3 py-2">
+                  <span className="text-white/70">License usage</span>
+                  <span className="font-semibold">{licenseInsights.percent}% of {licenseInsights.seats} seats</span>
+                </div>
               </div>
             </div>
           </div>
@@ -9523,16 +9573,16 @@ const App = () => {
                   </div>
                 </div>
                 {suitesWithLogos.length > 0 && (
-                  <div className="mt-8 rounded-2xl border border-slate-100/80 bg-slate-50/80 p-4">
+                  <div className="mt-8 min-h-[340px] rounded-2xl border border-slate-100/80 bg-slate-50/80 p-6">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Admin Portals</p>
-                    <div className="mt-4 flex items-center gap-4 overflow-x-auto pb-2 sm:flex-wrap sm:pb-0">
+                    <div className="mt-5 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                       {suitesWithLogos.map((suite) => (
                         <a
                           key={`logo-${suite.id}`}
                           href={suite.portal || SOFTWARE_ADMIN_PORTALS[suite.id] || '#'}
                           target="_blank"
                           rel="noreferrer"
-                          className="group relative flex h-14 min-w-[7rem] items-center justify-center rounded-2xl bg-white/90 shadow-inner ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:ring-blue-200"
+                          className="group relative flex h-24 items-center justify-center rounded-2xl bg-white/90 shadow-inner ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:ring-blue-200"
                           title={
                             suite.portal || SOFTWARE_ADMIN_PORTALS[suite.id]
                               ? `${suite.software} admin portal`
@@ -9542,7 +9592,7 @@ const App = () => {
                           <img
                             src={suite.logo}
                             alt={`${suite.software} logo`}
-                            className="h-8 w-auto object-contain opacity-80 transition group-hover:opacity-100 group-hover:scale-105"
+                            className="h-14 w-auto object-contain opacity-80 transition group-hover:opacity-100 group-hover:scale-105"
                             loading="lazy"
                           />
                         </a>
@@ -9825,33 +9875,9 @@ const App = () => {
           onMenu={() => setMenuOpen(true)}
         />
       )}
+      </div>
     </div>
   );
 };
 
 export default App;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
