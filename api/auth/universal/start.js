@@ -54,13 +54,12 @@ module.exports = async (req, res) => {
     
     // Create request for Duo Universal Prompt
     const duoClient = require('@duosecurity/duo_universal');
-    // Client constructor: (clientId, clientSecret, apiHost, redirectUri, useDuoCodeAttribute = true)
+    // Client constructor: (clientId, clientSecret, apiHost, redirectUri)
     const client = new duoClient.Client(
       clientId, 
       clientSecret, 
       apiHost, 
-      redirectUri,
-      true  // useDuoCodeAttribute - use duo_code in callback (default/recommended)
+      redirectUri
     );
     
     console.log('Duo client created, generating auth URL for username:', username.trim());
