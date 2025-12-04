@@ -23,10 +23,10 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const clientId = process.env.DUO_CLIENT_ID || 'DIMN6DZG4KW4BK6MTFJP';
-  const clientSecret = process.env.DUO_CLIENT_SECRET;
+  const clientId = process.env.DUO_OIDC_CLIENT_ID || 'DIMN6DZG4KW4BK6MTFJP';
+  const clientSecret = process.env.DUO_OIDC_CLIENT_SECRET || process.env.DUO_CLIENT_SECRET;
   const origin = getRequestOrigin(req, DEFAULT_REDIRECT_BASE);
-  const redirectUri = process.env.DUO_REDIRECT_URI || `${origin}/auth/callback`;
+  const redirectUri = process.env.DUO_OIDC_REDIRECT_URI || `${origin}/api/auth/duo/callback`;
   const issuer = process.env.DUO_ISSUER || DEFAULT_ISSUER;
   const cookieSecret = process.env.SESSION_SECRET || process.env.COOKIE_SECRET || 'change-me';
   const secureCookie = isSecureRequest(req) || process.env.NODE_ENV === 'production';

@@ -7052,7 +7052,7 @@ const App = () => {
     const fetchSession = async () => {
       setAuthLoading(true);
       try {
-        const resp = await fetch(buildApiUrl('/api/auth/universal/me'), { credentials: 'include' });
+        const resp = await fetch(buildApiUrl('/api/auth/duo/me'), { credentials: 'include' });
         if (resp.ok) {
           const isJson = (resp.headers.get('content-type') || '').includes('application/json');
           if (!isJson) {
@@ -8644,7 +8644,7 @@ const App = () => {
   const handleLogout = useCallback(() => {
     setAuthUser(null);
     setAuthError('');
-    fetch(buildApiUrl('/api/auth/universal/logout'), { method: 'POST', credentials: 'include' }).catch(() => {});
+    fetch(buildApiUrl('/api/auth/duo/logout'), { method: 'POST', credentials: 'include' }).catch(() => {});
   }, [buildApiUrl]);
 
   const [loginUsername, setLoginUsername] = React.useState('');
@@ -8656,7 +8656,8 @@ const App = () => {
       setAuthError('Please enter a username');
       return;
     }
-    window.location.href = buildApiUrl(`/api/auth/universal/start?username=${encodeURIComponent(loginUsername.trim())}`);
+    // Use OIDC authentication flow
+    window.location.href = buildApiUrl(`/api/auth/duo/start`);
   }, [buildApiUrl, loginUsername]);
 
   useEffect(() => {
