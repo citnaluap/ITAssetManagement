@@ -12,7 +12,7 @@ module.exports = (req, res) => {
     return;
   }
 
-  const clientId = process.env.DUO_OIDC_CLIENT_ID || 'DIMN6DZG4KW4BK6MTFJP';FJP';
+  const clientId = process.env.DUO_OIDC_CLIENT_ID || 'DIMN6DZG4KW4BK6MTFJP';
   const origin = getRequestOrigin(req, DEFAULT_REDIRECT_BASE);
   const redirectUri = process.env.DUO_OIDC_REDIRECT_URI || `${origin}/api/auth/duo/callback`;
   const issuer = process.env.DUO_ISSUER || DEFAULT_ISSUER;
