@@ -4,7 +4,7 @@
    ========================================================================== */
 
 /* ==================== Premium Typography System ==================== */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Sora:wght@400;600;700&display=swap');
 
 *,
 *::before,
@@ -29,73 +29,73 @@ html {
 }
 
 :root {
-  --bg-primary: #040815;
-  --bg-secondary: #0a1024;
+  --bg-primary: #020510;
+  --bg-secondary: #060b1c;
+  --bg-tertiary: #0b1026;
   --glass: rgba(255, 255, 255, 0.08);
-  --card: rgba(255, 255, 255, 0.06);
-  --stroke: rgba(255, 255, 255, 0.08);
-  --glow-blue: #58b5ff;
+  --card: rgba(17, 25, 52, 0.65);
+  --stroke: rgba(111, 134, 255, 0.22);
+  --glow-blue: #64d0ff;
   --glow-pink: #ff7ac3;
-  --glow-amber: #f7c266;
+  --glow-amber: #ffc857;
+  --glow-cyan: #4df3c8;
 }
 
 body {
   margin: 0;
-  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Sora', 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  
   background:
-    radial-gradient(circle at 10% 10%, rgba(139, 92, 246, 0.25), transparent 25%),
-    radial-gradient(circle at 90% 15%, rgba(236, 72, 153, 0.22), transparent 30%),
-    radial-gradient(circle at 50% 85%, rgba(59, 130, 246, 0.18), transparent 35%),
-    radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.15), transparent 30%),
-    linear-gradient(135deg, #f0f9ff 0%, #f5f3ff 25%, #fdf4ff 50%, #eff6ff 75%, #f0fdfa 100%);
+    radial-gradient(circle at 15% 20%, rgba(100, 240, 255, 0.12), transparent 30%),
+    radial-gradient(circle at 80% 10%, rgba(255, 122, 195, 0.14), transparent 32%),
+    radial-gradient(circle at 70% 80%, rgba(79, 70, 229, 0.18), transparent 40%),
+    linear-gradient(140deg, #030712 0%, #050c1c 35%, #0b1636 70%, #080f22 100%);
   background-attachment: fixed;
-  color: #0f172a;
-  
+  color: #d7def5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   font-feature-settings: "kern" 1, "liga" 1;
-  
   min-height: 100vh;
   line-height: 1.6;
   overflow-x: hidden;
-  
   position: relative;
 }
 
 body::before {
   content: '';
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    repeating-linear-gradient(
-      0deg,
-      rgba(139, 92, 246, 0.04) 0px,
-      transparent 1px,
-      transparent 30px,
-      rgba(139, 92, 246, 0.04) 31px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      rgba(236, 72, 153, 0.04) 0px,
-      transparent 1px,
-      transparent 30px,
-      rgba(236, 72, 153, 0.04) 31px
-    );
+  inset: 0;
+  background:
+    radial-gradient(circle at 25% 25%, rgba(100, 240, 255, 0.08), transparent 30%),
+    radial-gradient(circle at 75% 10%, rgba(255, 166, 43, 0.07), transparent 24%),
+    radial-gradient(circle at 40% 80%, rgba(255, 122, 195, 0.08), transparent 36%),
+    conic-gradient(from 0deg at 50% 50%, rgba(88, 101, 242, 0.14), rgba(20, 184, 166, 0.08), rgba(255, 122, 195, 0.14), rgba(88, 101, 242, 0.12));
+  filter: blur(80px);
+  opacity: 0.9;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.8;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.06), transparent 45%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 1200px 1200px, 120px 120px, 120px 120px;
+  mix-blend-mode: soft-light;
+  opacity: 0.45;
+  pointer-events: none;
+  z-index: 0;
 }
 
 #root {
   min-height: 100vh;
   position: relative;
-  z-index: 2;
+  z-index: 3;
 }
 
 /* ==================== Premium Typography Scale ==================== */
@@ -379,28 +379,30 @@ html.theme-dark code {
   left: 0;
   overflow: hidden;
   pointer-events: none;
-  z-index: 0;
-  opacity: 0.9;
+  z-index: 2;
+  opacity: 0.75;
+  mix-blend-mode: screen;
 }
 
 .ambient-orb {
   position: absolute;
-  filter: blur(80px);
-  opacity: 0.65;
+  filter: blur(95px);
+  opacity: 0.7;
   mix-blend-mode: screen;
   transform: translate3d(0, 0, 0);
+  animation: float-orb 26s ease-in-out infinite alternate;
 }
 
 .ambient-orb.blue {
-  background: radial-gradient(circle, rgba(88, 181, 255, 0.65) 0%, transparent 50%);
+  background: radial-gradient(circle at 30% 30%, rgba(100, 240, 255, 0.5), transparent 55%);
 }
 
 .ambient-orb.pink {
-  background: radial-gradient(circle, rgba(255, 122, 195, 0.6) 0%, transparent 50%);
+  background: radial-gradient(circle at 70% 40%, rgba(255, 122, 195, 0.52), transparent 55%);
 }
 
 .ambient-orb.gold {
-  background: radial-gradient(circle, rgba(247, 194, 102, 0.5) 0%, transparent 55%);
+  background: radial-gradient(circle at 50% 60%, rgba(255, 200, 87, 0.42), transparent 60%);
 }
 
 .grid-overlay {
@@ -410,11 +412,11 @@ html.theme-dark code {
   bottom: 0;
   left: 0;
   background-image:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(0deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 120px 120px;
-  opacity: 0.35;
-  mix-blend-mode: soft-light;
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 140px 140px;
+  opacity: 0.22;
+  mix-blend-mode: screen;
 }
 
 .neon-grid {
@@ -434,6 +436,12 @@ html.theme-dark code {
   background-size: 60px 60px;
   opacity: 0.2;
   pointer-events: none;
+}
+
+@keyframes float-orb {
+  0% { transform: translate3d(0, -10px, 0) scale(1); }
+  50% { transform: translate3d(12px, 18px, 0) scale(1.04); }
+  100% { transform: translate3d(-12px, 6px, 0) scale(0.98); }
 }
 
 .glass-card {

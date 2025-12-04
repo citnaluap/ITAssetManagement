@@ -49,10 +49,10 @@ import automateMap from './data/automateMap.json';
 const DARK_MODE_STYLES = `
   html.theme-dark body {
     background:
-      radial-gradient(circle at 15% 20%, rgba(88, 181, 255, 0.12), transparent 35%),
-      radial-gradient(circle at 85% 10%, rgba(255, 122, 195, 0.10), transparent 30%),
-      linear-gradient(180deg, #0b1224 0%, #0d162d 45%, #0a1226 100%);
-    color: #e9edf7;
+      radial-gradient(circle at 18% 18%, rgba(100, 240, 255, 0.14), transparent 32%),
+      radial-gradient(circle at 82% 12%, rgba(255, 122, 195, 0.12), transparent 30%),
+      linear-gradient(160deg, #020510 0%, #060b1c 45%, #0c1634 100%);
+    color: #e7edff;
   }
   html.theme-dark .bg-white,
   html.theme-dark .bg-white\\/50,
@@ -70,21 +70,21 @@ const DARK_MODE_STYLES = `
   html.theme-dark .bg-slate-100,
   html.theme-dark .bg-slate-100\\/70,
   html.theme-dark .bg-slate-200 {
-    background-color: #0f172a !important;
+    background-color: #0f1831 !important;
   }
   html.theme-dark .bg-blue-50 { background-color: rgba(59,130,246,0.18) !important; color: #cfe1ff; }
   html.theme-dark .border-slate-50,
   html.theme-dark .border-slate-100,
   html.theme-dark .border-slate-200 {
-    border-color: #1f2c46 !important;
+    border-color: #203459 !important;
   }
   html.theme-dark .divide-slate-100,
   html.theme-dark .divide-slate-200 {
-    border-color: #1f2c46 !important;
+    border-color: #203459 !important;
   }
   html.theme-dark .ring-slate-100,
   html.theme-dark .ring-slate-200 {
-    --tw-ring-color: #1f2c46 !important;
+    --tw-ring-color: #203459 !important;
   }
   html.theme-dark .text-slate-900,
   html.theme-dark .text-slate-800,
@@ -107,9 +107,11 @@ const DARK_MODE_STYLES = `
     color: #a5b4cf !important;
   }
   html.theme-dark .glass-card {
-    background: linear-gradient(145deg, rgba(16, 24, 39, 0.96), rgba(15, 23, 42, 0.9)) !important;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55) !important;
-    border: 1px solid #1f2c46 !important;
+    background: linear-gradient(145deg, rgba(12, 16, 32, 0.96), rgba(11, 18, 36, 0.9)) !important;
+    box-shadow:
+      0 28px 70px rgba(0, 0, 0, 0.6),
+      0 0 0 1px rgba(92, 224, 255, 0.18) !important;
+    border: 1px solid rgba(111, 134, 255, 0.25) !important;
   }
 `;
 
@@ -1872,10 +1874,7 @@ const PrimaryNav = ({
   onOpenCommandPalette,
 }) => (
   <nav
-    className={`mb-10 glass-card rounded-3xl px-6 py-5 backdrop-blur-xl shadow-2xl transition-all duration-500 ${
-      isDarkMode ? 'border border-slate-700 bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 text-slate-100' : 'border border-slate-200/50 bg-gradient-to-br from-white/95 via-blue-50/30 to-white/95 text-slate-500'
-    }`}
-    style={{ backdropFilter: 'blur(20px) saturate(180%)' }}
+    className={`nav-ribbon ${isDarkMode ? 'nav-dark text-slate-100' : 'text-slate-700'} mb-10 rounded-3xl px-6 py-5 backdrop-blur-xl shadow-2xl transition-all duration-500`}
   >
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -7052,7 +7051,7 @@ const App = () => {
     const fetchSession = async () => {
       setAuthLoading(true);
       try {
-        const resp = await fetch(buildApiUrl('/api/auth/duo/me'), { credentials: 'include' });
+        const resp = await fetch(buildApiUrl('/api/auth/universal/me'), { credentials: 'include' });
         if (resp.ok) {
           const isJson = (resp.headers.get('content-type') || '').includes('application/json');
           if (!isJson) {
@@ -8644,7 +8643,7 @@ const App = () => {
   const handleLogout = useCallback(() => {
     setAuthUser(null);
     setAuthError('');
-    fetch(buildApiUrl('/api/auth/duo/logout'), { method: 'POST', credentials: 'include' }).catch(() => {});
+    fetch(buildApiUrl('/api/auth/universal/logout'), { method: 'POST', credentials: 'include' }).catch(() => {});
   }, [buildApiUrl]);
 
   const [loginUsername, setLoginUsername] = React.useState('');
@@ -8656,8 +8655,7 @@ const App = () => {
       setAuthError('Please enter a username');
       return;
     }
-    // Use OIDC authentication flow
-    window.location.href = buildApiUrl(`/api/auth/duo/start`);
+    window.location.href = buildApiUrl(`/api/auth/universal/start?username=${encodeURIComponent(loginUsername.trim())}`);
   }, [buildApiUrl, loginUsername]);
 
   useEffect(() => {
@@ -8717,8 +8715,8 @@ const App = () => {
 
   return (
     <div
-      className={`app-canvas min-h-screen overflow-x-hidden pb-24 sm:pb-16 ${
-        isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-gradient-to-b from-slate-50 via-slate-100 to-slate-50 text-slate-900'
+      className={`app-canvas theme-nebula min-h-screen overflow-x-hidden pb-24 sm:pb-16 ${
+        isDarkMode ? 'text-slate-100' : 'text-slate-900'
       }`}
     >
       <style>{DARK_MODE_STYLES}</style>
