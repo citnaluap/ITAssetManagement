@@ -8,23 +8,24 @@ module.exports = async (req, res) => {
     return;
   }
 
-  // Trim all environment variables to remove any whitespace
-  const clientId = process.env.DUO_CLIENT_ID?.trim();
-  const clientSecret = process.env.DUO_CLIENT_SECRET?.trim();
-  const apiHost = process.env.DUO_API_HOST?.trim(); // e.g., api-xxxxxxxx.duosecurity.com
-  const redirectUri = (process.env.DUO_REDIRECT_URI || 'https://it-asset-management-ten.vercel.app/api/auth/universal/callback').trim();
+  // Trim all environment variables to remove any whitespace, handle undefined safely
+  const clientId = process.env.DUO_CLIENT_ID?.trim() || '';
+  const clientSecret = process.env.DUO_CLIENT_SECRET?.trim() || '';
+  const apiHost = process.env.DUO_API_HOST?.trim() || ''; // e.g., api-xxxxxxxx.duosecurity.com
+  const redirectUrlFromEnv = process.env.DUO_REDIRECT_URI?.trim();
+  const redirectUrl = redirectUrlFromEnv || `https://${req.headers.host}/api/auth/universal/callback`;
 
   console.log('Duo config check:', {
     hasClientId: !!clientId,
     hasClientSecret: !!clientSecret,
     hasApiHost: !!apiHost,
     apiHost: apiHost,
-    redirectUri: redirectUri,
-    clientIdValue: clientId,
+    redirectUrl,
+    clientIdValue: clientId?.substring(0, 4) + '...',
     clientSecretValue: clientSecret?.substring(0, 5) + '...',
   });
 
-  if (!clientId || !clientSecret || !apiHost || !redirectUri) {
+  if (!clientId || !clientSecret || !apiHost || !redirectUrl) {
     res.statusCode = 500;
     res.end('Missing Duo configuration. Set DUO_CLIENT_ID, DUO_CLIENT_SECRET, DUO_API_HOST, and DUO_REDIRECT_URI');
     return;
@@ -49,18 +50,17 @@ module.exports = async (req, res) => {
       clientIdLength: clientId?.length,
       clientSecretLength: clientSecret?.length,
       apiHost,
-      redirectUri,
+      redirectUrl,
     });
     
     // Create request for Duo Universal Prompt
     const duoClient = require('@duosecurity/duo_universal');
-    // Client constructor: (clientId, clientSecret, apiHost, redirectUri)
-    const client = new duoClient.Client(
-      clientId, 
-      clientSecret, 
-      apiHost, 
-      redirectUri
-    );
+    const client = new duoClient.Client({
+      clientId,
+      clientSecret,
+      apiHost,
+      redirectUrl,
+    });
     
     console.log('Duo client created, generating auth URL for username:', username.trim());
     

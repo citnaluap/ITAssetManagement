@@ -34,13 +34,26 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const clientId = process.env.DUO_CLIENT_ID;
-  const clientSecret = process.env.DUO_CLIENT_SECRET;
-  const apiHost = process.env.DUO_API_HOST;
-  const redirectUri = process.env.DUO_REDIRECT_URI || 'https://it-asset-management-ten.vercel.app/auth/callback';
+  // Trim environment variables, handling undefined/null safely
+  const clientId = process.env.DUO_CLIENT_ID?.trim() || '';
+  const clientSecret = process.env.DUO_CLIENT_SECRET?.trim() || '';
+  const apiHost = process.env.DUO_API_HOST?.trim() || '';
+  const redirectUrlFromEnv = process.env.DUO_REDIRECT_URI?.trim();
+  const redirectUrl = redirectUrlFromEnv || `https://${req.headers.host}/api/auth/universal/callback`;
   const cookieSecret = process.env.SESSION_SECRET || 'change-me';
 
-  if (!clientId || !clientSecret || !apiHost) {
+  console.log('Callback Duo config:', {
+    hasClientId: !!clientId,
+    clientIdLength: clientId?.length,
+    hasClientSecret: !!clientSecret,
+    clientSecretLength: clientSecret?.length,
+    hasApiHost: !!apiHost,
+    apiHost,
+    redirectUrl,
+  });
+
+  if (!clientId || !clientSecret || !apiHost || !redirectUrl) {
+    console.error('Missing Duo configuration:', { clientId: !!clientId, clientSecret: !!clientSecret, apiHost: !!apiHost, redirectUrl: !!redirectUrl });
     res.statusCode = 500;
     res.end('Missing Duo configuration');
     return;
@@ -77,7 +90,12 @@ module.exports = async (req, res) => {
 
   try {
     const duoClient = require('@duosecurity/duo_universal');
-    const client = new duoClient.Client(clientId, clientSecret, apiHost, redirectUri);
+    const client = new duoClient.Client({
+      clientId,
+      clientSecret,
+      apiHost,
+      redirectUrl,
+    });
     
     // Exchange duo_code for authentication result
     const decodedToken = await client.exchangeAuthorizationCodeFor2FAResult(duo_code, username.trim());
