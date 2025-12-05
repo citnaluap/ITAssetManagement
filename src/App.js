@@ -28,6 +28,7 @@ import {
   ExternalLink,
   PhoneCall,
   TrendingDown,
+  Wrench,
   Users,
   Smartphone,
   Navigation,
@@ -4676,6 +4677,7 @@ const AssetSpotlight = ({
   ownerHistory = [],
   onOpenAutomate,
   ownerContact,
+  onRepair,
 }) => {
   const Icon = asset ? assetTypeIcons[asset.type] || Monitor : Monitor;
   const statusLabel = asset ? getAssetDisplayStatus(asset) : 'Available';
@@ -4813,7 +4815,7 @@ const AssetSpotlight = ({
                   Direct link
                 </a>
               </>
-            )}
+              )}
             <button
               type="button"
               onClick={() => onEdit?.(asset)}
@@ -4821,6 +4823,14 @@ const AssetSpotlight = ({
             >
               Edit / Update asset
               <Edit2 className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onRepair?.(asset)}
+              className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 transition hover:border-amber-300 hover:text-amber-900"
+            >
+              <Wrench className="h-4 w-4" />
+              Repair
             </button>
           </div>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -10031,7 +10041,7 @@ const App = () => {
               <div
                 className={`rounded-3xl p-6 shadow-lg ${
                   isDarkMode
-                    ? 'glass-card border border-slate-800/60 bg-slate-900/70'
+                    ? 'border border-slate-800/60 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 shadow-[0_20px_80px_rgba(0,0,0,0.5)]'
                     : 'bg-white border border-slate-200 shadow-xl'
                 }`}
               >
@@ -10049,7 +10059,7 @@ const App = () => {
                 
                 <div className="mb-6 grid gap-4 sm:grid-cols-3">
                   <div className={`rounded-2xl border p-4 ${
-                    isDarkMode ? 'border-rose-500/30 bg-rose-500/10' : 'border-rose-200 bg-white'
+                    isDarkMode ? 'border-rose-500/30 bg-rose-950/40' : 'border-rose-200 bg-white'
                   }`}>
                     <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Overdue</p>
                     <p className={`mt-1 text-3xl font-bold ${isDarkMode ? 'text-rose-200' : 'text-rose-700'}`}>
@@ -10058,7 +10068,7 @@ const App = () => {
                     <p className="text-xs text-rose-600">Requires immediate action</p>
                   </div>
                   <div className={`rounded-2xl border p-4 ${
-                    isDarkMode ? 'border-amber-500/30 bg-amber-500/10' : 'border-amber-200 bg-white'
+                    isDarkMode ? 'border-amber-500/30 bg-amber-950/30' : 'border-amber-200 bg-white'
                   }`}>
                     <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">Next 90 days</p>
                     <p className={`mt-1 text-3xl font-bold ${isDarkMode ? 'text-amber-200' : 'text-amber-700'}`}>
@@ -10067,7 +10077,7 @@ const App = () => {
                     <p className="text-xs text-amber-600">Budget planning required</p>
                   </div>
                   <div className={`rounded-2xl border p-4 ${
-                    isDarkMode ? 'border-blue-500/30 bg-blue-500/10' : 'border-blue-200 bg-white'
+                    isDarkMode ? 'border-blue-500/30 bg-blue-950/40' : 'border-blue-200 bg-white'
                   }`}>
                     <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Total annual cost</p>
                     <p className={`mt-1 text-3xl font-bold ${isDarkMode ? 'text-blue-200' : 'text-blue-700'}`}>
@@ -10079,7 +10089,7 @@ const App = () => {
 
                 <div
                   className={`rounded-2xl p-5 shadow-inner ${
-                    isDarkMode ? 'border border-slate-800/60 bg-slate-900/70' : 'border border-slate-200 bg-white'
+                    isDarkMode ? 'border border-slate-800/60 bg-slate-950/70' : 'border border-slate-200 bg-white'
                   }`}
                 >
                   <p className={`mb-4 text-sm font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Complete Renewal Timeline</p>
