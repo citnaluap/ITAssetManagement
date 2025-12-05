@@ -9,7 +9,6 @@ import {
   HardDrive,
   Plus,
   Search,
-  SlidersHorizontal,
   Edit2,
   Trash2,
   Download,
@@ -1795,6 +1794,24 @@ const computeLaptopServiceSummary = (assets = [], workOrders = [], manualRepairs
   }, {});
   const now = Date.now();
   const monthMs = 1000 * 60 * 60 * 24 * 30;
+  const assetPurchaseLookup = new Map();
+  laptops.forEach((asset) => {
+    const keys = [asset.id, asset.sheetId, asset.assetName].filter(Boolean).map((k) => String(k).toLowerCase());
+    keys.forEach((key) => {
+      if (!assetPurchaseLookup.has(key)) {
+        assetPurchaseLookup.set(key, asset);
+      }
+    });
+  });
+  const getAgeMonthsFromAsset = (identifier) => {
+    if (!identifier) return 0;
+    const key = String(identifier).toLowerCase();
+    const matched = assetPurchaseLookup.get(key);
+    if (!matched || !matched.purchaseDate) return 0;
+    const purchaseDate = new Date(matched.purchaseDate);
+    if (Number.isNaN(purchaseDate.getTime())) return 0;
+    return Math.max(0, (now - purchaseDate.getTime()) / monthMs);
+  };
   const repairsFull = laptops
     .filter((asset) => getAssetDisplayStatus(asset) === 'Maintenance')
     .map((asset) => {
@@ -1827,7 +1844,7 @@ const computeLaptopServiceSummary = (assets = [], workOrders = [], manualRepairs
     status: ticket.status || 'Awaiting intake',
     severity: ticket.severity || 'Normal',
     eta: ticket.eta || null,
-    ageMonths: ticket.ageMonths || 0,
+    ageMonths: ticket.ageMonths || getAgeMonthsFromAsset(ticket.assetId),
     source: 'manual',
   }));
   const manualAssetIds = new Set(manualTickets.map((item) => item.assetId));
@@ -3302,7 +3319,8 @@ const EmployeeDirectoryGrid = ({
     </div>
     <div className="grid gap-6 p-6 sm:grid-cols-2 lg:grid-cols-3">
       {members.map((member) => {
-        const isExpanded = expandedId === member.id;
+        const memberKey = member.id || normalizeKey(member.name || '');
+        const isExpanded = expandedId === memberKey;
         const assignments = getAssignments(member);
         const licenses = getLicenses(member);
         const assignmentCount = assignments.length;
@@ -3316,18 +3334,19 @@ const EmployeeDirectoryGrid = ({
         const handleKeyDown = (event) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
-            onToggle(member.id);
+            onToggle(memberKey);
           }
         };
 
         return (
           <div
-            key={member.id}
+            key={memberKey}
+            id={`employee-card-${memberKey}`}
             className={cardClasses}
             role="button"
             tabIndex={0}
             aria-expanded={isExpanded}
-            onClick={() => onToggle(member.id)}
+            onClick={() => onToggle(memberKey)}
             onKeyDown={handleKeyDown}
           >
             <div className="flex items-start gap-3">
@@ -4716,7 +4735,17 @@ const AssetSpotlight = ({
               </span>
             </div>
           </div>
-          <dl className="mt-6 space-y-4 text-sm">
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => onEdit?.(asset)}
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700"
+            >
+              <Edit2 className="h-4 w-4" />
+              Edit
+            </button>
+          </div>
+          <dl className="mt-4 space-y-4 text-sm">
             <div className="flex items-start justify-between border-b border-slate-100 pb-3">
               <div>
                 <dt className="text-xs uppercase tracking-widest text-slate-400">Assigned to</dt>
@@ -4878,6 +4907,7 @@ const AssetSpotlightModal = ({
   onApproveIntake,
   onOpenAutomate,
   ownerContact,
+  onRepair,
 }) => {
   if (!asset) return null;
 
@@ -4891,6 +4921,7 @@ const AssetSpotlightModal = ({
         ownerHistory={ownerHistory}
         onOpenAutomate={onOpenAutomate}
         ownerContact={ownerContact}
+        onRepair={onRepair}
       />
     </ModalShell>
   );
@@ -5142,7 +5173,7 @@ const EMPTY_REPAIR_TICKET = {
   eta: '',
 };
 
-const RepairTicketModal = ({ ticket, onSubmit, onCancel }) => {
+const RepairTicketModal = ({ ticket, onSubmit, onCancel, modelOptions = [], employeeNames = [], locationOptions = [] }) => {
   const [form, setForm] = useState(() => ticket || { ...EMPTY_REPAIR_TICKET });
 
   useEffect(() => {
@@ -5177,8 +5208,14 @@ const RepairTicketModal = ({ ticket, onSubmit, onCancel }) => {
               value={form.model}
               onChange={(event) => update('model', event.target.value)}
               placeholder="Dell Latitude"
+              list="repair-model-suggestions"
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
+            <datalist id="repair-model-suggestions">
+              {modelOptions.map((model) => (
+                <option key={model} value={model} />
+              ))}
+            </datalist>
           </label>
           <label className="text-sm font-medium text-slate-700">
             Assigned to
@@ -5186,8 +5223,14 @@ const RepairTicketModal = ({ ticket, onSubmit, onCancel }) => {
               value={form.assignedTo}
               onChange={(event) => update('assignedTo', event.target.value)}
               placeholder="Name or team"
+              list="repair-employee-suggestions"
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
+            <datalist id="repair-employee-suggestions">
+              {employeeNames.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
           </label>
           <label className="text-sm font-medium text-slate-700">
             Location
@@ -5195,8 +5238,14 @@ const RepairTicketModal = ({ ticket, onSubmit, onCancel }) => {
               value={form.location}
               onChange={(event) => update('location', event.target.value)}
               placeholder="Depot, HQ, etc."
+              list="repair-location-suggestions"
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
+            <datalist id="repair-location-suggestions">
+              {locationOptions.map((location) => (
+                <option key={location} value={location} />
+              ))}
+            </datalist>
           </label>
           <label className="text-sm font-medium text-slate-700">
             Status
@@ -6668,6 +6717,10 @@ const App = () => {
   const departmentSuggestionOptions = employeeHubDepartments.length ? employeeHubDepartments : departmentOptions;
   const locationSuggestionOptions = employeeHubLocations.length ? employeeHubLocations : locationOptions;
   const jobTitleSuggestionOptions = employeeHubJobTitles.length ? employeeHubJobTitles : roleOptions;
+  const employeeNameOptions = useMemo(
+    () => employeeGallery.map((member) => member.name).filter(Boolean).sort((a, b) => safeLocaleCompare(a, b)),
+    [employeeGallery],
+  );
   useEffect(() => {
     if (!jobTitleSuggestionOptions.length) {
       if (newHireRole) {
@@ -7477,6 +7530,42 @@ const App = () => {
   }, [scannerActive]);
 
   useEffect(() => {
+    if (!scanResult) return;
+
+    const value = scanResult.trim();
+    if (!value) return;
+
+    const normalized = value.toLowerCase();
+    const matchedAsset = assets.find(
+      (asset) =>
+        (asset.qrCode && asset.qrCode.toLowerCase() === normalized) ||
+        (asset.serialNumber && asset.serialNumber.toLowerCase() === normalized) ||
+        (asset.assetName && asset.assetName.toLowerCase() === normalized) ||
+        (asset.sheetId && asset.sheetId.toLowerCase() === normalized),
+    );
+
+    setActivePage('Hardware');
+
+    if (matchedAsset) {
+      // Found matching asset - open spotlight modal
+      setSelectedAssetId(matchedAsset.id);
+      setSpotlightOpen(true);
+      setScanMessage(`Found: ${matchedAsset.assetName || matchedAsset.serialNumber || 'asset'}`);
+    } else {
+      // No match - open create new asset form with prefilled QR code
+      setAssetForm({
+        ...defaultAsset,
+        qrCode: value,
+        serialNumber: value,
+      });
+      setScanMessage(`No match found. Creating new asset with ID: ${value}`);
+    }
+
+    // Clear scan result after processing
+    setScanResult('');
+  }, [scanResult, assets]);
+
+  useEffect(() => {
     if (!filteredAssets.length) {
       setSelectedAssetId(null);
       setSpotlightOpen(false);
@@ -7965,7 +8054,15 @@ const App = () => {
         setActivePage('Employees');
         const member = employeeGallery.find((m) => (m.id || m.name) === item.id);
         if (member) {
-          setExpandedEmployeeId(member.id || member.name);
+          const memberKey = member.id || normalizeKey(member.name || '');
+          setExpandedEmployeeId(memberKey);
+          setTimeout(() => {
+            const el = document.getElementById(`employee-card-${memberKey}`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              el.focus?.();
+            }
+          }, 150);
         }
       }
     },
@@ -8027,6 +8124,15 @@ const App = () => {
     setScanMessage('');
     setScannerActive(true);
     setActivePage('Hardware');
+    setMenuOpen(false);
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        const el = document.getElementById('qr-tools-overview');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 150);
+    }
   };
 
   const handleStopScanner = () => {
@@ -8233,6 +8339,22 @@ const App = () => {
       setActionState({ asset, mode: 'checkin' });
     },
     [setActionState],
+  );
+
+  const handleOpenRepairTicketForAsset = useCallback(
+    (asset) => {
+      if (!asset) return;
+      setRepairTicketForm({
+        ...EMPTY_REPAIR_TICKET,
+        assetId: asset.assetName || asset.id || '',
+        model: asset.model || '',
+        assignedTo: asset.assignedTo || '',
+        location: asset.location || '',
+        vendor: asset.vendor || asset.brand || '',
+        deviceType: asset.type || 'Laptop',
+      });
+    },
+    [setRepairTicketForm],
   );
 
   const handleExport = () => {
@@ -10066,20 +10188,21 @@ const App = () => {
       </div>
 
       {spotlightOpen && selectedAsset && (
-        <AssetSpotlightModal
-          asset={selectedAsset}
-          onClose={() => {
-            setSpotlightOpen(false);
-            setSelectedAssetId(null);
-          }}
-          repairHistory={assetRepairHistory}
-          ownerHistory={assetOwnerHistory}
-          onEdit={setAssetForm}
-          onApproveIntake={handleApproveIntake}
-          onOpenAutomate={handleOpenAutomate}
-          ownerContact={ownerContact}
-        />
-      )}
+      <AssetSpotlightModal
+        asset={selectedAsset}
+        onClose={() => {
+          setSpotlightOpen(false);
+          setSelectedAssetId(null);
+        }}
+        repairHistory={assetRepairHistory}
+        ownerHistory={assetOwnerHistory}
+        onEdit={setAssetForm}
+        onApproveIntake={handleApproveIntake}
+        onOpenAutomate={handleOpenAutomate}
+        ownerContact={ownerContact}
+        onRepair={handleOpenRepairTicketForAsset}
+      />
+    )}
       {assetForm && (
         <AssetFormModal
           asset={assetForm}
@@ -10138,6 +10261,9 @@ const App = () => {
           ticket={repairTicketForm}
           onSubmit={handleSaveRepairTicket}
           onCancel={() => setRepairTicketForm(null)}
+          modelOptions={modelOptions}
+          employeeNames={employeeNameOptions}
+          locationOptions={locationSuggestionOptions}
         />
       )}
       {photoLightbox && (
