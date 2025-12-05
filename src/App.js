@@ -283,20 +283,28 @@ const VENDOR_IMAGES = {
 };
 const EMPLOYEE_PHOTO_UPLOAD_URL = process.env.REACT_APP_EMPLOYEE_PHOTO_UPLOAD_URL || '';
 const EMPLOYEE_PHOTO_CDN = (process.env.REACT_APP_EMPLOYEE_PHOTO_CDN || '').replace(/\/$/, '');
+const ASSET_CDN = EMPLOYEE_PHOTO_CDN || PUBLIC_URL;
 const SOFTWARE_LOGOS = {
-  m365: `${PUBLIC_URL}/assets/software/microsoft-365.png`,
-  adobe: `${PUBLIC_URL}/assets/software/adobe.png`,
-  autocad: `${PUBLIC_URL}/assets/software/autocad.png`,
-  citrix: `${PUBLIC_URL}/assets/software/citrix.png`,
-  zoom: `${PUBLIC_URL}/assets/software/zoom.jpg`,
-  cisco: `${PUBLIC_URL}/assets/software/cisco-secure.png`,
-  barracuda: `${PUBLIC_URL}/assets/software/barracuda.png`,
-  dragon: `${PUBLIC_URL}/assets/software/dragon.webp`,
-  duo: `${PUBLIC_URL}/assets/software/duo-security.png`,
-  keeper: `${PUBLIC_URL}/assets/software/keeper.jpg`,
-  eset: `${PUBLIC_URL}/assets/software/eset.jpeg`,
-  hrms: `${PUBLIC_URL}/assets/software/hrms.png`,
-  sage: `${PUBLIC_URL}/assets/software/sage.webp`,
+  m365: `${ASSET_CDN}/assets/software/microsoft-365.png`,
+  adobe: `${ASSET_CDN}/assets/software/adobe.png`,
+  autocad: `${ASSET_CDN}/assets/software/autocad.png`,
+  citrix: `${ASSET_CDN}/assets/software/citrix.png`,
+  zoom: `${ASSET_CDN}/assets/software/zoom.jpg`,
+  cisco: `${ASSET_CDN}/assets/software/cisco-secure.png`,
+  barracuda: `${ASSET_CDN}/assets/software/barracuda.png`,
+  dragon: `${ASSET_CDN}/assets/software/dragon.webp`,
+  duo: `${ASSET_CDN}/assets/software/duo-security.png`,
+  keeper: `${ASSET_CDN}/assets/software/keeper.jpg`,
+  eset: `${ASSET_CDN}/assets/software/eset.jpeg`,
+  hrms: `${ASSET_CDN}/assets/software/hrms.png`,
+  sage: `${ASSET_CDN}/assets/software/sage.webp`,
+};
+const SOFTWARE_LOGO_KEYS = {
+  'adobe-cc': 'adobe',
+  'cisco-secure': 'cisco',
+  'duo-security': 'duo',
+  'eset-endpoint': 'eset',
+  'eset-encryption': 'eset',
 };
 const SOFTWARE_ADMIN_PORTALS = {
   m365: 'https://admin.microsoft.com/',
@@ -5945,6 +5953,23 @@ const App = () => {
     () => licenseCompliance.filter((item) => item.status !== 'Healthy'),
     [licenseCompliance],
   );
+  const adminPortalTiles = useMemo(() => {
+    const suiteMap = new Map();
+    licenseBuckets.forEach((suite) => suiteMap.set(suite.id, suite));
+    const formatLabel = (value) =>
+      value
+        .replace(/-/g, ' ')
+        .split(' ')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    return Object.entries(SOFTWARE_ADMIN_PORTALS).map(([id, portal]) => {
+      const suite = suiteMap.get(id) || SOFTWARE_PORTFOLIO.find((item) => item.id === id);
+      const label = suite?.software || formatLabel(id);
+      const logoKey = SOFTWARE_LOGO_KEYS[id] || id;
+      const logo = suite?.logo || SOFTWARE_LOGOS[logoKey];
+      return { id, label, logo, portal };
+    });
+  }, [licenseBuckets]);
   const softwareRenewalAlerts = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -5998,7 +6023,6 @@ const App = () => {
     () => new Set(licenseBuckets.map((license) => license.vendor)).size,
     [licenseBuckets],
   );
-  const suitesWithLogos = useMemo(() => licenseBuckets.filter((suite) => suite.logo), [licenseBuckets]);
   const costByDepartment = useMemo(() => {
     const totals = assets.reduce((acc, asset) => {
       acc[asset.department] = (acc[asset.department] || 0) + Number(asset.cost || 0);
@@ -9669,104 +9693,7 @@ const App = () => {
 
         {activePage === 'Software' && (
           <>
-            <section id="software-renewal-overview" className="mb-8">
-              <div className="rounded-3xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-6 shadow-lg">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="rounded-2xl bg-purple-600 p-3 shadow-lg">
-                    <CalendarClock className="h-7 w-7 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-slate-900">Software Renewal Calendar</p>
-                    <p className="text-sm text-slate-600">Track upcoming renewals and budget for annual subscriptions</p>
-                  </div>
-                </div>
-                
-                <div className="grid gap-4 sm:grid-cols-3 mb-6">
-                  <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Overdue</p>
-                    <p className="mt-1 text-3xl font-bold text-rose-700">{softwareRenewalsOverdue.length}</p>
-                    <p className="text-xs text-rose-600">Requires immediate action</p>
-                  </div>
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">Next 90 days</p>
-                    <p className="mt-1 text-3xl font-bold text-amber-700">{softwareRenewalsDue90Days.length}</p>
-                    <p className="text-xs text-amber-600">Budget planning required</p>
-                  </div>
-                  <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Total annual cost</p>
-                    <p className="mt-1 text-3xl font-bold text-blue-700">
-                      {formatCurrency(SOFTWARE_PORTFOLIO.reduce((sum, s) => sum + (s.seats * s.costPerSeat * 12), 0))}
-                    </p>
-                    <p className="text-xs text-blue-600">All software licenses</p>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-white/60 bg-white/80 p-5 shadow-sm backdrop-blur">
-                  <p className="text-sm font-bold text-slate-900 mb-4">Complete Renewal Timeline</p>
-                  <div className="space-y-2">
-                    {softwareRenewalAlerts.map((software) => (
-                      <div key={software.id} className={`flex items-center justify-between rounded-xl p-3 ${
-                        software.daysUntilRenewal < 0 
-                          ? 'bg-rose-100 border border-rose-300' 
-                          : software.daysUntilRenewal <= 30
-                          ? 'bg-amber-100 border border-amber-300'
-                          : software.daysUntilRenewal <= 60
-                          ? 'bg-yellow-50 border border-yellow-300'
-                          : software.daysUntilRenewal <= 90
-                          ? 'bg-blue-50 border border-blue-200'
-                          : 'bg-slate-50 border border-slate-200'
-                      }`}>
-                        <div className="flex items-center gap-3 flex-1">
-                          {software.logo && <img src={software.logo} alt={software.software} className="h-8 w-8 rounded-lg object-contain" />}
-                          <div className="flex-1">
-                            <p className="font-semibold text-slate-900 text-sm">{software.software}</p>
-                            <p className="text-xs text-slate-600">{software.vendor} • {software.category}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <p className="text-xs text-slate-500">Renewal Date</p>
-                            <p className="font-semibold text-slate-900 text-sm">
-                              {new Date(software.renewalDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-xs text-slate-500">Annual Cost</p>
-                            <p className="font-semibold text-slate-900 text-sm">{formatCurrency(software.annualCost)}</p>
-                          </div>
-                          <span className={`rounded-full px-3 py-1.5 text-xs font-bold whitespace-nowrap ${
-                            software.daysUntilRenewal < 0 
-                              ? 'bg-rose-600 text-white' 
-                              : software.daysUntilRenewal <= 30
-                              ? 'bg-amber-600 text-white'
-                              : software.daysUntilRenewal <= 60
-                              ? 'bg-yellow-600 text-white'
-                              : software.daysUntilRenewal <= 90
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-slate-600 text-white'
-                          }`}>
-                            {software.daysUntilRenewal < 0 
-                              ? `${Math.abs(software.daysUntilRenewal)}d OVERDUE` 
-                              : `${software.daysUntilRenewal} days`}
-                          </span>
-                          {software.portal && (
-                            <a
-                              href={software.portal}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="rounded-xl bg-slate-700 p-2 text-white hover:bg-slate-800 transition"
-                              title="Open admin portal"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </section>
+            
 
             <section id="software-hero" className="mb-8 grid gap-6 lg:grid-cols-[2.1fr,0.5fr]">
               <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
@@ -9804,26 +9731,28 @@ const App = () => {
                     <p className="text-xs text-slate-500">{softwareAtRisk.length} suites watched</p>
                   </div>
                 </div>
-                {suitesWithLogos.length > 0 && (
+                {adminPortalTiles.some((tile) => tile.logo) && (
                   <div className="mt-8 min-h-[340px] rounded-2xl border border-slate-100/80 bg-slate-50/80 p-6">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Admin Portals</p>
                     <div className="mt-5 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                      {suitesWithLogos.map((suite) => (
+                      {adminPortalTiles
+                        .filter((tile) => tile.logo)
+                        .map((tile) => (
                         <a
-                          key={`logo-${suite.id}`}
-                          href={suite.portal || SOFTWARE_ADMIN_PORTALS[suite.id] || '#'}
+                          key={`logo-${tile.id}`}
+                          href={tile.portal || '#'}
                           target="_blank"
                           rel="noreferrer"
                           className="group relative flex h-24 items-center justify-center rounded-2xl bg-white/90 shadow-inner ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:ring-blue-200"
                           title={
-                            suite.portal || SOFTWARE_ADMIN_PORTALS[suite.id]
-                              ? `${suite.software} admin portal`
-                              : suite.software
+                            tile.portal
+                              ? `${tile.label} admin portal`
+                              : tile.label
                           }
                         >
                           <img
-                            src={suite.logo}
-                            alt={`${suite.software} logo`}
+                            src={tile.logo}
+                            alt={`${tile.label} logo`}
                             className="h-14 w-auto object-contain opacity-80 transition group-hover:opacity-100 group-hover:scale-105"
                             loading="lazy"
                           />
@@ -9868,6 +9797,146 @@ const App = () => {
             <section className="mb-8 grid gap-6 lg:grid-cols-2">
               <LicenseUsage licenses={licenseBuckets} />
               <LicenseCompliancePanel data={licenseCompliance} />
+            </section>
+
+            <section id="software-renewal-overview" className="mb-8">
+              <div
+                className={`rounded-3xl p-6 shadow-lg ${
+                  isDarkMode
+                    ? 'glass-card border border-slate-800/60 bg-slate-900/70'
+                    : 'glass-card border border-slate-100/70 bg-white/85'
+                }`}
+              >
+                <div className="mb-6 flex items-center gap-3">
+                  <div className="rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 p-3 shadow-lg">
+                    <CalendarClock className="h-7 w-7 text-white drop-shadow" />
+                  </div>
+                  <div>
+                    <p className={`text-2xl font-bold ${isDarkMode ? 'text-slate-50' : 'text-slate-900'}`}>Software Renewal Calendar</p>
+                    <p className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                      Track upcoming renewals and budget for annual subscriptions
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="mb-6 grid gap-4 sm:grid-cols-3">
+                  <div className={`rounded-2xl border p-4 ${isDarkMode ? 'border-rose-500/30 bg-rose-500/10' : 'border-rose-200 bg-rose-50'}`}>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Overdue</p>
+                    <p className={`mt-1 text-3xl font-bold ${isDarkMode ? 'text-rose-200' : 'text-rose-700'}`}>
+                      {softwareRenewalsOverdue.length}
+                    </p>
+                    <p className="text-xs text-rose-600">Requires immediate action</p>
+                  </div>
+                  <div className={`rounded-2xl border p-4 ${isDarkMode ? 'border-amber-500/30 bg-amber-500/10' : 'border-amber-200 bg-amber-50'}`}>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">Next 90 days</p>
+                    <p className={`mt-1 text-3xl font-bold ${isDarkMode ? 'text-amber-200' : 'text-amber-700'}`}>
+                      {softwareRenewalsDue90Days.length}
+                    </p>
+                    <p className="text-xs text-amber-600">Budget planning required</p>
+                  </div>
+                  <div className={`rounded-2xl border p-4 ${isDarkMode ? 'border-blue-500/30 bg-blue-500/10' : 'border-blue-200 bg-blue-50'}`}>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Total annual cost</p>
+                    <p className={`mt-1 text-3xl font-bold ${isDarkMode ? 'text-blue-200' : 'text-blue-700'}`}>
+                      {formatCurrency(SOFTWARE_PORTFOLIO.reduce((sum, s) => sum + (s.seats * s.costPerSeat * 12), 0))}
+                    </p>
+                    <p className="text-xs text-blue-600">All software licenses</p>
+                  </div>
+                </div>
+
+                <div
+                  className={`rounded-2xl p-5 shadow-inner ${
+                    isDarkMode ? 'border border-slate-800/60 bg-slate-900/70' : 'border border-slate-100/70 bg-white/85'
+                  }`}
+                >
+                  <p className={`mb-4 text-sm font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Complete Renewal Timeline</p>
+                  <div className="space-y-2">
+                    {softwareRenewalAlerts.map((software) => (
+                      <div
+                        key={software.id}
+                        className={`flex items-center justify-between rounded-xl p-3 ${
+                          software.daysUntilRenewal < 0
+                            ? isDarkMode
+                              ? 'bg-rose-500/10 border border-rose-400/40'
+                              : 'bg-rose-100 border border-rose-300'
+                            : software.daysUntilRenewal <= 30
+                            ? isDarkMode
+                              ? 'bg-amber-500/10 border border-amber-400/40'
+                              : 'bg-amber-100 border border-amber-300'
+                            : software.daysUntilRenewal <= 60
+                            ? isDarkMode
+                              ? 'bg-yellow-500/10 border border-yellow-400/40'
+                              : 'bg-yellow-50 border border-yellow-300'
+                            : software.daysUntilRenewal <= 90
+                            ? isDarkMode
+                              ? 'bg-blue-500/10 border border-blue-400/40'
+                              : 'bg-blue-50 border border-blue-200'
+                            : isDarkMode
+                            ? 'bg-slate-800/60 border border-slate-700/60'
+                            : 'bg-slate-50 border border-slate-200'
+                        }`}
+                      >
+                        <div className="flex flex-1 items-center gap-3">
+                          {software.logo && (
+                            <img src={software.logo} alt={software.software} className="h-8 w-8 rounded-lg object-contain" />
+                          )}
+                          <div className="flex-1">
+                            <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{software.software}</p>
+                            <p className={`text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                              {software.vendor} • {software.category}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Renewal Date</p>
+                            <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                              {new Date(software.renewalDate).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Annual Cost</p>
+                            <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                              {formatCurrency(software.annualCost)}
+                            </p>
+                          </div>
+                          <span
+                            className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold ${
+                              software.daysUntilRenewal < 0
+                                ? 'bg-rose-600 text-white'
+                                : software.daysUntilRenewal <= 30
+                                ? 'bg-amber-600 text-white'
+                                : software.daysUntilRenewal <= 60
+                                ? 'bg-yellow-600 text-white'
+                                : software.daysUntilRenewal <= 90
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-slate-600 text-white'
+                            }`}
+                          >
+                            {software.daysUntilRenewal < 0
+                              ? `${Math.abs(software.daysUntilRenewal)}d OVERDUE`
+                              : `${software.daysUntilRenewal} days`}
+                          </span>
+                          {software.portal && (
+                            <a
+                              href={software.portal}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="rounded-xl bg-slate-700 p-2 text-white transition hover:bg-slate-800"
+                              title="Open admin portal"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </section>
 
             <section className="grid gap-4 md:grid-cols-2">
