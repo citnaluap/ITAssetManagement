@@ -305,7 +305,7 @@ const SOFTWARE_ADMIN_PORTALS = {
   'cisco-secure': 'https://dashboard.umbrella.com/',
   'duo-security': 'https://admin.duosecurity.com/',
   barracuda: 'https://login.barracudanetworks.com/',
-  keeper: 'https://admin.keepersecurity.com/',
+  keeper: 'https://keepersecurity.com/en_US/console/#login',
   citrix: 'https://citrix.cloud.com/',
   dragon: 'https://login.nuance.com/',
   'eset-endpoint': 'https://protect.eset.com/',
@@ -937,7 +937,7 @@ const SOFTWARE_PORTFOLIO = [
     used: 265,
     costPerSeat: 6,
     renewal: '2025-08-15',
-    portal: 'https://admin.keepersecurity.com/',
+    portal: 'https://keepersecurity.com/en_US/console/#login',
     logo: SOFTWARE_LOGOS.keeper,
     accent: { from: '#f59e0b', to: '#b45309' },
     description: 'Enterprise vaults, shared folders, and breach monitoring for staff credentials.',
@@ -5945,6 +5945,55 @@ const App = () => {
     () => licenseCompliance.filter((item) => item.status !== 'Healthy'),
     [licenseCompliance],
   );
+  const softwareRenewalAlerts = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return SOFTWARE_PORTFOLIO.map((software) => {
+      const renewalDate = new Date(software.renewal);
+      renewalDate.setHours(0, 0, 0, 0);
+      const daysUntilRenewal = Math.ceil((renewalDate - today) / (1000 * 60 * 60 * 24));
+      const monthsUntilRenewal = Math.floor(daysUntilRenewal / 30);
+      
+      let status = 'upcoming';
+      let priority = 'low';
+      
+      if (daysUntilRenewal < 0) {
+        status = 'overdue';
+        priority = 'critical';
+      } else if (daysUntilRenewal <= 30) {
+        status = 'due-soon';
+        priority = 'high';
+      } else if (daysUntilRenewal <= 60) {
+        status = 'approaching';
+        priority = 'medium';
+      } else if (daysUntilRenewal <= 90) {
+        status = 'upcoming';
+        priority = 'medium';
+      }
+      
+      return {
+        ...software,
+        renewalDate: software.renewal,
+        daysUntilRenewal,
+        monthsUntilRenewal,
+        status,
+        priority,
+        annualCost: software.seats * software.costPerSeat * 12,
+      };
+    }).sort((a, b) => a.daysUntilRenewal - b.daysUntilRenewal);
+  }, []);
+  
+  const softwareRenewalsDue90Days = useMemo(
+    () => softwareRenewalAlerts.filter((s) => s.daysUntilRenewal <= 90 && s.daysUntilRenewal >= 0),
+    [softwareRenewalAlerts]
+  );
+  
+  const softwareRenewalsOverdue = useMemo(
+    () => softwareRenewalAlerts.filter((s) => s.daysUntilRenewal < 0),
+    [softwareRenewalAlerts]
+  );
+  
   const softwareVendorCount = useMemo(
     () => new Set(licenseBuckets.map((license) => license.vendor)).size,
     [licenseBuckets],
@@ -8911,6 +8960,83 @@ const App = () => {
           </section>
         )}
 
+        {softwareRenewalsDue90Days.length > 0 && (
+          <section className="mb-8">
+            <div className="rounded-3xl border border-purple-200 bg-gradient-to-r from-purple-50 via-pink-50 to-blue-50 p-6 shadow-lg">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-2xl bg-purple-100 p-3">
+                    <CalendarClock className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-slate-900">Software Renewal Alerts</p>
+                    <p className="text-sm text-slate-600">
+                      {softwareRenewalsDue90Days.length} license renewal{softwareRenewalsDue90Days.length !== 1 ? 's' : ''} due within 90 days
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveTab('software')}
+                  className="rounded-2xl bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-700 transition"
+                >
+                  View all renewals
+                </button>
+              </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {softwareRenewalsDue90Days.slice(0, 6).map((software) => (
+                  <div key={software.id} className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm backdrop-blur">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <p className="font-semibold text-slate-900 text-sm">{software.software}</p>
+                        <p className="text-xs text-slate-500">{software.vendor}</p>
+                      </div>
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        software.daysUntilRenewal <= 30 
+                          ? 'bg-rose-100 text-rose-700' 
+                          : software.daysUntilRenewal <= 60
+                          ? 'bg-amber-100 text-amber-700'
+                          : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {software.daysUntilRenewal} days
+                      </span>
+                    </div>
+                    <div className="mt-3 space-y-1 text-xs text-slate-600">
+                      <div className="flex justify-between">
+                        <span>Renewal date:</span>
+                        <span className="font-semibold">{new Date(software.renewalDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Annual cost:</span>
+                        <span className="font-semibold">{formatCurrency(software.annualCost)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Seats:</span>
+                        <span className="font-semibold">{software.seats} ({software.used} used)</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {softwareRenewalsOverdue.length > 0 && (
+                <div className="mt-4 rounded-2xl border-2 border-rose-300 bg-rose-50 p-4">
+                  <p className="flex items-center gap-2 text-sm font-bold text-rose-900">
+                    <Bell className="h-4 w-4" />
+                    {softwareRenewalsOverdue.length} OVERDUE renewal{softwareRenewalsOverdue.length !== 1 ? 's' : ''} requiring immediate attention
+                  </p>
+                  <div className="mt-3 space-y-2">
+                    {softwareRenewalsOverdue.map((software) => (
+                      <div key={software.id} className="flex items-center justify-between rounded-xl bg-white p-3 text-sm">
+                        <span className="font-semibold text-slate-900">{software.software}</span>
+                        <span className="text-rose-600 font-semibold">{Math.abs(software.daysUntilRenewal)} days overdue</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         <section id="overview-people" className="mb-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
           <SpendHotspotsCard costByDepartment={costByDepartment} topLocations={sheetInsights.topLocations} />
           <EmployeeSummaryCard total={employeeGallery.length} departments={employeeDepartmentCount} onAdd={handleAddEmployee} />
@@ -9543,6 +9669,105 @@ const App = () => {
 
         {activePage === 'Software' && (
           <>
+            <section id="software-renewal-overview" className="mb-8">
+              <div className="rounded-3xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-6 shadow-lg">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="rounded-2xl bg-purple-600 p-3 shadow-lg">
+                    <CalendarClock className="h-7 w-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-slate-900">Software Renewal Calendar</p>
+                    <p className="text-sm text-slate-600">Track upcoming renewals and budget for annual subscriptions</p>
+                  </div>
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-3 mb-6">
+                  <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Overdue</p>
+                    <p className="mt-1 text-3xl font-bold text-rose-700">{softwareRenewalsOverdue.length}</p>
+                    <p className="text-xs text-rose-600">Requires immediate action</p>
+                  </div>
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">Next 90 days</p>
+                    <p className="mt-1 text-3xl font-bold text-amber-700">{softwareRenewalsDue90Days.length}</p>
+                    <p className="text-xs text-amber-600">Budget planning required</p>
+                  </div>
+                  <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Total annual cost</p>
+                    <p className="mt-1 text-3xl font-bold text-blue-700">
+                      {formatCurrency(SOFTWARE_PORTFOLIO.reduce((sum, s) => sum + (s.seats * s.costPerSeat * 12), 0))}
+                    </p>
+                    <p className="text-xs text-blue-600">All software licenses</p>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-white/60 bg-white/80 p-5 shadow-sm backdrop-blur">
+                  <p className="text-sm font-bold text-slate-900 mb-4">Complete Renewal Timeline</p>
+                  <div className="space-y-2">
+                    {softwareRenewalAlerts.map((software) => (
+                      <div key={software.id} className={`flex items-center justify-between rounded-xl p-3 ${
+                        software.daysUntilRenewal < 0 
+                          ? 'bg-rose-100 border border-rose-300' 
+                          : software.daysUntilRenewal <= 30
+                          ? 'bg-amber-100 border border-amber-300'
+                          : software.daysUntilRenewal <= 60
+                          ? 'bg-yellow-50 border border-yellow-300'
+                          : software.daysUntilRenewal <= 90
+                          ? 'bg-blue-50 border border-blue-200'
+                          : 'bg-slate-50 border border-slate-200'
+                      }`}>
+                        <div className="flex items-center gap-3 flex-1">
+                          {software.logo && <img src={software.logo} alt={software.software} className="h-8 w-8 rounded-lg object-contain" />}
+                          <div className="flex-1">
+                            <p className="font-semibold text-slate-900 text-sm">{software.software}</p>
+                            <p className="text-xs text-slate-600">{software.vendor} • {software.category}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p className="text-xs text-slate-500">Renewal Date</p>
+                            <p className="font-semibold text-slate-900 text-sm">
+                              {new Date(software.renewalDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-slate-500">Annual Cost</p>
+                            <p className="font-semibold text-slate-900 text-sm">{formatCurrency(software.annualCost)}</p>
+                          </div>
+                          <span className={`rounded-full px-3 py-1.5 text-xs font-bold whitespace-nowrap ${
+                            software.daysUntilRenewal < 0 
+                              ? 'bg-rose-600 text-white' 
+                              : software.daysUntilRenewal <= 30
+                              ? 'bg-amber-600 text-white'
+                              : software.daysUntilRenewal <= 60
+                              ? 'bg-yellow-600 text-white'
+                              : software.daysUntilRenewal <= 90
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-slate-600 text-white'
+                          }`}>
+                            {software.daysUntilRenewal < 0 
+                              ? `${Math.abs(software.daysUntilRenewal)}d OVERDUE` 
+                              : `${software.daysUntilRenewal} days`}
+                          </span>
+                          {software.portal && (
+                            <a
+                              href={software.portal}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="rounded-xl bg-slate-700 p-2 text-white hover:bg-slate-800 transition"
+                              title="Open admin portal"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+
             <section id="software-hero" className="mb-8 grid gap-6 lg:grid-cols-[2.1fr,0.5fr]">
               <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
