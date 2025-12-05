@@ -3911,15 +3911,65 @@ const AssetFilters = ({ filters, onChange, onReset, types, embedded = false }) =
         <option value="Retired">Retired</option>
       </select>
       <button
+        type="button"
         onClick={onReset}
-        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900 sm:col-span-2 lg:col-span-1"
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600"
       >
-        <SlidersHorizontal className="h-4 w-4" />
-        Reset filters
+        <X className="h-4 w-4" />
+        Reset
       </button>
     </div>
   </div>
 );
+
+const EmployeeFilters = ({ search, filters, departments, locations, onSearchChange, onFilterChange, onReset }) => (
+  <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_auto]">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <input
+          value={search}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder="Search by name, title, or department"
+          className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        />
+      </div>
+      <select
+        value={filters.department}
+        onChange={(event) => onFilterChange('department', event.target.value)}
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+      >
+        <option value="all">All departments</option>
+        {departments.map((dept) => (
+          <option key={dept} value={dept}>
+            {dept}
+          </option>
+        ))}
+      </select>
+      <select
+        value={filters.location}
+        onChange={(event) => onFilterChange('location', event.target.value)}
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+      >
+        <option value="all">All locations</option>
+        {locations.map((loc) => (
+          <option key={loc} value={loc}>
+            {loc}
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        onClick={onReset}
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600"
+      >
+        <X className="h-4 w-4" />
+        Reset
+      </button>
+    </div>
+  </div>
+);
+
 const AssetTable = ({
   assets,
   onEdit,
@@ -6119,6 +6169,7 @@ const App = () => {
   const [commandQuery, setCommandQuery] = useState('');
   const [flashMessage, setFlashMessage] = useState('');
   const [employeeSearch, setEmployeeSearch] = useState('');
+  const [employeeFilters, setEmployeeFilters] = useState({ department: 'all', location: 'all' });
   const [employeePage, setEmployeePage] = useState(1);
   const [employeeForm, setEmployeeForm] = useState(null);
   const [expandedEmployeeId, setExpandedEmployeeId] = useState(null);
@@ -6816,14 +6867,24 @@ const App = () => {
     () =>
       employeeGallery.filter((member) => {
         const query = employeeSearch.toLowerCase();
-        return (
+        const searchMatch =
           !query ||
           member.name.toLowerCase().includes(query) ||
           member.department.toLowerCase().includes(query) ||
-          member.title.toLowerCase().includes(query)
-        );
+          member.title.toLowerCase().includes(query) ||
+          (member.location && member.location.toLowerCase().includes(query));
+        
+        const departmentMatch =
+          employeeFilters.department === 'all' ||
+          member.department === employeeFilters.department;
+        
+        const locationMatch =
+          employeeFilters.location === 'all' ||
+          member.location === employeeFilters.location;
+        
+        return searchMatch && departmentMatch && locationMatch;
       }),
-    [employeeGallery, employeeSearch],
+    [employeeGallery, employeeSearch, employeeFilters],
   );
   const totalEmployeePages = Math.max(1, Math.ceil(filteredEmployees.length / EMPLOYEE_PAGE_SIZE));
   useEffect(() => {
@@ -8133,7 +8194,7 @@ const App = () => {
         const resetStatus = asset.status === 'Maintenance' || asset.status === 'Retired' ? asset.status : 'Available';
         return normalizeAssetStatus({
           ...asset,
-          assignedTo: '',
+          assignedTo: 'Unassigned',
           status: resetStatus,
           checkedOut: false,
           checkOutDate: '',
@@ -8147,7 +8208,7 @@ const App = () => {
         id: Date.now(),
         assetId,
         action: mode === 'checkout' ? 'Check Out' : 'Check In',
-        user,
+        user: mode === 'checkout' ? user : 'Unassigned',
         notes,
         date,
       },
@@ -9300,16 +9361,7 @@ const App = () => {
                   <p className="mt-1 text-2xl font-semibold text-slate-900">{employeeDepartmentCount}</p>
                 </div>
               </div>
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <input
-                  value={employeeSearch}
-                  onChange={(event) => {
-                    setEmployeeSearch(event.target.value);
-                    setEmployeePage(1);
-                  }}
-                  placeholder="Search the employee directory"
-                  className="w-full flex-1 rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
+              <div className="mt-6 flex justify-end">
                 <button
                   type="button"
                   onClick={() => setEmployeeForm({ ...defaultEmployeeProfile })}
@@ -9322,6 +9374,25 @@ const App = () => {
 
             <section id="employee-directory" className="grid gap-6">
               <div className="space-y-4">
+                <EmployeeFilters
+                  search={employeeSearch}
+                  filters={employeeFilters}
+                  departments={departmentOptions}
+                  locations={locationOptions}
+                  onSearchChange={(value) => {
+                    setEmployeeSearch(value);
+                    setEmployeePage(1);
+                  }}
+                  onFilterChange={(key, value) => {
+                    setEmployeeFilters((prev) => ({ ...prev, [key]: value }));
+                    setEmployeePage(1);
+                  }}
+                  onReset={() => {
+                    setEmployeeSearch('');
+                    setEmployeeFilters({ department: 'all', location: 'all' });
+                    setEmployeePage(1);
+                  }}
+                />
                 <EmployeeDirectoryGrid
                   members={displayedEmployees}
                   totalCount={filteredEmployees.length}
