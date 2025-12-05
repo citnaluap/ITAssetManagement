@@ -28,7 +28,6 @@ import {
   ExternalLink,
   PhoneCall,
   TrendingDown,
-  Wrench,
   Users,
   Smartphone,
   Navigation,
@@ -3061,74 +3060,6 @@ const SoftwareFormModal = ({ suite, onSubmit, onCancel, suggestionListId }) => {
   );
 };
 
-const LicenseCompliancePanel = ({ data = [] }) => {
-  const [query, setQuery] = useState('');
-  const filtered = useMemo(
-    () =>
-      data.filter(
-        (item) =>
-          item.software.toLowerCase().includes(query.toLowerCase()) ||
-          item.status.toLowerCase().includes(query.toLowerCase()),
-      ),
-    [data, query],
-  );
-
-  return (
-    <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-6 py-5">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Software</p>
-          <p className="text-lg font-semibold text-slate-900">License compliance</p>
-          <p className="text-sm text-slate-500">Track seat usage and highlight over-allocated workloads.</p>
-        </div>
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search suites"
-          className="rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-        />
-      </div>
-      <div className="overflow-x-auto pb-1">
-        <table className="w-full divide-y divide-slate-100 text-left text-sm">
-          <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-5 py-3 whitespace-nowrap">Suite</th>
-              <th className="px-5 py-3 whitespace-nowrap text-center">Used / Seats</th>
-              <th className="px-5 py-3 whitespace-nowrap text-center">Delta</th>
-              <th className="px-5 py-3 pr-6 whitespace-nowrap text-right">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 text-slate-600">
-            {filtered.map((item) => (
-              <tr key={item.software}>
-                <td className="px-5 py-3 font-semibold text-slate-900">{item.software}</td>
-                <td className="px-5 py-3 text-center">
-                  {item.used} / {item.seats}
-                </td>
-                <td className="px-5 py-3 text-center">{item.delta > 0 ? `+${item.delta}` : item.delta}</td>
-                <td className="px-5 py-3 pr-6 whitespace-nowrap text-right">
-                  <span
-                    className={`inline-block rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${
-                      item.status === 'Overused'
-                        ? 'bg-rose-50 text-rose-600'
-                        : item.status === 'At capacity'
-                          ? 'bg-amber-50 text-amber-700'
-                          : 'bg-emerald-50 text-emerald-600'
-                    }`}
-                  >
-                    {item.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {filtered.length === 0 && <p className="px-6 py-6 text-sm text-slate-500">No license data available.</p>}
-      </div>
-    </div>
-  );
-};
-
 const AnalyticsInsightsPanel = ({ costData = [], depreciation = [] }) => (
   <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
     <div className="border-b border-slate-100 px-6 py-5">
@@ -4746,6 +4677,16 @@ const AssetSpotlight = ({
               <Edit2 className="h-4 w-4" />
               Edit
             </button>
+            {isLaptopAsset(asset) && (
+              <button
+                type="button"
+                onClick={() => onRepair?.(asset)}
+                className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 transition hover:border-amber-300 hover:bg-amber-100"
+              >
+                <HardDrive className="h-4 w-4" />
+                Repair
+              </button>
+            )}
           </div>
           <dl className="mt-4 space-y-4 text-sm">
             <div className="flex items-start justify-between border-b border-slate-100 pb-3">
@@ -4815,7 +4756,7 @@ const AssetSpotlight = ({
                   Direct link
                 </a>
               </>
-              )}
+            )}
             <button
               type="button"
               onClick={() => onEdit?.(asset)}
@@ -4823,14 +4764,6 @@ const AssetSpotlight = ({
             >
               Edit / Update asset
               <Edit2 className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => onRepair?.(asset)}
-              className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 transition hover:border-amber-300 hover:text-amber-900"
-            >
-              <Wrench className="h-4 w-4" />
-              Repair
             </button>
           </div>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -8014,8 +7947,9 @@ const App = () => {
       items.push({ id: printer.id, kind: 'printer', label, subtitle: printer.model || '' });
     });
     employeeGallery.forEach((member) => {
+      const memberKey = member.id || normalizeKey(member.name || '');
       items.push({
-        id: member.id || member.name,
+        id: memberKey,
         kind: 'employee',
         label: member.name,
         subtitle: `${member.title || ''} - ${member.department || ''}`,
@@ -8061,22 +7995,19 @@ const App = () => {
         return;
       }
       if (item.kind === 'employee') {
+        setCommandPaletteOpen(false);
         setActivePage('Employees');
-        const member = employeeGallery.find((m) => (m.id || m.name) === item.id);
-        if (member) {
-          const memberKey = member.id || normalizeKey(member.name || '');
-          setExpandedEmployeeId(memberKey);
-          setTimeout(() => {
-            const el = document.getElementById(`employee-card-${memberKey}`);
-            if (el) {
-              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              el.focus?.();
-            }
-          }, 150);
-        }
+        setExpandedEmployeeId(item.id);
+        setTimeout(() => {
+          const el = document.getElementById(`employee-card-${item.id}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.focus?.();
+          }
+        }, 300);
       }
     },
-    [assets, employeeGallery, handleEditPrinter, handleOpenAutomate, networkPrinters],
+    [assets, handleEditPrinter, handleOpenAutomate, networkPrinters],
   );
 
   const handleSaveAsset = async (payload) => {
@@ -9214,10 +9145,10 @@ const App = () => {
 
         {softwareRenewalsDue90Days.length > 0 && (
           <section className="mb-8">
-            <div className="rounded-3xl border border-purple-200 bg-gradient-to-r from-purple-50 via-pink-50 to-blue-50 p-6 shadow-lg">
+            <div className="glass-card rounded-3xl border border-slate-100 bg-gradient-to-br from-white via-purple-50/30 to-pink-50/30 p-6 shadow-lg">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="rounded-2xl bg-purple-100 p-3">
+                  <div className="rounded-2xl bg-gradient-to-br from-purple-50 to-pink-50 p-3 shadow-inner">
                     <CalendarClock className="h-6 w-6 text-purple-600" />
                   </div>
                   <div>
@@ -9229,57 +9160,57 @@ const App = () => {
                 </div>
                 <button
                   onClick={() => setActivePage('Software')}
-                  className="rounded-2xl bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-700 transition"
+                  className="rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg hover-lift hover:shadow-xl transition-all duration-300"
                 >
                   View all renewals
                 </button>
               </div>
-              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {softwareRenewalsDue90Days.slice(0, 6).map((software) => (
-                  <div key={software.id} className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm backdrop-blur">
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {softwareRenewalsDue90Days.slice(0, 2).map((software) => (
+                  <div key={software.id} className="rounded-2xl border border-slate-200 bg-slate-900 p-4 shadow-md text-white">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
-                        <p className="font-semibold text-slate-900 text-sm">{software.software}</p>
-                        <p className="text-xs text-slate-500">{software.vendor}</p>
+                        <p className="font-semibold text-white text-sm">{software.software}</p>
+                        <p className="text-xs text-slate-400">{software.vendor}</p>
                       </div>
                       <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                         software.daysUntilRenewal <= 30 
-                          ? 'bg-rose-100 text-rose-700' 
+                          ? 'bg-rose-500/20 text-rose-300' 
                           : software.daysUntilRenewal <= 60
-                          ? 'bg-amber-100 text-amber-700'
-                          : 'bg-blue-100 text-blue-700'
+                          ? 'bg-amber-500/20 text-amber-300'
+                          : 'bg-blue-500/20 text-blue-300'
                       }`}>
                         {software.daysUntilRenewal} days
                       </span>
                     </div>
-                    <div className="mt-3 space-y-1 text-xs text-slate-600">
+                    <div className="mt-3 space-y-1 text-xs text-slate-300">
                       <div className="flex justify-between">
                         <span>Renewal date:</span>
-                        <span className="font-semibold">{new Date(software.renewalDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <span className="font-semibold text-white">{new Date(software.renewalDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Annual cost:</span>
-                        <span className="font-semibold">{formatCurrency(software.annualCost)}</span>
+                        <span className="font-semibold text-white">{formatCurrency(software.annualCost)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Seats:</span>
-                        <span className="font-semibold">{software.seats} ({software.used} used)</span>
+                        <span className="font-semibold text-white">{software.seats} ({software.used} used)</span>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
               {softwareRenewalsOverdue.length > 0 && (
-                <div className="mt-4 rounded-2xl border-2 border-rose-300 bg-rose-50 p-4">
-                  <p className="flex items-center gap-2 text-sm font-bold text-rose-900">
+                <div className="mt-4 rounded-2xl border-2 border-rose-500/30 bg-rose-950/50 p-4">
+                  <p className="flex items-center gap-2 text-sm font-bold text-rose-300">
                     <Bell className="h-4 w-4" />
                     {softwareRenewalsOverdue.length} OVERDUE renewal{softwareRenewalsOverdue.length !== 1 ? 's' : ''} requiring immediate attention
                   </p>
                   <div className="mt-3 space-y-2">
-                    {softwareRenewalsOverdue.map((software) => (
-                      <div key={software.id} className="flex items-center justify-between rounded-xl bg-white p-3 text-sm">
-                        <span className="font-semibold text-slate-900">{software.software}</span>
-                        <span className="text-rose-600 font-semibold">{Math.abs(software.daysUntilRenewal)} days overdue</span>
+                    {softwareRenewalsOverdue.slice(0, 3).map((software) => (
+                      <div key={software.id} className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900 p-3 text-sm">
+                        <span className="font-semibold text-white">{software.software}</span>
+                        <span className="text-rose-400 font-semibold">{Math.abs(software.daysUntilRenewal)} days overdue</span>
                       </div>
                     ))}
                   </div>
@@ -9778,12 +9709,9 @@ const App = () => {
               </div>
             </section>
 
-            <section className="mb-8 grid gap-6 xl:grid-cols-[1.6fr,1fr]">
-              <div className="space-y-4">
-                <AnalyticsInsightsPanel costData={costByDepartment} depreciation={depreciationTrend} />
-                <DepreciationForecastTable forecast={depreciationForecast} />
-              </div>
-              <LicenseCompliancePanel data={licenseCompliance} />
+            <section className="mb-8 space-y-6">
+              <AnalyticsInsightsPanel costData={costByDepartment} depreciation={depreciationTrend} />
+              <DepreciationForecastTable forecast={depreciationForecast} />
             </section>
 
             <section className="mb-8 grid gap-6 xl:grid-cols-[1.6fr,1fr]">
@@ -10032,9 +9960,8 @@ const App = () => {
               </div>
             </section>
 
-            <section className="mb-8 grid gap-6 lg:grid-cols-2">
+            <section className="mb-8">
               <LicenseUsage licenses={licenseBuckets} />
-              <LicenseCompliancePanel data={licenseCompliance} />
             </section>
 
             <section id="software-renewal-overview" className="mb-8">
@@ -10089,7 +10016,7 @@ const App = () => {
 
                 <div
                   className={`rounded-2xl p-5 shadow-inner ${
-                    isDarkMode ? 'border border-slate-800/60 bg-slate-950/70' : 'border border-slate-200 bg-white'
+                    isDarkMode ? 'border border-slate-800/60 bg-slate-900/70' : 'border border-slate-200 bg-white'
                   }`}
                 >
                   <p className={`mb-4 text-sm font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Complete Renewal Timeline</p>
