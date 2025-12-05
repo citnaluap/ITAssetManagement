@@ -8976,7 +8976,7 @@ const App = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => setActiveTab('software')}
+                  onClick={() => setActivePage('Software')}
                   className="rounded-2xl bg-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-700 transition"
                 >
                   View all renewals
