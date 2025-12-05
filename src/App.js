@@ -283,21 +283,22 @@ const VENDOR_IMAGES = {
 };
 const EMPLOYEE_PHOTO_UPLOAD_URL = process.env.REACT_APP_EMPLOYEE_PHOTO_UPLOAD_URL || '';
 const EMPLOYEE_PHOTO_CDN = (process.env.REACT_APP_EMPLOYEE_PHOTO_CDN || '').replace(/\/$/, '');
-const ASSET_CDN = EMPLOYEE_PHOTO_CDN || PUBLIC_URL;
+const softwareLogo = (file) =>
+  EMPLOYEE_PHOTO_CDN ? `${EMPLOYEE_PHOTO_CDN}/${file}` : `${PUBLIC_URL}/assets/software/${file}`;
 const SOFTWARE_LOGOS = {
-  m365: `${ASSET_CDN}/assets/software/microsoft-365.png`,
-  adobe: `${ASSET_CDN}/assets/software/adobe.png`,
-  autocad: `${ASSET_CDN}/assets/software/autocad.png`,
-  citrix: `${ASSET_CDN}/assets/software/citrix.png`,
-  zoom: `${ASSET_CDN}/assets/software/zoom.jpg`,
-  cisco: `${ASSET_CDN}/assets/software/cisco-secure.png`,
-  barracuda: `${ASSET_CDN}/assets/software/barracuda.png`,
-  dragon: `${ASSET_CDN}/assets/software/dragon.webp`,
-  duo: `${ASSET_CDN}/assets/software/duo-security.png`,
-  keeper: `${ASSET_CDN}/assets/software/keeper.jpg`,
-  eset: `${ASSET_CDN}/assets/software/eset.jpeg`,
-  hrms: `${ASSET_CDN}/assets/software/hrms.png`,
-  sage: `${ASSET_CDN}/assets/software/sage.webp`,
+  m365: softwareLogo('microsoft-365.png'),
+  adobe: softwareLogo('adobe.png'),
+  autocad: softwareLogo('autocad.png'),
+  citrix: softwareLogo('citrix.png'),
+  zoom: softwareLogo('zoom.jpg'),
+  cisco: softwareLogo('cisco-secure.png'),
+  barracuda: softwareLogo('barracuda.png'),
+  dragon: softwareLogo('dragon.webp'),
+  duo: softwareLogo('duo-security.png'),
+  keeper: softwareLogo('keeper.jpg'),
+  eset: softwareLogo('eset.jpeg'),
+  hrms: softwareLogo('hrms.png'),
+  sage: softwareLogo('sage.webp'),
 };
 const SOFTWARE_LOGO_KEYS = {
   'adobe-cc': 'adobe',
@@ -7797,13 +7798,47 @@ const App = () => {
         severity: ticket.severity || 'Normal',
         eta: ticket.eta || '',
       };
-      setRepairTickets((prev) => {
-        const exists = prev.some((item) => item.id === normalized.id);
-        return exists ? prev.map((item) => (item.id === normalized.id ? normalized : item)) : [normalized, ...prev];
-      });
+      
+      // If repair is completed, remove from list and record history
+      if (normalized.status === 'Completed') {
+        setRepairTickets((prev) => prev.filter((item) => item.id !== normalized.id));
+        
+        // Find the asset and update its status back to Available
+        setAssets((prev) =>
+          prev.map((asset) => {
+            if (asset.id === normalized.assetId || asset.assetName === normalized.assetId || asset.sheetId === normalized.assetId) {
+              return normalizeAssetStatus({
+                ...asset,
+                status: 'Available',
+              });
+            }
+            return asset;
+          })
+        );
+        
+        // Record in history
+        setHistory((prev) => [
+          {
+            id: `history-${Date.now()}`,
+            assetId: normalized.assetId,
+            action: 'Repair Completed',
+            user: 'IT Operations',
+            date: new Date().toISOString().split('T')[0],
+            notes: `${normalized.severity} priority repair completed. Issue: ${normalized.issue || 'N/A'}`,
+          },
+          ...prev,
+        ]);
+      } else {
+        // Update or add repair ticket
+        setRepairTickets((prev) => {
+          const exists = prev.some((item) => item.id === normalized.id);
+          return exists ? prev.map((item) => (item.id === normalized.id ? normalized : item)) : [normalized, ...prev];
+        });
+      }
+      
       setRepairTicketForm(null);
     },
-    [setRepairTickets],
+    [setRepairTickets, setAssets, setHistory],
   );
 
   const commandItems = useMemo(() => {
@@ -9804,7 +9839,7 @@ const App = () => {
                 className={`rounded-3xl p-6 shadow-lg ${
                   isDarkMode
                     ? 'glass-card border border-slate-800/60 bg-slate-900/70'
-                    : 'glass-card border border-slate-100/70 bg-white/85'
+                    : 'bg-white border border-slate-200 shadow-xl'
                 }`}
               >
                 <div className="mb-6 flex items-center gap-3">
@@ -9820,21 +9855,27 @@ const App = () => {
                 </div>
                 
                 <div className="mb-6 grid gap-4 sm:grid-cols-3">
-                  <div className={`rounded-2xl border p-4 ${isDarkMode ? 'border-rose-500/30 bg-rose-500/10' : 'border-rose-200 bg-rose-50'}`}>
+                  <div className={`rounded-2xl border p-4 ${
+                    isDarkMode ? 'border-rose-500/30 bg-rose-500/10' : 'border-rose-200 bg-white'
+                  }`}>
                     <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Overdue</p>
                     <p className={`mt-1 text-3xl font-bold ${isDarkMode ? 'text-rose-200' : 'text-rose-700'}`}>
                       {softwareRenewalsOverdue.length}
                     </p>
                     <p className="text-xs text-rose-600">Requires immediate action</p>
                   </div>
-                  <div className={`rounded-2xl border p-4 ${isDarkMode ? 'border-amber-500/30 bg-amber-500/10' : 'border-amber-200 bg-amber-50'}`}>
+                  <div className={`rounded-2xl border p-4 ${
+                    isDarkMode ? 'border-amber-500/30 bg-amber-500/10' : 'border-amber-200 bg-white'
+                  }`}>
                     <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">Next 90 days</p>
                     <p className={`mt-1 text-3xl font-bold ${isDarkMode ? 'text-amber-200' : 'text-amber-700'}`}>
                       {softwareRenewalsDue90Days.length}
                     </p>
                     <p className="text-xs text-amber-600">Budget planning required</p>
                   </div>
-                  <div className={`rounded-2xl border p-4 ${isDarkMode ? 'border-blue-500/30 bg-blue-500/10' : 'border-blue-200 bg-blue-50'}`}>
+                  <div className={`rounded-2xl border p-4 ${
+                    isDarkMode ? 'border-blue-500/30 bg-blue-500/10' : 'border-blue-200 bg-white'
+                  }`}>
                     <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Total annual cost</p>
                     <p className={`mt-1 text-3xl font-bold ${isDarkMode ? 'text-blue-200' : 'text-blue-700'}`}>
                       {formatCurrency(SOFTWARE_PORTFOLIO.reduce((sum, s) => sum + (s.seats * s.costPerSeat * 12), 0))}
@@ -9845,7 +9886,7 @@ const App = () => {
 
                 <div
                   className={`rounded-2xl p-5 shadow-inner ${
-                    isDarkMode ? 'border border-slate-800/60 bg-slate-900/70' : 'border border-slate-100/70 bg-white/85'
+                    isDarkMode ? 'border border-slate-800/60 bg-slate-900/70' : 'border border-slate-200 bg-white'
                   }`}
                 >
                   <p className={`mb-4 text-sm font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Complete Renewal Timeline</p>
@@ -9856,23 +9897,23 @@ const App = () => {
                         className={`flex items-center justify-between rounded-xl p-3 ${
                           software.daysUntilRenewal < 0
                             ? isDarkMode
-                              ? 'bg-rose-500/10 border border-rose-400/40'
-                              : 'bg-rose-100 border border-rose-300'
+                              ? 'bg-gradient-to-r from-rose-900/60 via-rose-800/50 to-rose-900/60 border border-rose-500/50'
+                              : 'bg-gradient-to-r from-rose-50 via-rose-100 to-white border border-rose-200'
                             : software.daysUntilRenewal <= 30
                             ? isDarkMode
-                              ? 'bg-amber-500/10 border border-amber-400/40'
-                              : 'bg-amber-100 border border-amber-300'
+                              ? 'bg-gradient-to-r from-amber-900/40 via-amber-800/40 to-amber-900/40 border border-amber-400/40'
+                              : 'bg-gradient-to-r from-amber-50 via-amber-100 to-white border border-amber-200'
                             : software.daysUntilRenewal <= 60
                             ? isDarkMode
-                              ? 'bg-yellow-500/10 border border-yellow-400/40'
-                              : 'bg-yellow-50 border border-yellow-300'
+                              ? 'bg-gradient-to-r from-yellow-900/30 via-yellow-800/30 to-yellow-900/30 border border-yellow-400/40'
+                              : 'bg-gradient-to-r from-yellow-50 via-yellow-100 to-white border border-yellow-200'
                             : software.daysUntilRenewal <= 90
                             ? isDarkMode
-                              ? 'bg-blue-500/10 border border-blue-400/40'
-                              : 'bg-blue-50 border border-blue-200'
+                              ? 'bg-gradient-to-r from-blue-900/40 via-blue-800/30 to-blue-900/40 border border-blue-400/40'
+                              : 'bg-gradient-to-r from-blue-50 via-blue-100 to-white border border-blue-200'
                             : isDarkMode
-                            ? 'bg-slate-800/60 border border-slate-700/60'
-                            : 'bg-slate-50 border border-slate-200'
+                            ? 'bg-gradient-to-r from-slate-900/40 via-slate-800/35 to-slate-900/40 border border-slate-700/60'
+                            : 'bg-gradient-to-r from-slate-50 via-slate-100 to-white border border-slate-200'
                         }`}
                       >
                         <div className="flex flex-1 items-center gap-3">
@@ -9906,14 +9947,14 @@ const App = () => {
                           <span
                             className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold ${
                               software.daysUntilRenewal < 0
-                                ? 'bg-rose-600 text-white'
+                                ? 'bg-rose-600 text-white shadow-[0_8px_30px_rgba(225,29,72,0.35)]'
                                 : software.daysUntilRenewal <= 30
-                                ? 'bg-amber-600 text-white'
+                                ? 'bg-amber-600 text-white shadow-[0_8px_30px_rgba(245,158,11,0.35)]'
                                 : software.daysUntilRenewal <= 60
-                                ? 'bg-yellow-600 text-white'
+                                ? 'bg-yellow-600 text-white shadow-[0_8px_30px_rgba(234,179,8,0.35)]'
                                 : software.daysUntilRenewal <= 90
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-slate-600 text-white'
+                                ? 'bg-blue-600 text-white shadow-[0_8px_30px_rgba(59,130,246,0.35)]'
+                                : 'bg-slate-600 text-white shadow-[0_8px_30px_rgba(51,65,85,0.35)]'
                             }`}
                           >
                             {software.daysUntilRenewal < 0
