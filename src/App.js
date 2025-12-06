@@ -285,8 +285,10 @@ const EMPLOYEE_PHOTO_CDN = (process.env.REACT_APP_EMPLOYEE_PHOTO_CDN || '').repl
 const softwareLogo = (file) =>
   EMPLOYEE_PHOTO_CDN ? `${EMPLOYEE_PHOTO_CDN}/${file}` : `${PUBLIC_URL}/assets/software/${file}`;
 const SOFTWARE_LOGOS = {
+  'apple-bm': softwareLogo('abm.png'),
   m365: softwareLogo('microsoft-365.png'),
   adobe: softwareLogo('adobe.png'),
+  automate: softwareLogo('automate.png'),
   autocad: softwareLogo('autocad.png'),
   citrix: softwareLogo('citrix.png'),
   zoom: softwareLogo('zoom.jpg'),
@@ -298,13 +300,29 @@ const SOFTWARE_LOGOS = {
   eset: softwareLogo('eset.jpeg'),
   hrms: softwareLogo('hrms.png'),
   sage: softwareLogo('sage.webp'),
+  itglue: softwareLogo('it-glue.png'),
+  maas360: softwareLogo('maas360.png'),
+  knox: softwareLogo('samsung-knox.jpg'),
 };
 const SOFTWARE_LOGO_KEYS = {
+  abm: 'apple-bm',
+  'apple-business-manager': 'apple-bm',
+  'apple-bm': 'apple-bm',
+  'apple-business': 'apple-bm',
   'adobe-cc': 'adobe',
+  automate: 'automate',
+  'connectwise-automate': 'automate',
+  'cw-automate': 'automate',
   'cisco-secure': 'cisco',
   'duo-security': 'duo',
   'eset-endpoint': 'eset',
   'eset-encryption': 'eset',
+  'it-glue': 'itglue',
+  itglue: 'itglue',
+  maas360: 'maas360',
+  'ibm-maas360': 'maas360',
+  'samsung-knox': 'knox',
+  knox: 'knox',
 };
 const SOFTWARE_ADMIN_PORTALS = {
   m365: 'https://admin.microsoft.com/',
@@ -321,7 +339,30 @@ const SOFTWARE_ADMIN_PORTALS = {
   hrms: 'https://access.paylocity.com/',
   sage: 'https://signin.intacct.com/',
   zoom: 'https://zoom.us/account',
+  automate: AUTOMATE_BASE_URL,
+  'connectwise-automate': AUTOMATE_BASE_URL,
+  'cw-automate': AUTOMATE_BASE_URL,
+  'it-glue': 'https://app.itglue.com/',
+  itglue: 'https://app.itglue.com/',
+  maas360: 'https://portal.maas360.com/',
+  'ibm-maas360': 'https://portal.maas360.com/',
+  'samsung-knox': 'https://www.samsungknox.com/console',
+  knox: 'https://www.samsungknox.com/console',
+  'apple-bm': 'https://business.apple.com/',
+  'apple-business-manager': 'https://business.apple.com/',
 };
+const DEFAULT_SUITE_IDS = [
+  'adobe-cc',
+  'barracuda',
+  'cisco-secure',
+  'automate',
+  'duo-security',
+  'eset-endpoint',
+  'eset-encryption',
+  'm365',
+  'zoom',
+];
+const DEFAULT_SUITE_SET = new Set(DEFAULT_SUITE_IDS);
 const EXCEL_EXPORTS = {
   assets: `${PUBLIC_URL}/tables/${encodeURIComponent('Asset List 11-18-25.xlsx')}`,
   employees: `${PUBLIC_URL}/tables/${encodeURIComponent('Employee Information Hub.xlsx')}`,
@@ -737,15 +778,14 @@ const HARDWARE_VENDOR_CATALOG = [
     accent: { from: '#0f172a', to: '#1d4ed8' },
     image: VENDOR_IMAGES.brother,
     contact: {
-      name: 'Sara Smoker',
-      email: 'Sara@weaverassociatesinc.com',
+      name: 'Weaver Associates',
       org: 'Weaver Associates Inc.',
     },
     ctas: [
       {
-        label: 'Email Sara Smoker',
-        href: 'mailto:Sara@weaverassociatesinc.com?subject=Brother%20Toner%20Request',
-        external: false,
+        label: 'Order toner',
+        href: 'https://weaverassociatesinc.infoflopay.com/',
+        external: true,
       },
     ],
     match: (asset = {}) => {
@@ -1042,6 +1082,96 @@ const SOFTWARE_PORTFOLIO = [
     stack: ['Onboarding', 'Talent', 'Benefits'],
     deployment: 'Cloud',
     criticality: 'High',
+  },
+  {
+    id: 'apple-bm',
+    software: 'Apple Business Manager',
+    vendor: 'Apple',
+    owner: 'IT Operations',
+    category: 'Identity & Device Enrollment',
+    seats: 120,
+    used: 104,
+    costPerSeat: 5,
+    renewal: '2025-12-15',
+    portal: SOFTWARE_ADMIN_PORTALS['apple-bm'],
+    logo: SOFTWARE_LOGOS['apple-bm'],
+    accent: { from: '#0f172a', to: '#111827' },
+    description: 'Automated DEP enrollment, VPP app assignment, and managed Apple IDs.',
+    stack: ['DEP', 'VPP', 'Managed Apple IDs'],
+    deployment: 'Cloud',
+    criticality: 'High',
+  },
+  {
+    id: 'automate',
+    software: 'ConnectWise Automate',
+    vendor: 'ConnectWise',
+    owner: 'Infrastructure',
+    category: 'RMM & Automation',
+    seats: 520,
+    used: 508,
+    costPerSeat: 9,
+    renewal: '2025-11-15',
+    portal: SOFTWARE_ADMIN_PORTALS.automate,
+    logo: SOFTWARE_LOGOS.automate,
+    accent: { from: '#0f766e', to: '#14b8a6' },
+    description: 'Patch automation, agent health, and remote remediation for endpoints.',
+    stack: ['Agent Health', 'Patching', 'Remote Tools'],
+    deployment: 'Hybrid',
+    criticality: 'High',
+  },
+  {
+    id: 'it-glue',
+    software: 'IT Glue',
+    vendor: 'Kaseya',
+    owner: 'IT Operations',
+    category: 'Documentation',
+    seats: 80,
+    used: 67,
+    costPerSeat: 21,
+    renewal: '2025-12-05',
+    portal: SOFTWARE_ADMIN_PORTALS['it-glue'],
+    logo: SOFTWARE_LOGOS.itglue,
+    accent: { from: '#6d28d9', to: '#7c3aed' },
+    description: 'Runbooks, passwords, and asset documentation for service delivery.',
+    stack: ['Runbooks', 'Password Vault', 'Configurations'],
+    deployment: 'Cloud',
+    criticality: 'High',
+  },
+  {
+    id: 'maas360',
+    software: 'IBM MaaS360',
+    vendor: 'IBM',
+    owner: 'Security Operations',
+    category: 'Mobile Device Management',
+    seats: 260,
+    used: 214,
+    costPerSeat: 6,
+    renewal: '2025-08-25',
+    portal: SOFTWARE_ADMIN_PORTALS.maas360,
+    logo: SOFTWARE_LOGOS.maas360,
+    accent: { from: '#0ea5e9', to: '#075985' },
+    description: 'MDM for iOS/Android with compliance policies and secure mail.',
+    stack: ['MDM', 'Compliance', 'Secure Mail'],
+    deployment: 'Cloud',
+    criticality: 'High',
+  },
+  {
+    id: 'samsung-knox',
+    software: 'Samsung Knox Suite',
+    vendor: 'Samsung',
+    owner: 'Security Operations',
+    category: 'Mobile Security',
+    seats: 140,
+    used: 118,
+    costPerSeat: 5,
+    renewal: '2025-07-20',
+    portal: SOFTWARE_ADMIN_PORTALS['samsung-knox'],
+    logo: SOFTWARE_LOGOS.knox,
+    accent: { from: '#0f172a', to: '#1e293b' },
+    description: 'Device security, remote wipe, and containerization for Samsung fleet.',
+    stack: ['Knox Manage', 'Secure Folder', 'Remote Wipe'],
+    deployment: 'Cloud',
+    criticality: 'Medium',
   },
   {
     id: 'sage',
@@ -1900,7 +2030,8 @@ const PrimaryNav = ({
   onOpenCommandPalette,
 }) => (
   <nav
-    className={`nav-ribbon ${isDarkMode ? 'nav-dark text-slate-100' : 'text-slate-700'} mb-10 rounded-3xl px-6 py-5 backdrop-blur-xl shadow-2xl transition-all duration-500`}
+    className={`nav-ribbon ${isDarkMode ? 'nav-dark text-slate-100' : 'text-slate-700'} mb-10 rounded-3xl px-6 py-5 backdrop-blur-xl shadow-2xl transition-all duration-500 overflow-hidden`}
+    style={{ overflow: 'hidden', maxWidth: '100%' }}
   >
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -1947,8 +2078,9 @@ const PrimaryNav = ({
         className={`flex w-full flex-wrap items-center justify-between gap-4 text-sm font-medium ${
         isDarkMode ? 'text-slate-200' : 'text-slate-500'
       }`}
-    >
-      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+        style={{ overflow: 'hidden', maxWidth: '100%' }}
+      >
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
         <button
           onClick={onAdd}
           className="btn-primary inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg hover-lift hover:shadow-xl hover:shadow-emerald-500/50 transition-all duration-300 sm:w-auto"
@@ -2686,6 +2818,7 @@ const SoftwareSuiteCard = ({ suite, onEdit, onDelete }) => {
     SOFTWARE_LOGOS[vendorKey] ||
     SOFTWARE_LOGOS[softwareKey] ||
     null;
+  const isDefaultSuite = DEFAULT_SUITE_SET.has(suite.id);
 
   return (
     <div className="glass-card flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/50 bg-white shadow-2xl ring-1 ring-transparent transition-all duration-500 hover:-translate-y-2 hover:shadow-3xl hover:ring-2 hover:ring-blue-400/50">
@@ -2708,6 +2841,12 @@ const SoftwareSuiteCard = ({ suite, onEdit, onDelete }) => {
             className="absolute inset-0"
             style={{ backgroundImage: `linear-gradient(135deg, ${accentFrom}, ${accentTo})` }}
           />
+        )}
+        {isDefaultSuite && (
+          <div className="absolute left-4 top-4 z-20 inline-flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-800 ring-1 ring-blue-200/80 shadow-sm">
+            <Sparkles className="h-3.5 w-3.5" />
+            Default
+          </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/45 via-slate-900/30 to-slate-950/70" />
         {onEdit && (
@@ -2787,19 +2926,31 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll }) => {
     return null;
   }
   const highlight = alerts.slice(0, 3);
+  const nextExpiry = highlight[0]?.warrantyExpiry ? formatDate(highlight[0].warrantyExpiry) : null;
   return (
-    <div className="rounded-3xl border border-amber-100 bg-amber-50/60 p-5 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-amber-800">Warranty alerts</p>
-          <p className="text-lg font-semibold text-amber-900">Expiring within 30 days</p>
-          <p className="text-sm text-amber-800/80">{alerts.length} device{alerts.length === 1 ? '' : 's'} need attention.</p>
+    <div className="relative overflow-hidden rounded-3xl border border-slate-200/70 bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 p-6 text-white shadow-[0_20px_60px_rgba(15,23,42,0.55)]">
+      <div className="absolute inset-0 opacity-40 blur-3xl">
+        <div className="absolute -left-10 -top-8 h-40 w-40 rounded-full bg-cyan-500/40" />
+        <div className="absolute bottom-0 right-0 h-48 w-48 rounded-full bg-amber-400/30" />
+      </div>
+      <div className="relative flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 shadow-inner">
+            <CalendarClock className="h-5 w-5 text-amber-200" />
+          </span>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-white/70">Warranty alerts</p>
+            <p className="text-xl font-semibold text-white">Expiring within 30 days</p>
+            <p className="text-sm text-white/70">
+              {alerts.length} device{alerts.length === 1 ? '' : 's'} need attention {nextExpiry ? `— next on ${nextExpiry}` : ''}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {typeof onClearAll === 'function' && (
             <button
               type="button"
-              className="rounded-2xl border border-amber-200 bg-white/60 px-4 py-1.5 text-xs font-semibold text-amber-800 transition hover:border-amber-300 hover:text-amber-900"
+              className="rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/30 hover:bg-white/15"
               onClick={() => onClearAll(alerts)}
             >
               Clear all
@@ -2808,7 +2959,7 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll }) => {
           {typeof onViewAll === 'function' && (
             <button
               type="button"
-              className="rounded-2xl border border-amber-200 px-4 py-1.5 text-xs font-semibold text-amber-800 transition hover:border-amber-300 hover:text-amber-900"
+              className="rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-4 py-2 text-xs font-semibold text-slate-900 shadow-lg shadow-amber-500/30 transition hover:-translate-y-0.5"
               onClick={onViewAll}
             >
               View all
@@ -2816,17 +2967,54 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll }) => {
           )}
         </div>
       </div>
-      <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold text-amber-900">
-        {highlight.map((alert) => (
-          <div key={`${alert.assetId || alert.assetName}-warranty`} className="flex items-center gap-2 rounded-2xl bg-white/70 px-4 py-2">
-            <span>{alert.assetName || alert.model || 'Device'}</span>
-            <span className="text-xs font-normal text-amber-700">({formatDate(alert.warrantyExpiry)})</span>
+
+      <div className="relative mt-5 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner backdrop-blur">
+          <p className="text-[11px] uppercase tracking-[0.25rem] text-white/60">Total alerts</p>
+          <p className="mt-2 text-3xl font-semibold text-white">{alerts.length}</p>
+        </div>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner backdrop-blur">
+          <p className="text-[11px] uppercase tracking-[0.25rem] text-white/60">Next expiry</p>
+          <p className="mt-2 text-lg font-semibold text-amber-100">{nextExpiry || '—'}</p>
+        </div>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner backdrop-blur">
+          <p className="text-[11px] uppercase tracking-[0.25rem] text-white/60">Action</p>
+          <p className="mt-2 text-sm font-semibold text-white">Schedule service or renew coverage</p>
+        </div>
+      </div>
+
+      <div className="relative mt-5 space-y-3">
+        {highlight.map((alert, index) => (
+          <div
+            key={`${alert.assetId || alert.assetName}-warranty`}
+            className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm shadow-inner backdrop-blur"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/20 text-amber-100 ring-1 ring-amber-300/40">
+                {index + 1}
+              </div>
+              <div>
+                <p className="font-semibold text-white">{alert.assetName || alert.model || 'Device'}</p>
+                <p className="text-xs text-white/70">
+                  {alert.location || 'Location TBD'} · {alert.assignedTo || 'Unassigned'}
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xs uppercase tracking-wide text-white/60">Expires</p>
+              <p className="text-sm font-semibold text-amber-100">{formatDate(alert.warrantyExpiry)}</p>
+            </div>
           </div>
         ))}
         {alerts.length > highlight.length && (
-          <span className="rounded-2xl bg-white/50 px-3 py-2 text-xs font-semibold text-amber-800">
-            +{alerts.length - highlight.length} more
-          </span>
+          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs font-semibold text-white/80 backdrop-blur">
+            <span>+{alerts.length - highlight.length} more devices in queue</span>
+            {typeof onViewAll === 'function' && (
+              <button type="button" className="text-amber-200 underline underline-offset-4" onClick={onViewAll}>
+                Review all
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -3968,12 +4156,14 @@ const AssetTable = ({
               key={asset.id}
               onClick={() => onSelect(asset)}
               className={`rounded-2xl border p-4 shadow-sm transition ${
-                isSelected ? 'border-blue-200 bg-blue-50/70 ring-1 ring-blue-200' : 'border-slate-100 bg-white hover:border-blue-200'
+                isSelected
+                  ? 'border-blue-200 bg-blue-50/60 ring-1 ring-blue-200'
+                  : 'border-slate-100 bg-white hover:border-blue-100 hover:bg-blue-50/40'
               }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
-                  <div className="rounded-xl bg-slate-100 p-2 text-slate-600">
+                  <div className="rounded-xl bg-slate-100/80 p-2 text-slate-600 ring-1 ring-slate-200/60">
                     <Icon className="h-4 w-4" />
                   </div>
                   <div>
@@ -4102,7 +4292,9 @@ const AssetTable = ({
                   key={asset.id}
                   onClick={() => onSelect(asset)}
                   className={`cursor-pointer transition ${
-                    isSelected ? 'bg-blue-50/80 shadow-inner ring-1 ring-blue-100' : 'hover:bg-slate-50/70'
+                    isSelected
+                      ? 'bg-blue-50/80 shadow-inner ring-1 ring-blue-100'
+                      : 'hover:bg-slate-50/30 hover:ring-1 hover:ring-slate-100/60'
                   }`}
                 >
                   <td className="px-6 py-4">
@@ -4623,7 +4815,6 @@ const AssetSpotlight = ({
     <div className="sticky top-6 rounded-3xl border border-slate-100 bg-white/80 p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Asset spotlight</p>
           <p className="text-base font-semibold text-slate-900">{asset ? 'Live snapshot' : 'Choose a device'}</p>
         </div>
         {asset && !ready && (
@@ -4644,13 +4835,13 @@ const AssetSpotlight = ({
         <>
           <div className="mt-6 rounded-2xl bg-slate-900 p-5 text-white">
             <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-white/10 p-3">
-                <Icon className="h-5 w-5" />
+              <div className="rounded-2xl bg-white/10 p-3 ring-1 ring-white/20 shadow-inner">
+                <Icon className="h-6 w-6 text-white drop-shadow" />
               </div>
               <div>
-                <p className="text-sm text-white/60">{asset.type}</p>
-                <p className="text-lg font-semibold">{asset.assetName}</p>
-                <p className="text-xs text-white/60">{asset.model || 'Model not set'}</p>
+                <p className="text-xs uppercase tracking-[0.25rem] text-white/60">{asset.type}</p>
+                <p className="text-lg font-semibold leading-tight text-white">{asset.assetName}</p>
+                <p className="text-xs text-white/70">{asset.model || 'Model not set'}</p>
               </div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
@@ -5764,6 +5955,26 @@ const App = () => {
     [apiBaseUrl],
   );
   useEffect(() => {
+    // Ensure newly added suites exist and drop legacy entries (e.g., old ABM Facilities card).
+    setSoftwareSuites((prev) => {
+      const filtered = prev.filter(
+        (suite) =>
+          suite.id !== 'abm' &&
+          suite.software?.toLowerCase() !== 'abm facilities',
+      );
+      const byId = new Map(filtered.map((suite) => [suite.id, suite]));
+      let changed = false;
+      SOFTWARE_PORTFOLIO.forEach((suite) => {
+        if (!byId.has(suite.id)) {
+          byId.set(suite.id, suite);
+          changed = true;
+        }
+      });
+      const next = Array.from(byId.values());
+      return changed || next.length !== prev.length ? next : prev;
+    });
+  }, [setSoftwareSuites]);
+  useEffect(() => {
     setAssets((prev) => {
       const canonicalMap = buildCanonicalMap(prev);
       let changed = false;
@@ -5848,6 +6059,10 @@ const App = () => {
         return { ...suite, logo };
       }),
     [softwareSuites],
+  );
+  const sortedLicenseBuckets = useMemo(
+    () => [...licenseBuckets].sort((a, b) => a.software.localeCompare(b.software)),
+    [licenseBuckets],
   );
   const maintenanceRecords = useMemo(() => buildMaintenanceFromAssets(assets), [assets]);
   const sheetInsights = useMemo(() => computeSheetInsights(assets), [assets]);
@@ -6005,13 +6220,22 @@ const App = () => {
         .split(' ')
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
-    return Object.entries(SOFTWARE_ADMIN_PORTALS).map(([id, portal]) => {
-      const suite = suiteMap.get(id) || SOFTWARE_PORTFOLIO.find((item) => item.id === id);
-      const label = suite?.software || formatLabel(id);
-      const logoKey = SOFTWARE_LOGO_KEYS[id] || id;
+    const tiles = Object.entries(SOFTWARE_ADMIN_PORTALS).map(([id, portal]) => {
+      const primaryId = SOFTWARE_LOGO_KEYS[id] || id;
+      const suite = suiteMap.get(primaryId) || suiteMap.get(id) || SOFTWARE_PORTFOLIO.find((item) => item.id === primaryId) || SOFTWARE_PORTFOLIO.find((item) => item.id === id);
+      const label = suite?.software || formatLabel(primaryId);
+      const logoKey = SOFTWARE_LOGO_KEYS[primaryId] || primaryId;
       const logo = suite?.logo || SOFTWARE_LOGOS[logoKey];
-      return { id, label, logo, portal };
+      return { id: primaryId, label, logo, portal };
     });
+    // Deduplicate by primary id so aliases (e.g., Automate) render once, then sort alphabetically.
+    const unique = new Map();
+    tiles.forEach((tile) => {
+      if (!unique.has(tile.id)) {
+        unique.set(tile.id, tile);
+      }
+    });
+    return Array.from(unique.values()).sort((a, b) => a.label.localeCompare(b.label));
   }, [licenseBuckets]);
   const softwareRenewalAlerts = useMemo(() => {
     const today = new Date();
@@ -6757,7 +6981,7 @@ const App = () => {
       });
       return acc;
     }, {});
-    const defaultSuiteIds = ['m365', 'adobe-cc', 'zoom', 'cisco-secure', 'duo-security'];
+    const defaultSuiteIds = DEFAULT_SUITE_IDS;
     normalizedEmployees.forEach((employee) => {
       const isUpmc = employee.department === 'upmc' || employee.department === 'hcbsupmc';
       if (isUpmc) {
@@ -6889,9 +7113,6 @@ const App = () => {
     }
   }, [employeePage, totalEmployeePages]);
   const orderedEmployees = useMemo(() => {
-    if (!isMobile) {
-      return filteredEmployees;
-    }
     return [...filteredEmployees].sort((a, b) => {
       const nameA = (a.name || '').toLowerCase();
       const nameB = (b.name || '').toLowerCase();
@@ -6900,7 +7121,7 @@ const App = () => {
       }
       return nameA.localeCompare(nameB);
     });
-  }, [filteredEmployees, isMobile]);
+  }, [filteredEmployees]);
   const displayedEmployees = useMemo(
     () => orderedEmployees.slice((employeePage - 1) * EMPLOYEE_PAGE_SIZE, employeePage * EMPLOYEE_PAGE_SIZE),
     [orderedEmployees, employeePage],
@@ -6991,7 +7212,8 @@ const App = () => {
       if (!member) return [];
       const normalizedName = member.lookupKey || normalizeKey(member.name || '');
       if (!normalizedName) return [];
-      return employeeLicenseMap[normalizedName] || [];
+      const licenses = employeeLicenseMap[normalizedName] || [];
+      return licenses.filter((suite) => suite?.suiteId && !DEFAULT_SUITE_SET.has(suite.suiteId));
     },
     [employeeLicenseMap],
   );
@@ -7036,11 +7258,6 @@ const App = () => {
       { label: 'Keyboard + mouse', type: 'Accessory', reason: 'Ergonomic bundle' },
       { label: 'Backpack/Case', type: 'Accessory', reason: 'Carry kit' },
       { label: 'Apple iPhone or Samsung Galaxy', type: 'Phone', reason: 'Mobile choice based on preference' },
-      { label: 'Microsoft 365', type: 'Software', reason: 'Email, Teams, and Office apps' },
-      { label: 'Adobe Acrobat Pro', type: 'Software', reason: 'PDF editing and signatures' },
-      { label: 'Zoom Workplace', type: 'Software', reason: 'Meetings, chat, and voice' },
-      { label: 'Cisco Secure Client', type: 'Software', reason: 'VPN and secure remote access' },
-      { label: 'Duo Security MFA', type: 'Software', reason: 'MFA and device trust' },
     ].filter(Boolean);
     const laptopForRole = () => {
       switch (roleCategory) {
@@ -7116,11 +7333,7 @@ const App = () => {
     };
     const extras = roleExtras[roleCategory] || roleExtras.general;
     const laptop = roleCategory === 'blocked' ? null : laptopForRole();
-    const zoomAccess =
-      laptop && laptop.type === 'Laptop'
-        ? { label: 'Zoom Workplace', type: 'Software', reason: 'Meetings and voice' }
-        : null;
-    const kit = [laptop, ...baseKit, zoomAccess, ...extras].filter(Boolean);
+    const kit = [laptop, ...baseKit, ...extras].filter(Boolean);
     const cableAddOns = kit.flatMap((item) => {
       if (item.type === 'Monitor') {
         return [{ label: 'HDMI cable', type: 'Accessory', reason: 'Required for monitor connectivity' }];
@@ -9004,7 +9217,7 @@ const App = () => {
 
         {activePage === 'Overview' && (
           <>
-        <section id="overview-hero" className="mb-10 grid gap-6 lg:grid-cols-[2fr,1fr]">
+            <section id="overview-hero" className="mb-10 grid gap-6 lg:grid-cols-[2fr,1fr]">
           <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 p-8 text-white shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ring-white/10 neon-grid">
             <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
             <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
@@ -9234,41 +9447,44 @@ const App = () => {
           <WhatsNewCard />
         </section>
 
-        {isMobile && (
-          <div className="mb-20">
-            <div className="rounded-3xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-700 shadow-sm">
-              <div className="flex items-center gap-3">
-                <Navigation className="h-4 w-4 text-blue-600" />
-                <div>
-                  <p className="font-semibold text-slate-900">Mobile-ready dashboard</p>
-                  <p className="text-xs text-slate-500">
-                    Tap the action bar to add hardware, scan QR codes, or jump to warranty alerts.
-                  </p>
+            {isMobile && (
+              <div className="mb-20">
+                <div className="rounded-3xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-700 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <Navigation className="h-4 w-4 text-blue-600" />
+                    <div>
+                      <p className="font-semibold text-slate-900">Mobile-ready dashboard</p>
+                      <p className="text-xs text-slate-500">
+                        Tap the action bar to add hardware, scan QR codes, or jump to warranty alerts.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
-      </>
+            )}
+          </>
         )}
 
         {activePage === 'Hardware' && (
           <>
-            <section id="hardware-hero" className="mb-8 rounded-3xl border border-slate-900/60 bg-slate-900 p-8 text-white shadow-lg">
-              <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-white/60">Hardware</p>
+            <section id="hardware-hero" className="relative mb-8 overflow-hidden rounded-3xl border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 p-8 text-white shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ring-white/10">
+              <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
+              <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
+              <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-white/70">Hardware</p>
               <h2 className="mt-3 text-3xl font-semibold">Full-fidelity device management</h2>
-              <p className="mt-2 text-sm text-white/70">Real-time visibility into every laptop, display, dock, and printer with proactive lifecycle tracking.</p>
+              <p className="mt-2 text-sm text-white/75">Real-time visibility into every laptop, display, dock, and printer with proactive lifecycle tracking.</p>
               <div className="mt-6 grid gap-4 sm:grid-cols-3">
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-white/50">Total inventory</p>
+                  <p className="text-xs uppercase tracking-widest text-white/60">Total inventory</p>
                   <p className="mt-1 text-2xl font-semibold">{stats.total}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-white/50">Checked out</p>
+                  <p className="text-xs uppercase tracking-widest text-white/60">Checked out</p>
                   <p className="mt-1 text-2xl font-semibold">{stats.checkedOut}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-white/50">Available</p>
+                  <p className="text-xs uppercase tracking-widest text-white/60">Available</p>
                   <p className="mt-1 text-2xl font-semibold">{stats.available}</p>
                 </div>
               </div>
@@ -9404,31 +9620,34 @@ const App = () => {
 
         {activePage === 'Employees' && (
           <>
-            <section id="employees-hero" className="mb-8 rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-slate-400">Employees</p>
-              <h2 className="mt-3 text-3xl font-semibold text-slate-900">The faces powering UDS technology</h2>
-              <p className="mt-2 text-sm text-slate-600">
+            <section id="employees-hero" className="relative mb-8 overflow-hidden rounded-3xl border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 p-8 text-white shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ring-white/10">
+              <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
+              <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
+              <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-white/70">Employees</p>
+              <h2 className="mt-3 text-3xl font-semibold text-white">The faces powering UDS technology</h2>
+              <p className="mt-2 text-sm text-white/75">
                 Browse featured team members, their departments, and contact info to keep deployments aligned with your workforce.
               </p>
               <div className="mt-6 grid gap-4 sm:grid-cols-3">
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-slate-400">Featured teammates</p>
-                  <p className="mt-1 text-2xl font-semibold text-slate-900">{employeeGallery.length}</p>
+                  <p className="text-xs uppercase tracking-widest text-white/60">Featured teammates</p>
+                  <p className="mt-1 text-2xl font-semibold text-white">{employeeGallery.length}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-slate-400">Remote workforce</p>
-                  <p className="mt-1 text-2xl font-semibold text-slate-900">{sheetInsights.remoteShare}%</p>
+                  <p className="text-xs uppercase tracking-widest text-white/60">Remote workforce</p>
+                  <p className="mt-1 text-2xl font-semibold text-white">{sheetInsights.remoteShare}%</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-slate-400">Departments</p>
-                  <p className="mt-1 text-2xl font-semibold text-slate-900">{employeeDepartmentCount}</p>
+                  <p className="text-xs uppercase tracking-widest text-white/60">Departments</p>
+                  <p className="mt-1 text-2xl font-semibold text-white">{employeeDepartmentCount}</p>
                 </div>
               </div>
               <div className="mt-6 flex justify-end">
                 <button
                   type="button"
                   onClick={() => setEmployeeForm({ ...defaultEmployeeProfile })}
-                  className="rounded-2xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
+                  className="rounded-2xl bg-white/10 px-5 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-white/20"
                 >
                   Add employee
                 </button>
@@ -9647,31 +9866,34 @@ const App = () => {
 
         {activePage === 'Reports' && (
           <>
-            <section id="reports-hero" className="mb-8 rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-slate-400">Reports</p>
-              <h2 className="mt-3 text-3xl font-semibold text-slate-900">Insights, forecasts, and exports</h2>
-              <p className="mt-2 text-sm text-slate-600">
+            <section id="reports-hero" className="relative mb-8 overflow-hidden rounded-3xl border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 p-8 text-white shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ring-white/10">
+              <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
+              <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
+              <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-white/70">Reports</p>
+              <h2 className="mt-3 text-3xl font-semibold text-white">Insights, forecasts, and exports</h2>
+              <p className="mt-2 text-sm text-white/75">
                 Benchmark hardware performance, anticipate spend, and share ready-to-run reports with stakeholders.
               </p>
               <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-slate-400">Aging fleet</p>
-                  <p className="mt-1 text-2xl font-semibold text-slate-900">{stats.expiringSoon} devices</p>
-                  <p className="text-xs text-slate-500">Require attention in 90 days</p>
+                  <p className="text-xs uppercase tracking-widest text-white/60">Aging fleet</p>
+                  <p className="mt-1 text-2xl font-semibold text-white">{stats.expiringSoon} devices</p>
+                  <p className="text-xs text-white/70">Require attention in 90 days</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-slate-400">Top spend</p>
-                  <p className="mt-1 text-2xl font-semibold text-slate-900">
+                  <p className="text-xs uppercase tracking-widest text-white/60">Top spend</p>
+                  <p className="mt-1 text-2xl font-semibold text-white">
                     {costByDepartment[0] ? formatCurrency(costByDepartment[0].value) : '$0'}
                   </p>
-                  <p className="text-xs text-slate-500">{costByDepartment[0]?.name || 'No data'}</p>
+                  <p className="text-xs text-white/70">{costByDepartment[0]?.name || 'No data'}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-slate-400">License compliance</p>
-                  <p className="mt-1 text-2xl font-semibold text-slate-900">
+                  <p className="text-xs uppercase tracking-widest text-white/60">License compliance</p>
+                  <p className="mt-1 text-2xl font-semibold text-white">
                     {licenseCompliance.filter((item) => item.status !== 'Healthy').length} risks
                   </p>
-                  <p className="text-xs text-slate-500">Overused or at capacity suites</p>
+                  <p className="text-xs text-white/70">Overused or at capacity suites</p>
                 </div>
               </div>
             </section>
@@ -9741,8 +9963,11 @@ const App = () => {
 
         {activePage === 'Vendors' && (
           <>
-            <section id="vendors-hero" className="mb-8 overflow-hidden rounded-[2.5rem] bg-slate-950 p-8 text-white shadow-2xl">
-              <div className="grid gap-8 lg:grid-cols-[1.5fr,1fr]">
+            <section id="vendors-hero" className="relative mb-8 overflow-hidden rounded-[2.5rem] border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 p-8 text-white shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ring-white/10">
+              <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
+              <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
+              <div className="grid gap-8 lg:grid-cols-2">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/60">Vendor galaxy</p>
                   <h2 className="mt-4 text-4xl font-semibold leading-tight">
@@ -9766,11 +9991,11 @@ const App = () => {
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-2 md:overflow-visible md:pb-0">
+                <div className="grid grid-cols-2 gap-4">
                   {vendorProfiles.slice(0, 4).map((vendor) => (
                     <a
                       key={`vendor-mosaic-${vendor.id}`}
-                      className="relative block h-32 min-w-[14rem] overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur transition hover:-translate-y-0.5 hover:border-blue-200"
+                      className="relative block h-36 overflow-hidden rounded-3xl border border-white/15 bg-white/5 backdrop-blur transition hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(0,0,0,0.35)] hover:border-cyan-200/60"
                       href={
                         vendor.contact?.url ||
                         (vendor.id === 'brother'
@@ -9786,12 +10011,12 @@ const App = () => {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      <img src={vendor.image} alt={`${vendor.name} collage`} className="h-full w-full object-cover opacity-80" loading="lazy" />
-                      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/70 via-transparent to-slate-900/40" />
-                      <div className="absolute bottom-3 left-3">
-                        <p className="text-xs uppercase tracking-widest text-white/70">{vendor.coverage?.[0] || 'Coverage'}</p>
-                        <p className="text-lg font-semibold">{vendor.name}</p>
-                      </div>
+                      <img src={vendor.image} alt={`${vendor.name} collage`} className="absolute inset-0 h-full w-full object-cover opacity-70" loading="lazy" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-900/50 to-blue-900/65" />
+                      <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-cyan-400/30 blur-3xl" />
+                      <p className="absolute bottom-4 left-4 text-lg font-semibold text-cyan-100 leading-tight drop-shadow-sm">
+                        {vendor.name}
+                      </p>
                     </a>
                   ))}
                 </div>
@@ -9859,15 +10084,16 @@ const App = () => {
 
         {activePage === 'Software' && (
           <>
-            
-
-            <section id="software-hero" className="mb-8 grid gap-6 lg:grid-cols-[2.1fr,0.5fr]">
-              <div className="rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+            <section id="software-hero" className="mb-8">
+              <div className="relative overflow-hidden rounded-3xl border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 p-8 text-white shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ring-white/10">
+                <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
+                <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-slate-400">Software</p>
-                    <h2 className="mt-3 text-3xl font-semibold text-slate-900">Licensing + SaaS operations</h2>
-                    <p className="mt-2 text-sm text-slate-600">
+                    <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-white/70">Software</p>
+                    <h2 className="mt-3 text-3xl font-semibold text-white">Licensing + SaaS operations</h2>
+                    <p className="mt-2 text-sm text-white/75">
                       Centralize entitlement tracking for Microsoft 365, Adobe, AutoCAD, Cisco Secure Client, Duo, Keeper, ESET, Barracuda, Citrix,
                       Zoom, and more without tying usage to hardware guesses.
                     </p>
@@ -9875,7 +10101,7 @@ const App = () => {
                   <button
                     type="button"
                     onClick={() => setSoftwareForm({ ...defaultSoftwareSuite })}
-                    className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
+                    className="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-white/20"
                   >
                     <Plus className="h-4 w-4" />
                     Add software
@@ -9883,23 +10109,23 @@ const App = () => {
                 </div>
                 <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <div>
-                    <p className="text-xs uppercase tracking-widest text-slate-400">Suites tracked</p>
-                    <p className="mt-1 text-2xl font-semibold text-slate-900">{licenseBuckets.length}</p>
+                    <p className="text-xs uppercase tracking-widest text-white/60">Suites tracked</p>
+                    <p className="mt-1 text-2xl font-semibold text-white">{licenseBuckets.length}</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-widest text-slate-400">Active seats</p>
-                    <p className="mt-1 text-2xl font-semibold text-slate-900">{licenseInsights.used}</p>
-                    <p className="text-xs text-slate-500">{licenseInsights.seats} total licensed</p>
+                    <p className="text-xs uppercase tracking-widest text-white/60">Active seats</p>
+                    <p className="mt-1 text-2xl font-semibold text-white">{licenseInsights.used}</p>
+                    <p className="text-xs text-white/70">{licenseInsights.seats} total licensed</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-widest text-slate-400">Vendor ecosystems</p>
-                    <p className="mt-1 text-2xl font-semibold text-slate-900">{softwareVendorCount}</p>
-                    <p className="text-xs text-slate-500">{softwareAtRisk.length} suites watched</p>
+                    <p className="text-xs uppercase tracking-widest text-white/60">Vendor ecosystems</p>
+                    <p className="mt-1 text-2xl font-semibold text-white">{softwareVendorCount}</p>
+                    <p className="text-xs text-white/70">{softwareAtRisk.length} suites watched</p>
                   </div>
                 </div>
                 {adminPortalTiles.some((tile) => tile.logo) && (
-                  <div className="mt-8 min-h-[340px] rounded-2xl border border-slate-100/80 bg-slate-50/80 p-6">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Admin Portals</p>
+                  <div className="mt-8 min-h-[340px] rounded-2xl border border-white/15 bg-white/10 p-6 shadow-inner backdrop-blur">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/70">Admin Portals</p>
                     <div className="mt-5 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                       {adminPortalTiles
                         .filter((tile) => tile.logo)
@@ -9919,43 +10145,13 @@ const App = () => {
                           <img
                             src={tile.logo}
                             alt={`${tile.label} logo`}
-                            className="h-14 w-auto object-contain opacity-80 transition group-hover:opacity-100 group-hover:scale-105"
+                            className="h-20 w-full max-w-[90%] object-contain opacity-85 transition group-hover:opacity-100 group-hover:scale-110"
                             loading="lazy"
                           />
                         </a>
                       ))}
                     </div>
                   </div>
-                )}
-              </div>
-              <div className="rounded-3xl border border-amber-100 bg-amber-50/70 p-6 text-amber-900">
-                <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-amber-900/70">Compliance alerts</p>
-                {softwareAtRisk.length === 0 && (
-                  <p className="mt-4 text-sm">
-                    All suites are within their licensed capacity. Review renewals below to keep coverage aligned with demand.
-                  </p>
-                )}
-                {softwareAtRisk.length > 0 && (
-                  <ul className="mt-4 space-y-3">
-                    {softwareAtRisk.map((suite) => (
-                      <li key={suite.id} className="rounded-2xl bg-white/70 p-4 text-sm text-slate-900">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="font-semibold">{suite.software}</p>
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                              suite.status === 'Overused' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-700'
-                            }`}
-                          >
-                            {suite.status}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {suite.used} used / {suite.seats} seats - {suite.delta < 0 ? `${Math.abs(suite.delta)} over capacity` : `${suite.delta} seats free`}
-                        </p>
-                        {suite.expiryDate && <p className="text-xs text-slate-500">Renewal: {suite.expiryDate}</p>}
-                      </li>
-                    ))}
-                  </ul>
                 )}
               </div>
             </section>
@@ -10020,7 +10216,7 @@ const App = () => {
                   }`}
                 >
                   <p className={`mb-4 text-sm font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Complete Renewal Timeline</p>
-                  <div className="space-y-2">
+                  <div className="grid gap-2 md:grid-cols-2">
                     {softwareRenewalAlerts.map((software) => (
                       <div
                         key={software.id}
@@ -10053,7 +10249,7 @@ const App = () => {
                           <div className="flex-1">
                             <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{software.software}</p>
                             <p className={`text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                              {software.vendor} • {software.category}
+                              {software.vendor} &bull; {software.category}
                             </p>
                           </div>
                         </div>
@@ -10061,11 +10257,7 @@ const App = () => {
                           <div className="text-right">
                             <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Renewal Date</p>
                             <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
-                              {new Date(software.renewalDate).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })}
+                              {formatDate(software.renewalDate)}
                             </p>
                           </div>
                           <div className="text-right">
@@ -10109,9 +10301,9 @@ const App = () => {
                 </div>
               </div>
             </section>
-
+  
             <section className="grid gap-4 md:grid-cols-2">
-              {licenseBuckets.map((suite) => (
+              {sortedLicenseBuckets.map((suite) => (
                 <SoftwareSuiteCard
                   key={suite.id}
                   suite={suite}
