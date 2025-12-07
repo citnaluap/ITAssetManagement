@@ -114,6 +114,119 @@ const DARK_MODE_STYLES = `
   }
 `;
 
+const LIGHT_MODE_STYLES = `
+  html.theme-light body {
+    background:
+      radial-gradient(circle at 14% 18%, rgba(105, 170, 255, 0.15), transparent 32%),
+      radial-gradient(circle at 86% 14%, rgba(255, 190, 210, 0.14), transparent 28%),
+      radial-gradient(circle at 18% 86%, rgba(132, 225, 249, 0.12), transparent 30%),
+      linear-gradient(180deg, #f8fbff 0%, #f2f6fd 44%, #eef2f6 100%);
+    color: #0c1222;
+    line-height: 1.6;
+    text-rendering: optimizeLegibility;
+  }
+  html.theme-light .ambient-layer .ambient-orb.blue { background: radial-gradient(circle, rgba(90, 160, 255, 0.18) 0%, rgba(90, 160, 255, 0) 55%); }
+  html.theme-light .ambient-layer .ambient-orb.pink { background: radial-gradient(circle, rgba(255, 176, 204, 0.16) 0%, rgba(255, 176, 204, 0) 55%); }
+  html.theme-light .ambient-layer .ambient-orb.gold { background: radial-gradient(circle, rgba(255, 220, 170, 0.14) 0%, rgba(255, 220, 170, 0) 55%); }
+  html.theme-light .grid-overlay { background-image: linear-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(15, 23, 42, 0.05) 1px, transparent 1px); opacity: 0.45; }
+  html.theme-light .bg-white,
+  html.theme-light .bg-white/50,
+  html.theme-light .bg-white/60,
+  html.theme-light .bg-white/70,
+  html.theme-light .bg-white/80,
+  html.theme-light .bg-white/90,
+  html.theme-light .bg-slate-50,
+  html.theme-light .bg-slate-100 {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 250, 255, 0.98) 55%, rgba(238, 243, 255, 0.96) 100%) !important;
+    box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08);
+  }
+  html.theme-light .bg-slate-200 {
+    background: linear-gradient(135deg, #f7f9fc 0%, #eef3ff 100%) !important;
+  }
+  html.theme-light .bg-blue-50 { background: linear-gradient(135deg, rgba(219, 234, 254, 0.92) 0%, rgba(239, 246, 255, 0.96) 100%) !important; }
+  html.theme-light .bg-rose-50 { background: linear-gradient(135deg, rgba(255, 241, 242, 0.92) 0%, rgba(255, 247, 248, 0.96) 100%) !important; }
+  html.theme-light .bg-amber-50 { background: linear-gradient(135deg, rgba(255, 251, 235, 0.92) 0%, rgba(255, 253, 240, 0.96) 100%) !important; }
+  html.theme-light .bg-emerald-50 { background: linear-gradient(135deg, rgba(236, 253, 245, 0.92) 0%, rgba(240, 253, 249, 0.96) 100%) !important; }
+  html.theme-light .bg-indigo-50 { background: linear-gradient(135deg, rgba(238, 242, 255, 0.92) 0%, rgba(245, 247, 255, 0.96) 100%) !important; }
+  html.theme-light .bg-sky-50 { background: linear-gradient(135deg, rgba(240, 249, 255, 0.92) 0%, rgba(244, 251, 255, 0.96) 100%) !important; }
+  html.theme-light .bg-teal-50 { background: linear-gradient(135deg, rgba(240, 253, 250, 0.92) 0%, rgba(243, 253, 251, 0.96) 100%) !important; }
+  html.theme-light .bg-yellow-50 { background: linear-gradient(135deg, rgba(254, 252, 232, 0.92) 0%, rgba(255, 253, 240, 0.96) 100%) !important; }
+  html.theme-light .bg-orange-50 { background: linear-gradient(135deg, rgba(255, 247, 237, 0.92) 0%, rgba(255, 249, 240, 0.96) 100%) !important; }
+  html.theme-light section:nth-of-type(3n+1) .rounded-3xl,
+  html.theme-light section:nth-of-type(3n+1) .glass-card {
+    background: linear-gradient(135deg, rgba(235, 244, 255, 0.98) 0%, rgba(221, 236, 255, 0.96) 100%) !important;
+    border-color: rgba(193, 216, 255, 0.9) !important;
+  }
+  html.theme-light section:nth-of-type(3n+2) .rounded-3xl,
+  html.theme-light section:nth-of-type(3n+2) .glass-card {
+    background: linear-gradient(135deg, rgba(255, 246, 240, 0.98) 0%, rgba(255, 236, 229, 0.96) 100%) !important;
+    border-color: rgba(255, 211, 197, 0.9) !important;
+  }
+  html.theme-light section:nth-of-type(3n) .rounded-3xl,
+  html.theme-light section:nth-of-type(3n) .glass-card {
+    background: linear-gradient(135deg, rgba(241, 252, 247, 0.98) 0%, rgba(228, 249, 241, 0.96) 100%) !important;
+    border-color: rgba(191, 230, 214, 0.9) !important;
+  }
+  html.theme-light .border-slate-50,
+  html.theme-light .border-slate-100,
+  html.theme-light .border-slate-200 {
+    border-color: #e3e9f5 !important;
+  }
+  html.theme-light .shadow-sm,
+  html.theme-light .shadow,
+  html.theme-light .shadow-lg {
+    box-shadow: 0 12px 36px rgba(15, 23, 42, 0.08) !important;
+  }
+  html.theme-light .hero-shell { color: #0b1324 !important; }
+  html.theme-light .hero-shell [class*="text-white"] { color: #0b1324 !important; }
+  html.theme-light .hero-shell [class*="text-white/"] { color: #111827 !important; }
+  html.theme-light .hero-shell [class*="bg-white/"] {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    color: #0b1324 !important;
+    border-color: #d8e1f0 !important;
+  }
+  html.theme-light .hero-shell .chip-muted {
+    background-color: rgba(255, 255, 255, 0.75) !important;
+    color: #0f172a !important;
+    border-color: #d8e1f0 !important;
+  }
+  html.theme-light .shadow-inner {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 14px 40px rgba(15, 23, 42, 0.08) !important;
+  }
+  html.theme-light input,
+  html.theme-light select,
+  html.theme-light textarea {
+    background-color: #ffffff !important;
+    color: #0b1324 !important;
+    border-color: #d0d8e7 !important;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+  }
+  html.theme-light input::placeholder,
+  html.theme-light textarea::placeholder {
+    color: #6b7280 !important;
+  }
+  html.theme-light .glass-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(245, 249, 255, 0.96)) !important;
+    border: 1px solid rgba(211, 218, 230, 0.9) !important;
+    box-shadow: 0 18px 56px rgba(15, 23, 42, 0.14) !important;
+  }
+  html.theme-light .bg-white,
+  html.theme-light .bg-slate-50,
+  html.theme-light .bg-slate-100 {
+    color: #0b1324 !important;
+  }
+  html.theme-light .text-slate-500 { color: #4b5563 !important; }
+  html.theme-light .text-slate-600 { color: #374151 !important; }
+  html.theme-light .text-slate-700 { color: #1f2937 !important; }
+  html.theme-light .text-slate-800 { color: #111827 !important; }
+  html.theme-light .border-slate-200 { border-color: #cbd5e1 !important; }
+  html.theme-light .border-slate-100 { border-color: #e2e8f0 !important; }
+  html.theme-light .shadow-sm,
+  html.theme-light .shadow {
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08) !important;
+  }
+`;
+
 const STORAGE_KEYS = {
   assets: 'uds_assets',
   licenses: 'uds_licenses',
@@ -202,6 +315,8 @@ const defaultAsset = {
   checkOutDate: '',
   qrCode: '',
   approvalStatus: 'Approved',
+  ownerNotes: '',
+  repairNotes: '',
 };
 const defaultSoftwareSuite = {
   id: null,
@@ -241,7 +356,7 @@ const defaultEmployeeProfile = {
   keyFob: '',
 };
 
-const NAV_LINKS = ['Overview', 'Hardware', 'Employees', 'Reports', 'Software', 'Vendors'];
+const NAV_LINKS = ['Overview', 'Hardware', 'Repairs', 'Employees', 'Reports', 'Software', 'Vendors'];
 
 const PUBLIC_URL = process.env.PUBLIC_URL || '';
 const normalizedPublicUrl = PUBLIC_URL.replace(/\/+$/, '');
@@ -394,31 +509,31 @@ const PRINTER_VENDOR_DIRECTORY = {
   },
 };
 const RAW_NETWORK_PRINTER_ROWS = [
-  { deviceType: 'Canon Copier', location: 'Administration Area', model: 'iR-ADV C5550', serial: 'XUG08932', ip: '10.0.0.27', colonyId: '14952' },
-  { deviceType: 'Canon Copier', location: '1st Floor HM Area', model: 'iR-ADV C5535', serial: 'XLN05423', ip: '10.0.0.30', colonyId: '14851' },
-  { deviceType: 'Canon Copier', location: 'AE Elm Ave', model: 'iR-ADV C257', serial: '3CE06826', ip: '192.168.3.7', colonyId: '15416' },
-  { deviceType: 'Canon Copier', location: 'ASB/SC/Main Remote Fax', model: 'iR-ADV C3525 III', serial: '2GH10339', ip: '10.0.0.32', colonyId: '15134' },
-  { deviceType: 'Canon Copier', location: 'Garden Level', model: 'iR-ADV C3525', serial: 'XTK01222', ip: '10.0.0.12', colonyId: '14824' },
-  { deviceType: 'Canon Copier', location: 'ILS Elm Ave', model: 'iR-ADV C3525', serial: 'XTK10374', ip: '192.168.3.9', colonyId: '14945' },
-  { deviceType: 'Canon Copier', location: 'KOP', model: 'iR-ADV C3525 III', serial: '2GH09996', ip: '10.165.5.20', colonyId: '15189' },
-  { deviceType: 'Canon Copier', location: 'Resource Center', model: 'iR-ADV 4535', serial: 'UMU00616', ip: '10.0.0.34', colonyId: '11376' },
-  { deviceType: 'Canon Copier', location: 'SC Office at 2260', model: 'iR-ADV C5550', serial: 'XLG05808', ip: '10.0.0.31', colonyId: '14800' },
-  { deviceType: 'Canon Copier', location: 'West Side Copy Room', model: 'iR-ADV C3525', serial: 'XTK02577', ip: '10.0.0.25', colonyId: '' },
-  { deviceType: 'Canon Copier', location: 'Chestnut St', model: 'iR1435', serial: 'RZJ27457', ip: '192.168.7.222', colonyId: '14739' },
-  { deviceType: 'Epson Printer', location: 'Home Mods', model: 'WF-C579R', serial: '', ip: '10.0.0.74' },
-  { deviceType: 'Epson Printer', location: 'SC 1st Floor', model: 'WF-PRO C579R', serial: '', ip: '10.0.0.40' },
-  { deviceType: 'Epson Printer', location: 'KOP ASB', model: 'WF-PRO C579R', serial: '', ip: '10.165.5.21' },
-  { deviceType: 'Epson Printer', location: 'Receptionist', model: 'WF-PRO 529R', serial: 'X57G000296', ip: '10.0.0.29' },
-  { deviceType: 'Epson Printer', location: 'HR Office', model: 'WF-PRO 529R', serial: 'X57G000291', ip: '10.0.0.5' },
-  { deviceType: 'HP Printer', location: 'HME Office', model: 'P4014', serial: 'CNDX206508', ip: '10.0.0.8' },
-  { deviceType: 'HP Printer', location: 'Warehouse', model: 'LaserJet P3015', serial: 'VND3F75923', ip: '10.165.1.201' },
-  { deviceType: 'HP Printer', location: 'Resource Center', model: 'LaserJet P3015', serial: 'VND3F25632', ip: '10.0.0.34' },
-  { deviceType: 'HP Printer', location: 'ILS Office', model: 'LaserJet 9050', serial: 'JPRC9DW07R', ip: '192.168.3.8' },
-  { deviceType: 'HP Printer', location: 'Finance Department', model: 'LaserJet 9050', serial: 'JPRCB4403H', ip: '10.0.0.13' },
-  { deviceType: 'HP Printer', location: 'Fiscal', model: 'LaserJet 4200', serial: 'USGNP05083', ip: '10.0.0.26' },
-  { deviceType: 'HP Printer', location: 'Executive', model: 'Color LaserJet M651', serial: 'NPI06BF0C', ip: '10.0.0.14' },
-  { deviceType: 'HP Printer', location: 'Vocational Services Chestnut', model: 'Color LaserJet M451', serial: 'CNDF234516', ip: '192.168.7.3' },
-  { deviceType: 'Lexmark Printer', location: 'SC Office Erin Court', model: 'M3150', serial: '45147PHH3R9W2', ip: '10.0.0.16' },
+  { deviceType: 'Canon Copier', location: 'Administration Area', model: 'iR-ADV C5550', serial: 'XUG08932', ip: '10.0.0.27', colonyId: '14952', toner: 'Canon GPR-55' },
+  { deviceType: 'Canon Copier', location: '1st Floor HM Area', model: 'iR-ADV C5535', serial: 'XLN05423', ip: '10.0.0.30', colonyId: '14851', toner: 'Canon GPR-55' },
+  { deviceType: 'Canon Copier', location: 'AE Elm Ave', model: 'iR-ADV C257', serial: '3CE06826', ip: '192.168.3.7', colonyId: '15416', toner: 'Canon GPR-53' },
+  { deviceType: 'Canon Copier', location: 'ASB/SC/Main Remote Fax', model: 'iR-ADV C3525 III', serial: '2GH10339', ip: '10.0.0.32', colonyId: '15134', toner: 'Canon GPR-53' },
+  { deviceType: 'Canon Copier', location: 'Garden Level', model: 'iR-ADV C3525', serial: 'XTK01222', ip: '10.0.0.12', colonyId: '14824', toner: 'Canon GPR-53' },
+  { deviceType: 'Canon Copier', location: 'ILS Elm Ave', model: 'iR-ADV C3525', serial: 'XTK10374', ip: '192.168.3.9', colonyId: '14945', toner: 'Canon GPR-53' },
+  { deviceType: 'Canon Copier', location: 'KOP', model: 'iR-ADV C3525 III', serial: '2GH09996', ip: '10.165.5.20', colonyId: '15189', toner: 'Canon GPR-53' },
+  { deviceType: 'Canon Copier', location: 'Resource Center', model: 'iR-ADV 4535', serial: 'UMU00616', ip: '10.0.0.34', colonyId: '11376', toner: 'Canon GPR-53' },
+  { deviceType: 'Canon Copier', location: 'SC Office at 2260', model: 'iR-ADV C5550', serial: 'XLG05808', ip: '10.0.0.31', colonyId: '14800', toner: 'Canon GPR-55' },
+  { deviceType: 'Canon Copier', location: 'West Side Copy Room', model: 'iR-ADV C3525', serial: 'XTK02577', ip: '10.0.0.25', colonyId: '', toner: 'Canon GPR-53' },
+  { deviceType: 'Canon Copier', location: 'Chestnut St', model: 'iR1435', serial: 'RZJ27457', ip: '192.168.7.222', colonyId: '14739', toner: 'Canon GPR-18' },
+  { deviceType: 'Epson Printer', location: 'Home Mods', model: 'WF-C579R', serial: '', ip: '10.0.0.74', toner: 'Epson R12' },
+  { deviceType: 'Epson Printer', location: 'SC 1st Floor', model: 'WF-PRO C579R', serial: '', ip: '10.0.0.40', toner: 'Epson R12' },
+  { deviceType: 'Epson Printer', location: 'KOP ASB', model: 'WF-PRO C579R', serial: '', ip: '10.165.5.21', toner: 'Epson R12' },
+  { deviceType: 'Epson Printer', location: 'Receptionist', model: 'WF-PRO 529R', serial: 'X57G000296', ip: '10.0.0.29', toner: 'Epson R12' },
+  { deviceType: 'Epson Printer', location: 'HR Office', model: 'WF-PRO 529R', serial: 'X57G000291', ip: '10.0.0.5', toner: 'Epson R12' },
+  { deviceType: 'HP Printer', location: 'HME Office', model: 'P4014', serial: 'CNDX206508', ip: '10.0.0.8', toner: 'HP 64X' },
+  { deviceType: 'HP Printer', location: 'Warehouse', model: 'LaserJet P3015', serial: 'VND3F75923', ip: '10.165.1.201', toner: 'HP 55X' },
+  { deviceType: 'HP Printer', location: 'Resource Center', model: 'LaserJet P3015', serial: 'VND3F25632', ip: '10.0.0.34', toner: 'HP 55X' },
+  { deviceType: 'HP Printer', location: 'ILS Office', model: 'LaserJet 9050', serial: 'JPRC9DW07R', ip: '192.168.3.8', toner: 'HP 43X' },
+  { deviceType: 'HP Printer', location: 'Finance Department', model: 'LaserJet 9050', serial: 'JPRCB4403H', ip: '10.0.0.13', toner: 'HP 43X' },
+  { deviceType: 'HP Printer', location: 'Fiscal', model: 'LaserJet 4200', serial: 'USGNP05083', ip: '10.0.0.26', toner: 'HP 38A' },
+  { deviceType: 'HP Printer', location: 'Executive', model: 'Color LaserJet M651', serial: 'NPI06BF0C', ip: '10.0.0.14', toner: 'HP 653X' },
+  { deviceType: 'HP Printer', location: 'Vocational Services Chestnut', model: 'Color LaserJet M451', serial: 'CNDF234516', ip: '192.168.7.3', toner: 'HP 305X' },
+  { deviceType: 'Lexmark Printer', location: 'SC Office Erin Court', model: 'M3150', serial: '45147PHH3R9W2', ip: '10.0.0.16', toner: 'Lexmark 50F1H00' },
 ];
 const NETWORK_PRINTERS = RAW_NETWORK_PRINTER_ROWS.map((row) => {
   const vendorId = (row.deviceType || '').toLowerCase().includes('canon') ? 'colony' : 'weaver';
@@ -514,6 +629,36 @@ const normalizeBrandName = (value = '') =>
   value
     .trim()
     .toLowerCase();
+
+const TONER_LOOKUP = RAW_NETWORK_PRINTER_ROWS.reduce((acc, row) => {
+  const key = normalizeModelName(row.model || '');
+  if (key && row.toner) {
+    acc[key] = row.toner;
+  }
+  return acc;
+}, {});
+
+const getPrinterToner = (asset = {}) => {
+  if ((asset.type || '').toLowerCase() !== 'printer') return '';
+  const existing = asset.toner || asset.tonerType || '';
+  if (existing) return existing;
+  const modelKey = normalizeModelName(asset.model || asset.deviceName || '');
+  if (modelKey) {
+    if (TONER_LOOKUP[modelKey]) {
+      return TONER_LOOKUP[modelKey];
+    }
+    const fuzzy = Object.entries(TONER_LOOKUP).find(([known]) => modelKey.includes(known) || known.includes(modelKey));
+    if (fuzzy) {
+      return fuzzy[1];
+    }
+  }
+  const brand = normalizeBrandName(asset.brand || asset.model || asset.deviceName || '');
+  if (brand.includes('canon')) return 'Canon GPR series (check model)';
+  if (brand.includes('hp')) return 'HP LaserJet toner (check model)';
+  if (brand.includes('epson')) return 'Epson Business Ink (check R-series)';
+  if (brand.includes('lexmark')) return 'Lexmark toner (check model)';
+  return '';
+};
 
 const ensureKeyFobModel = (asset) => {
   if (!asset) {
@@ -1801,6 +1946,21 @@ const LAPTOP_REPAIR_NOTES = [
   'SSD SMART errors require replacement',
   'Fan noise and thermal throttling observed',
 ];
+const AMAZON_PART_CATEGORIES = [
+  { label: 'Replacement screen', query: 'replacement screen' },
+  { label: 'Battery', query: 'battery' },
+  { label: 'Charger / AC adapter', query: 'USB-C 65W charger' },
+  { label: 'Keyboard + palmrest', query: 'keyboard palmrest replacement' },
+  { label: 'SSD upgrade (NVMe/SATA)', query: 'NVMe SSD 1TB kit' },
+];
+const DIFFICULT_REPAIR_TOPICS = [
+  { label: 'LCD + bezel swap', query: 'screen replacement' },
+  { label: 'Keyboard + trackpad', query: 'keyboard replacement' },
+  { label: 'Battery + fan service', query: 'battery replacement disassembly' },
+  { label: 'SSD upgrade + imaging', query: 'ssd upgrade clone windows' },
+];
+const buildAmazonSearch = (model, keyword) => `https://www.amazon.com/s?k=${encodeURIComponent(`${model} ${keyword}`)}`;
+const buildYoutubeSearch = (model, keyword) => `https://www.youtube.com/results?search_query=${encodeURIComponent(`${model} ${keyword}`)}`;
 
 const hashString = (value = '') => {
   let hash = 0;
@@ -1833,7 +1993,7 @@ const computeLaptopRefreshReport = (assets = [], referenceInput = '') => {
   })();
   const threshold = new Date(referenceDate.getTime() - 5 * YEAR_IN_MS);
   const rows = assets
-    .filter(isLaptopAsset)
+    .filter((asset) => isLaptopAsset(asset) && !isLoanerLaptop(asset))
     .map((asset) => {
       const purchaseDate = asset.purchaseDate ? new Date(asset.purchaseDate) : null;
       if (!purchaseDate || Number.isNaN(purchaseDate.getTime())) {
@@ -2570,6 +2730,8 @@ const NetworkPrinterBoard = ({
           return printer.colonyId || '';
         case 'vendorName':
           return printer.vendorName || '';
+        case 'toner':
+          return printer.toner || '';
         default:
           return '';
       }
@@ -2670,6 +2832,11 @@ const NetworkPrinterBoard = ({
                 </button>
               </th>
               <th className="px-5 py-3">
+                <button className="flex items-center gap-1 font-semibold" type="button" onClick={() => toggleSort('toner')}>
+                  Toner <span className="text-[11px]">{sortIcon('toner')}</span>
+                </button>
+              </th>
+              <th className="px-5 py-3">
                 <button className="flex items-center gap-1 font-semibold" type="button" onClick={() => toggleSort('colonyId')}>
                   Fleet ID <span className="text-[11px]">{sortIcon('colonyId')}</span>
                 </button>
@@ -2697,6 +2864,7 @@ const NetworkPrinterBoard = ({
                 <td className="px-5 py-3 text-sm">{printer.model}</td>
                 <td className="px-5 py-3 text-sm">{printer.serial || 'N/A'}</td>
                 <td className="px-5 py-3 text-sm font-mono">{printer.ip || 'N/A'}</td>
+                <td className="px-5 py-3 text-sm">{printer.toner || 'N/A'}</td>
                 <td className="px-5 py-3 text-sm">{printer.colonyId || 'N/A'}</td>
                 <td className="px-5 py-3">
                   <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ${printer.vendorBadge}`}>
@@ -3416,6 +3584,7 @@ const EmployeeDirectoryGrid = ({
   onDelete = () => {},
   onPhoto = () => {},
   downloadHref,
+  isDarkMode = false,
 }) => (
   <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
     <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-6 py-5">
@@ -3447,8 +3616,11 @@ const EmployeeDirectoryGrid = ({
         const licenseCount = licenses.length;
         const supervisorLabel = member.supervisor || 'Not set';
         const cardClasses = [
-          'rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200',
-          'cursor-pointer select-none hover:shadow-md hover:border-purple-300',
+          'rounded-xl border p-4 shadow-sm transition-all duration-200',
+          isDarkMode
+            ? 'border-slate-700/70 bg-slate-900/70 backdrop-blur-sm hover:border-purple-400/80 hover:shadow-lg'
+            : 'border-slate-200 bg-white hover:border-purple-300 hover:shadow-md',
+          'cursor-pointer select-none',
           isExpanded ? 'ring-2 ring-purple-400 border-purple-400' : '',
         ].join(' ');
         const handleKeyDown = (event) => {
@@ -3489,16 +3661,69 @@ const EmployeeDirectoryGrid = ({
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-slate-900 truncate">{member.name}</p>
                 <p className="text-xs text-purple-600 font-medium truncate">{member.title}</p>
-                {member.email ? (
-                  <p className="mt-1.5 text-xs truncate">
+                {member.phone && (
+                  <p className="mt-1 text-[11px]">
                     <a
-                      href={`mailto:${member.email}`}
+                      href={`tel:${member.phone}`}
                       onClick={(event) => event.stopPropagation()}
                       className="text-blue-600 hover:text-purple-600 transition-colors"
                     >
-                      {member.email}
+                      {member.phone}
                     </a>
                   </p>
+                )}
+                {member.email ? (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <a
+                      href={`mailto:${member.email}`}
+                      onClick={(event) => event.stopPropagation()}
+                      className="text-xs text-blue-600 hover:text-purple-600 transition-colors"
+                    >
+                      {member.email}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        const subject = encodeURIComponent('Please verify your assigned hardware');
+                        const auditAssets = (assignments || []).filter(
+                          (asset) => (asset.type || '').toLowerCase() !== 'key fob',
+                        );
+                        const assetChecklist =
+                          auditAssets.length > 0
+                            ? auditAssets
+                                .map((asset) => {
+                                  const assetId = asset.sheetId || asset.assetName || `Asset-${asset.id}`;
+                                  const model = asset.model || 'Model unknown';
+                                  const serial = asset.serialNumber || 'Serial N/A';
+                                  return `- [ ] ${assetId} | ${model} | Serial: ${serial}`;
+                                })
+                                .join('\n')
+                            : '- [ ] No assets on file for you. Please list any devices you have.';
+                        const body = encodeURIComponent(
+                          `Hi ${member.name || ''},
+
+We are running our asset audit and need you to confirm the hardware assigned to you.
+
+Checklist (mark [x] to confirm or edit details):
+${assetChecklist}
+
+Add or correct:
+- Assets you actually have (add lines as needed):
+- Items you returned / don't have:
+- Where you keep these assets:
+- Notes or issues:
+
+Reply to this email with your updates. Photos are welcome. Thank you!`,
+                        );
+                        window.location.href = `mailto:${member.email}?subject=${subject}&body=${body}`;
+                      }}
+                      className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700"
+                    >
+                      <Mail className="h-3.5 w-3.5" />
+                      Audit Email
+                    </button>
+                  </div>
                 ) : (
                   <p className="mt-1.5 text-xs text-slate-400">No email on file</p>
                 )}
@@ -3515,17 +3740,6 @@ const EmployeeDirectoryGrid = ({
                 <p className="mt-2 text-[11px] text-slate-600">
                   <span className="font-semibold">Supervisor:</span> {supervisorLabel}
                 </p>
-                {member.phone && (
-                  <p className="mt-1 text-[11px]">
-                    <a
-                      href={`tel:${member.phone}`}
-                      onClick={(event) => event.stopPropagation()}
-                      className="text-blue-600 hover:text-purple-600 transition-colors"
-                    >
-                      {member.phone}
-                    </a>
-                  </p>
-                )}
               </div>
               <div className="flex flex-col gap-1">
                 <button
@@ -3553,8 +3767,14 @@ const EmployeeDirectoryGrid = ({
               </div>
             </div>
             {isExpanded && (
-              <div className="mt-4 rounded-xl border border-purple-100 bg-purple-50/30 p-4">
-                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-purple-700 mb-3">
+              <div
+                className={`mt-4 rounded-xl border p-4 ${
+                  isDarkMode
+                    ? 'border-slate-700/70 bg-gradient-to-br from-slate-900/80 via-slate-900/70 to-purple-900/50 shadow-inner'
+                    : 'border-purple-100 bg-gradient-to-br from-purple-50/70 via-white to-blue-50/70'
+                }`}
+              >
+                <div className="mb-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-purple-700">
                   <span>Assigned assets</span>
                   <span className="rounded-full bg-purple-100 px-2 py-0.5">{assignmentCount}</span>
                 </div>
@@ -3570,19 +3790,39 @@ const EmployeeDirectoryGrid = ({
                       const showDeviceLabel =
                         deviceLabel && deviceLabel.toLowerCase() !== (assetId || '').toLowerCase();
                       return (
-                        <li key={asset.id} className="rounded-lg border border-blue-100 bg-white p-3">
-                          <p className="text-sm font-semibold text-slate-900">
-                            {assetId}
-                            {showDeviceLabel && (
-                              <span className="text-xs font-normal text-slate-600"> - {deviceLabel}</span>
-                            )}
-                          </p>
-                          <p className="text-[11px] text-slate-600">
-                            <span className="font-semibold">Model:</span> {modelLabel}
-                          </p>
-                          <p className="text-[11px] text-slate-600">
-                            <span className="font-semibold">Serial:</span> {serialLabel}
-                          </p>
+                        <li
+                          key={asset.id}
+                          className={`rounded-lg border p-3 ${
+                            isDarkMode
+                              ? 'border-slate-700/70 bg-slate-900/70 shadow-inner'
+                              : 'border-blue-100 bg-white/95 shadow-sm'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-slate-900">
+                                {assetId}
+                                {showDeviceLabel && (
+                                  <span className="text-xs font-normal text-slate-600"> - {deviceLabel}</span>
+                                )}
+                              </p>
+                              <p className="text-[11px] text-slate-600">
+                                <span className="font-semibold">Model:</span> {modelLabel}
+                              </p>
+                              <p className="text-[11px] text-slate-600">
+                                <span className="font-semibold">Serial:</span> {serialLabel}
+                              </p>
+                            </div>
+                            <span
+                              className={`inline-flex flex-shrink-0 items-center rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                                isDarkMode
+                                  ? 'bg-purple-900/50 text-purple-100 border border-purple-500/40'
+                                  : 'bg-purple-50 text-purple-700 border border-purple-200'
+                              }`}
+                            >
+                              {asset.type || 'Asset'}
+                            </span>
+                          </div>
                         </li>
                       );
                     })}
@@ -3634,6 +3874,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
     loanerDeployedCount = 0,
     loanerTotal = 0,
   } = data;
+  const coveragePercent = loanerTotal ? Math.round((loanerAvailableCount / loanerTotal) * 100) : 0;
   return (
     <div className="rounded-3xl border border-slate-100 bg-white/90 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800/60">
@@ -3705,12 +3946,34 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
           )}
         </div>
         <div className="rounded-2xl border border-slate-100 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-800/70">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500 dark:text-slate-400">Loaner laptops</p>
-            <p className="text-sm font-semibold text-slate-900 dark:text-white">
-              {loanerAvailableCount}/{loanerTotal} ready
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-300">Tap a device below to reserve or return it.</p>
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500 dark:text-slate-400">Loaner coverage</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {loanerAvailableCount}/{loanerTotal} staged
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-300">Tap a device below to reserve or return it.</p>
+              </div>
+              <div className="rounded-2xl bg-blue-50 px-4 py-2 text-center text-xs font-semibold text-blue-700 shadow-sm dark:bg-blue-900/30 dark:text-blue-100">
+                {coveragePercent}% ready
+                <p className="text-[10px] font-medium text-blue-600/80 dark:text-blue-200/70">Loaner health</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 text-center text-[11px] font-semibold uppercase tracking-wide">
+              <div className="rounded-xl border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-900/60">
+                <p className="text-lg text-emerald-600 dark:text-emerald-200">{loanerAvailableCount}</p>
+                <p className="text-slate-500 dark:text-slate-300">Available</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-900/60">
+                <p className="text-lg text-amber-600 dark:text-amber-200">{loanerDeployedCount}</p>
+                <p className="text-slate-500 dark:text-slate-300">Deployed</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-900/60">
+                <p className="text-lg text-slate-800 dark:text-slate-100">{loanerTotal}</p>
+                <p className="text-slate-500 dark:text-slate-300">Total</p>
+              </div>
+            </div>
           </div>
           <div className="mt-3">
             {loanersAvailable.length === 0 ? (
@@ -3775,6 +4038,143 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
             </p>
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const RepairPartsPanel = ({ models = [], isDarkMode = false }) => {
+  const topModels = models.slice(0, 8);
+  return (
+    <div
+      className={`rounded-3xl border p-6 shadow-lg ${
+        isDarkMode ? 'border-slate-800/70 bg-slate-900/70' : 'border-slate-100 bg-white'
+      }`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Parts ordering</p>
+          <p className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Amazon quick links by model</p>
+          <p className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+            One-click carts for batteries, displays, chargers, keyboards, and SSDs for your most common laptops.
+          </p>
+        </div>
+        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-100">
+          Replacement parts
+        </span>
+      </div>
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
+        {topModels.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+            No laptop models detected yet. Add a laptop asset to unlock one-click ordering.
+          </div>
+        ) : (
+          topModels.map((entry) => (
+            <div
+              key={`parts-${entry.model}`}
+              className={`rounded-2xl border p-4 ${
+                isDarkMode ? 'border-slate-800 bg-slate-900/60' : 'border-slate-100 bg-slate-50/80'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{entry.model}</p>
+                  <p className={`text-[11px] uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {entry.count} in fleet
+                  </p>
+                </div>
+                <div className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-slate-500 shadow-sm dark:bg-slate-800 dark:text-slate-200">
+                  Parts bundle
+                </div>
+              </div>
+              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {AMAZON_PART_CATEGORIES.map((part) => (
+                  <a
+                    key={`${entry.model}-${part.label}`}
+                    href={buildAmazonSearch(entry.model, part.query)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group inline-flex items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-blue-400"
+                  >
+                    <span className="truncate">{part.label}</span>
+                    <ExternalLink className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-500" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+      {topModels.length > 0 && (
+        <p className={`mt-4 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+          Showing the top {topModels.length} laptop models by inventory count. Links open Amazon searches with the model pre-filled.
+        </p>
+      )}
+    </div>
+  );
+};
+
+const RepairVideosPanel = ({ models = [], isDarkMode = false }) => {
+  const focusModels = models.slice(0, 6);
+  return (
+    <div
+      className={`rounded-3xl border p-6 shadow-lg ${
+        isDarkMode ? 'border-slate-800/70 bg-slate-900/70' : 'border-slate-100 bg-white'
+      }`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Repair playbooks</p>
+          <p className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>How-to videos for tricky fixes</p>
+          <p className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+            Pre-filtered YouTube searches for screens, keyboards, thermals, and storage upgrades.
+          </p>
+        </div>
+        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-100">
+          Video guides
+        </span>
+      </div>
+      <div className="mt-5 space-y-3">
+        {focusModels.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+            Add laptop assets to surface tailored repair videos.
+          </div>
+        ) : (
+          focusModels.map((entry) => (
+            <div
+              key={`videos-${entry.model}`}
+              className={`rounded-2xl border p-4 ${
+                isDarkMode ? 'border-slate-800 bg-slate-900/60' : 'border-slate-100 bg-slate-50/80'
+              }`}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{entry.model}</p>
+                  <p className={`text-[11px] uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Difficult repairs
+                  </p>
+                </div>
+                <div className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-slate-500 shadow-sm dark:bg-slate-800 dark:text-slate-200">
+                  {entry.count} devices
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {DIFFICULT_REPAIR_TOPICS.map((topic) => (
+                  <a
+                    key={`${entry.model}-${topic.label}`}
+                    href={buildYoutubeSearch(entry.model, topic.query)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group inline-flex items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-rose-400"
+                  >
+                    <span className="truncate">{topic.label}</span>
+                    <ExternalLink className="h-3.5 w-3.5 text-slate-400 group-hover:text-rose-500" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
@@ -3903,6 +4303,7 @@ const LicenseRiskReport = ({ data = [], onExport }) => {
   );
 };
 
+// eslint-disable-next-line no-unused-vars
 const LoanerCoverageReport = ({ data, onExport }) => {
   if (!data) {
     return null;
@@ -4061,10 +4462,10 @@ const AssetFilters = ({ filters, onChange, onReset, types, embedded = false }) =
   </div>
 );
 
-const EmployeeFilters = ({ search, filters, departments, locations, onSearchChange, onFilterChange, onReset }) => (
+const EmployeeFilters = ({ search, filters, departments, locations, jobTitles, onSearchChange, onFilterChange, onReset }) => (
   <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_auto]">
-      <div className="relative">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_auto]">
+      <div className="relative sm:col-span-2 lg:col-span-1">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           value={search}
@@ -4094,6 +4495,18 @@ const EmployeeFilters = ({ search, filters, departments, locations, onSearchChan
         {locations.map((loc) => (
           <option key={loc} value={loc}>
             {loc}
+          </option>
+        ))}
+      </select>
+      <select
+        value={filters.jobTitle}
+        onChange={(event) => onFilterChange('jobTitle', event.target.value)}
+        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+      >
+        <option value="all">All roles</option>
+        {jobTitles.map((title) => (
+          <option key={title} value={title}>
+            {title}
           </option>
         ))}
       </select>
@@ -4456,12 +4869,27 @@ const QrToolingPanel = ({
   scanMessage,
   scannerError,
   videoRef,
+  employeeOptions = [],
+  selectedEmployee = '',
+  onSelectEmployee = () => {},
 }) => (
   <div className="grid gap-4 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm md:grid-cols-2">
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <QrCode className="h-4 w-4 text-blue-600" />
         <p className="text-sm font-semibold text-slate-900">Generate QR</p>
+      </div>
+      <div className="flex h-48 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/70">
+        {qrDataUrl ? (
+          <img
+            src={qrDataUrl}
+            alt="QR code preview"
+            className="h-40 w-40 object-contain"
+            style={{ imageRendering: 'pixelated' }}
+          />
+        ) : (
+          <p className="text-xs text-slate-500">Enter text to generate a QR code.</p>
+        )}
       </div>
       <input
         value={qrInput}
@@ -4487,18 +4915,6 @@ const QrToolingPanel = ({
           Export PNG
         </button>
         <p className="text-xs text-slate-500">Share labels or onboarding links quickly.</p>
-      </div>
-      <div className="flex h-48 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/70">
-        {qrDataUrl ? (
-          <img
-            src={qrDataUrl}
-            alt="QR code preview"
-            className="h-40 w-40 object-contain"
-            style={{ imageRendering: 'pixelated' }}
-          />
-        ) : (
-          <p className="text-xs text-slate-500">Enter text to generate a QR code.</p>
-        )}
       </div>
     </div>
 
@@ -4557,6 +4973,24 @@ const QrToolingPanel = ({
             Apply
           </button>
         </div>
+      </div>
+      <div className="space-y-2">
+        <label className="text-xs font-semibold text-slate-700">Assign to employee (for checkout)</label>
+        <input
+          list="qr-employee-options"
+          value={selectedEmployee}
+          onChange={(event) => onSelectEmployee(event.target.value)}
+          placeholder="Search or type employee name"
+          className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        />
+        <datalist id="qr-employee-options">
+          {employeeOptions.map((name) => (
+            <option key={`qr-employee-${name}`} value={name} />
+          ))}
+        </datalist>
+        <p className="text-[11px] text-slate-500">
+          We'll prefill check-out with this person when a matching asset is scanned.
+        </p>
       </div>
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Last scan</p>
@@ -4860,14 +5294,6 @@ const AssetSpotlight = ({
             </div>
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => onEdit?.(asset)}
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700"
-            >
-              <Edit2 className="h-4 w-4" />
-              Edit
-            </button>
             {isLaptopAsset(asset) && (
               <button
                 type="button"
@@ -4925,6 +5351,17 @@ const AssetSpotlight = ({
                 </ul>
               )}
             </div>
+            {asset.type === 'Printer' && (
+              <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.3rem] text-blue-400">Printer consumables</p>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-sm text-slate-600">Toner type</span>
+                  <span className="text-sm font-semibold text-slate-900">
+                    {getPrinterToner(asset) || 'Not specified'}
+                  </span>
+                </div>
+              </div>
+            )}
           </dl>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {automateEligible && (
@@ -5257,6 +5694,28 @@ const AssetFormModal = ({
             />
           </label>
         </div>
+        <div className="space-y-4">
+          <label className="text-sm font-medium text-slate-700">
+            Owner notes
+            <textarea
+              value={form.ownerNotes || ''}
+              onChange={(event) => update('ownerNotes', event.target.value)}
+              placeholder="Add notes about ownership history, transfers, or assignments..."
+              rows={3}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Repair history notes
+            <textarea
+              value={form.repairNotes || ''}
+              onChange={(event) => update('repairNotes', event.target.value)}
+              placeholder="Add notes about repairs, maintenance, or service history..."
+              rows={3}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+        </div>
         <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4 text-sm text-slate-700">
           <div className="flex items-center justify-between">
             <p className="font-semibold text-slate-800">Intake readiness</p>
@@ -5446,20 +5905,20 @@ const RepairTicketModal = ({ ticket, onSubmit, onCancel, modelOptions = [], empl
   );
 };
 
-const CheckActionModal = ({ asset, mode, onSubmit, onCancel, suggestionListId }) => {
+const CheckActionModal = ({ asset, mode, onSubmit, onCancel, suggestionListId, defaultUser = '' }) => {
   const [form, setForm] = useState({
-    user: asset?.assignedTo || '',
+    user: defaultUser || asset?.assignedTo || '',
     notes: '',
     date: new Date().toISOString().slice(0, 10),
   });
 
   useEffect(() => {
     setForm({
-      user: asset?.assignedTo || '',
+      user: defaultUser || asset?.assignedTo || '',
       notes: '',
       date: new Date().toISOString().slice(0, 10),
     });
-  }, [asset, mode]);
+  }, [asset, mode, defaultUser]);
 
   const update = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -5724,20 +6183,22 @@ const EmployeeFormModal = ({
             />
           </label>
           <label className="text-sm font-medium text-slate-700">
-            Phone
-            <input
-              value={form.phone}
-              onChange={(event) => update('phone', event.target.value)}
-              placeholder="(717) 555-1212"
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </label>
-          <label className="text-sm font-medium text-slate-700">
             Start date
             <input
               type="date"
               value={form.startDate}
               onChange={(event) => update('startDate', event.target.value)}
+              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+          <label className="text-sm font-medium text-slate-700">
+            Phone
+            <input
+              type="tel"
+              value={form.phone}
+              onChange={(event) => update('phone', event.target.value)}
+              placeholder="(717) 555-1212"
+              autoComplete="tel"
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -6045,25 +6506,6 @@ const App = () => {
     });
   }, [setAssets]);
 
-  const licenseBuckets = useMemo(
-    () =>
-      softwareSuites.map((suite) => {
-        const vendorKey = normalizeKey(suite.vendor || '');
-        const softwareKey = normalizeKey((suite.software || '').replace(/[^a-z0-9]+/gi, ''));
-        const logo =
-          suite.logo ||
-          SOFTWARE_LOGOS[suite.id] ||
-          SOFTWARE_LOGOS[vendorKey] ||
-          SOFTWARE_LOGOS[softwareKey] ||
-          '';
-        return { ...suite, logo };
-      }),
-    [softwareSuites],
-  );
-  const sortedLicenseBuckets = useMemo(
-    () => [...licenseBuckets].sort((a, b) => a.software.localeCompare(b.software)),
-    [licenseBuckets],
-  );
   const maintenanceRecords = useMemo(() => buildMaintenanceFromAssets(assets), [assets]);
   const sheetInsights = useMemo(() => computeSheetInsights(assets), [assets]);
   const vendorProfiles = useMemo(() => buildVendorProfiles(assets), [assets]);
@@ -6199,12 +6641,40 @@ const App = () => {
     () => computeLaptopRefreshReport(assets, laptopRefreshDate),
     [assets, laptopRefreshDate],
   );
+  const accessibilityDesignerCount = useMemo(
+    () =>
+      employeeGallery.filter((member) => normalizeKey(member.title || '') === 'accessibilitydesigner').length,
+    [employeeGallery],
+  );
+  const licenseBuckets = useMemo(
+    () =>
+      softwareSuites.map((suite) => {
+        const vendorKey = normalizeKey(suite.vendor || '');
+        const softwareKey = normalizeKey((suite.software || '').replace(/[^a-z0-9]+/gi, ''));
+        const logo =
+          suite.logo ||
+          SOFTWARE_LOGOS[suite.id] ||
+          SOFTWARE_LOGOS[vendorKey] ||
+          SOFTWARE_LOGOS[softwareKey] ||
+          '';
+        const used =
+          suite.id === 'autocad'
+            ? Math.max(suite.used || 0, accessibilityDesignerCount)
+            : suite.used;
+        return { ...suite, logo, used };
+      }),
+    [softwareSuites, accessibilityDesignerCount],
+  );
   const licenseCompliance = useMemo(
     () =>
       licenseBuckets.map((license) => {
         const { delta, status } = getLicenseHealth(license.seats, license.used);
         return { ...license, delta, status };
       }),
+    [licenseBuckets],
+  );
+  const sortedLicenseBuckets = useMemo(
+    () => [...licenseBuckets].sort((a, b) => a.software.localeCompare(b.software)),
     [licenseBuckets],
   );
   const softwareAtRisk = useMemo(
@@ -6385,7 +6855,7 @@ const App = () => {
   const [commandQuery, setCommandQuery] = useState('');
   const [flashMessage, setFlashMessage] = useState('');
   const [employeeSearch, setEmployeeSearch] = useState('');
-  const [employeeFilters, setEmployeeFilters] = useState({ department: 'all', location: 'all' });
+  const [employeeFilters, setEmployeeFilters] = useState({ department: 'all', location: 'all', jobTitle: 'all' });
   const [employeePage, setEmployeePage] = useState(1);
   const [employeeForm, setEmployeeForm] = useState(null);
   const [expandedEmployeeId, setExpandedEmployeeId] = useState(null);
@@ -6732,10 +7202,11 @@ const App = () => {
   );
   const [newHireRole, setNewHireRole] = useState('');
   const [newHireLocation, setNewHireLocation] = useState('');
-  const [newHireDepartment, setNewHireDepartment] = useState('UDS');
+  const [newHireDepartment, setNewHireDepartment] = useState('');
   const [newHireRemote, setNewHireRemote] = useState(true);
   const [terminationEmployee, setTerminationEmployee] = useState('');
   const [repairTicketForm, setRepairTicketForm] = useState(null);
+  const [repairModelQuery, setRepairModelQuery] = useState('');
   const [photoLightbox, setPhotoLightbox] = useState(null);
   const normalizedLocationsRef = useRef(false);
 
@@ -6843,9 +7314,29 @@ const App = () => {
       ),
     ).sort((a, b) => safeLocaleCompare(a, b));
   }, [assets, employeeGallery]);
+  const laptopModelCatalog = useMemo(() => {
+    const counts = new Map();
+    assets.forEach((asset) => {
+      if (!isLaptopAsset(asset)) return;
+      const modelLabel = (asset.model || asset.assetName || asset.deviceName || 'Laptop').trim() || 'Laptop';
+      const normalized = modelLabel.replace(/\s+/g, ' ').trim();
+      const key = normalized.toLowerCase();
+      const existing = counts.get(key) || { model: normalized, count: 0 };
+      existing.count += 1;
+      counts.set(key, existing);
+    });
+    return Array.from(counts.values()).sort(
+      (a, b) => b.count - a.count || safeLocaleCompare(a.model, b.model),
+    );
+  }, [assets]);
+  const filteredRepairModels = useMemo(() => {
+    const query = repairModelQuery.trim().toLowerCase();
+    if (!query) return laptopModelCatalog;
+    return laptopModelCatalog.filter((item) => item.model.toLowerCase().includes(query));
+  }, [laptopModelCatalog, repairModelQuery]);
   const departmentOptions = useMemo(
     () =>
-      Array.from(new Set(employeeGallery.map((member) => member.department).filter(Boolean))).sort((a, b) =>
+      Array.from(new Set(employeeGallery.map((member) => member.department).filter(Boolean))).filter(dept => normalizeKey(dept) !== 'uds').sort((a, b) =>
         safeLocaleCompare(a, b),
       ),
     [employeeGallery],
@@ -6856,7 +7347,7 @@ const App = () => {
     employeeSheetData.forEach((row) => {
       const dept = (row['Department'] || row['Company'] || '').trim();
       const key = normalizeKey(dept);
-      if (!key || seen.has(key)) return;
+      if (!key || seen.has(key) || key === 'uds') return;
       seen.add(key);
       list.push(dept);
     });
@@ -6941,6 +7432,7 @@ const App = () => {
         name: member.name,
         key: normalizeKey(member.lookupKey || member.name || ''),
         department: normalizeKey(member.department || ''),
+        role: normalizeKey(member.title || ''),
       }))
       .filter((item) => item.name && item.key);
     const suiteById = softwareSuites.reduce((acc, suite) => {
@@ -6986,6 +7478,21 @@ const App = () => {
       const isUpmc = employee.department === 'upmc' || employee.department === 'hcbsupmc';
       if (isUpmc) {
         return;
+      }
+      if (employee.role === 'accessibilitydesigner') {
+        const autocadSuite = suiteById.autocad;
+        if (autocadSuite) {
+          if (!seededAssignments[employee.key]) seededAssignments[employee.key] = [];
+          const alreadyAssigned = seededAssignments[employee.key].some((entry) => entry.suiteId === 'autocad');
+          if (!alreadyAssigned) {
+            seededAssignments[employee.key].push({
+              suiteId: 'autocad',
+              name: autocadSuite.software || 'AutoCAD',
+              vendor: autocadSuite.vendor,
+              licenseKey: autocadSuite.licenseKey,
+            });
+          }
+        }
       }
       defaultSuiteIds.forEach((suiteId) => {
         const suite = suiteById[suiteId];
@@ -7102,7 +7609,11 @@ const App = () => {
           employeeFilters.location === 'all' ||
           member.location === employeeFilters.location;
         
-        return searchMatch && departmentMatch && locationMatch;
+        const jobTitleMatch =
+          employeeFilters.jobTitle === 'all' ||
+          member.title === employeeFilters.jobTitle;
+        
+        return searchMatch && departmentMatch && locationMatch && jobTitleMatch;
       }),
     [employeeGallery, employeeSearch, employeeFilters],
   );
@@ -7436,58 +7947,16 @@ const App = () => {
     if (typeof document === 'undefined') {
       return;
     }
-    const styleId = 'uds-theme-dark-overrides';
+    const styleId = 'uds-theme-overrides';
     let styleEl = document.getElementById(styleId);
     if (!styleEl) {
       styleEl = document.createElement('style');
       styleEl.id = styleId;
-      styleEl.innerHTML = `
-        .theme-dark {
-          background-color: #0f172a;
-          color: #e2e8f0;
-        }
-        .theme-dark .bg-white,
-        .theme-dark .bg-white\\/70,
-        .theme-dark .bg-white\\/80,
-        .theme-dark .bg-white\\/90,
-        .theme-dark .bg-slate-50,
-        .theme-dark .bg-slate-100 {
-          background-color: #111827 !important;
-        }
-        .theme-dark .bg-slate-900,
-        .theme-dark .bg-slate-800 {
-          background-color: #0b1224 !important;
-        }
-        .theme-dark .text-slate-900,
-        .theme-dark .text-slate-800,
-        .theme-dark .text-slate-700 {
-          color: #e2e8f0 !important;
-        }
-        .theme-dark .text-slate-600,
-        .theme-dark .text-slate-500,
-        .theme-dark .text-slate-400 {
-          color: #cbd5e1 !important;
-        }
-        .theme-dark .border-slate-100,
-        .theme-dark .border-slate-200 {
-          border-color: #1f2937 !important;
-        }
-        .theme-dark .shadow-sm,
-        .theme-dark .shadow,
-        .theme-dark .shadow-lg {
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
-        }
-        .theme-dark input,
-        .theme-dark select,
-        .theme-dark textarea {
-          background-color: #0f172a !important;
-          color: #e2e8f0 !important;
-          border-color: #1f2937 !important;
-        }
-      `;
+      styleEl.innerHTML = `${LIGHT_MODE_STYLES}${DARK_MODE_STYLES}`;
       document.head.appendChild(styleEl);
     }
     document.documentElement.classList.toggle('theme-dark', isDarkMode);
+    document.documentElement.classList.toggle('theme-light', !isDarkMode);
     window.localStorage.setItem('uds_theme_dark', String(isDarkMode));
   }, [isDarkMode]);
 
@@ -8311,6 +8780,8 @@ const App = () => {
     [],
   );
 
+  const [scanEmployee, setScanEmployee] = useState('');
+
   const handleUseScanResult = () => {
     const value = (manualScanInput || scanResult || '').trim();
     if (!value) {
@@ -8334,9 +8805,11 @@ const App = () => {
       setActionState({
         asset: matchedAsset,
         mode: matchedAsset.checkedOut ? 'checkin' : 'checkout',
+        user: scanEmployee || matchedAsset.assignedTo || '',
       });
       setScanMessage(`Matched ${matchedAsset.assetName || matchedAsset.serialNumber || 'asset'}`);
       setManualScanInput('');
+      setScanEmployee('');
     } else {
       setScanMessage('No asset matched this code.');
     }
@@ -8632,6 +9105,7 @@ const App = () => {
   const menuNavItems = [
     { label: 'Overview', onClick: () => handleJumpToSection('Overview', 'overview-hero') },
     { label: 'Hardware', onClick: () => handleJumpToSection('Hardware', 'hardware-hero') },
+    { label: 'Repairs', onClick: () => handleJumpToSection('Repairs', 'repairs-hero') },
     { label: 'Employees', onClick: () => handleJumpToSection('Employees', 'employees-hero') },
     { label: 'Reports', onClick: () => handleJumpToSection('Reports', 'reports-hero') },
     { label: 'Software', onClick: () => handleJumpToSection('Software', 'software-hero') },
@@ -8643,6 +9117,8 @@ const App = () => {
     { label: 'Quick actions', onClick: () => handleJumpToSection('Overview', 'overview-actions') },
     { label: 'QR tools', onClick: () => handleJumpToSection('Overview', 'qr-tools-overview') },
     { label: 'Asset table', onClick: () => handleJumpToSection('Hardware', 'asset-table') },
+    { label: 'Repair desk', onClick: () => handleJumpToSection('Repairs', 'repairs-hero') },
+    { label: 'Parts ordering', onClick: () => handleJumpToSection('Repairs', 'repair-resources') },
     { label: 'Employee directory', onClick: () => handleJumpToSection('Employees', 'employee-directory') },
     { label: 'Reports gallery', onClick: () => handleJumpToSection('Reports', 'reports-hero') },
     { label: 'Software suites', onClick: () => handleJumpToSection('Software', 'software-hero') },
@@ -8918,6 +9394,23 @@ const App = () => {
     return { overdueWarranty, criticalMaintenance };
   }, [lifecycleReminders, maintenanceWorkOrders]);
 
+  const auditReport = useMemo(
+    () => ({
+      inventory: assets.map((asset) => ({
+        assetId: asset.sheetId || asset.assetName || `Asset-${asset.id}`,
+        name: asset.assetName || '',
+        type: asset.type || '',
+        model: asset.model || '',
+        serial: asset.serialNumber || '',
+        location: normalizeLocationLabel(asset.location || ''),
+        assignedTo: asset.assignedTo || 'Unassigned',
+        status: getAssetDisplayStatus(asset),
+        purchaseDate: asset.purchaseDate || '',
+      })),
+    }),
+    [assets],
+  );
+
   const financialRollupReport = useMemo(
     () => ({
       depreciationForecast,
@@ -9022,6 +9515,11 @@ const App = () => {
         payload: financialRollupReport,
       },
       {
+        title: 'Audit report',
+        description: 'Inventory export for audit sampling and spot checks.',
+        payload: auditReport,
+      },
+      {
         title: 'Procurement pipeline',
         description: 'Unassigned inventory ready to deploy.',
         payload: procurementReport,
@@ -9040,6 +9538,7 @@ const App = () => {
     [
       dataQualityReport,
       costByDepartment,
+      auditReport,
       executiveSnapshotReport,
       financialRollupReport,
       laptopRefreshReport,
@@ -9164,7 +9663,7 @@ const App = () => {
         isDarkMode ? 'text-slate-100' : 'text-slate-900'
       }`}
     >
-      <style>{DARK_MODE_STYLES}</style>
+      <style>{`${LIGHT_MODE_STYLES}${DARK_MODE_STYLES}`}</style>
       <div className="ambient-layer">
         <div className="ambient-orb blue" style={{ width: '42vw', height: '42vw', top: '-12vh', left: '-8vw' }} />
         <div className="ambient-orb pink" style={{ width: '36vw', height: '36vw', bottom: '-10vh', right: '4vw' }} />
@@ -9218,7 +9717,13 @@ const App = () => {
         {activePage === 'Overview' && (
           <>
             <section id="overview-hero" className="mb-10 grid gap-6 lg:grid-cols-[2fr,1fr]">
-          <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 p-8 text-white shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ring-white/10 neon-grid">
+          <div
+            className={`hero-shell relative overflow-hidden rounded-[32px] p-8 shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 neon-grid ${
+              isDarkMode
+                ? 'border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
+                : 'border border-slate-200 bg-gradient-to-br from-white via-blue-50 to-sky-100 text-slate-900 ring-blue-100'
+            }`}
+          >
             <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
             <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
@@ -9298,7 +9803,13 @@ const App = () => {
               </div>
             </div>
           </div>
-          <div className="relative overflow-hidden rounded-[32px] border border-slate-900/70 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900 p-6 text-white shadow-[0_18px_60px_rgba(2,6,23,0.5)] ring-1 ring-blue-500/15">
+          <div
+            className={`hero-shell relative overflow-hidden rounded-[32px] border p-6 shadow-[0_18px_60px_rgba(2,6,23,0.5)] ring-1 ${
+              isDarkMode
+                ? 'border-slate-900/70 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900 text-white ring-blue-500/15'
+                : 'border-slate-200 bg-gradient-to-br from-white via-sky-50 to-blue-100 text-slate-900 ring-blue-100'
+            }`}
+          >
             <div className="absolute inset-0 opacity-40">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.2),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(236,72,153,0.18),transparent_30%)] blur-3xl" />
             </div>
@@ -9467,7 +9978,14 @@ const App = () => {
 
         {activePage === 'Hardware' && (
           <>
-            <section id="hardware-hero" className="relative mb-8 overflow-hidden rounded-3xl border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 p-8 text-white shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ring-white/10">
+            <section
+              id="hardware-hero"
+              className={`hero-shell relative mb-8 overflow-hidden rounded-3xl border p-8 shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ${
+                isDarkMode
+                  ? 'border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
+                  : 'border-slate-200 bg-gradient-to-br from-white via-blue-50 to-sky-100 text-slate-900 ring-blue-100'
+              }`}
+            >
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
@@ -9512,14 +10030,24 @@ const App = () => {
                     <p className="text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-500">Hardware table</p>
                     <p className="text-xs text-slate-500">Filter, search, and add devices from the same surface.</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setAssetForm(defaultAsset)}
-                    className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
-                  >
-                    <Plus className="h-4 w-4" />
-                    New asset
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <a
+                      href={EXCEL_EXPORTS.assets}
+                      download
+                      className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-700"
+                    >
+                      <Download className="h-4 w-4" />
+                      Export
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setAssetForm(defaultAsset)}
+                      className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
+                    >
+                      <Plus className="h-4 w-4" />
+                      New asset
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-3 p-4">
                   <AssetFilters
@@ -9583,15 +10111,6 @@ const App = () => {
             <section className="grid gap-6">
               <ActivityPanel history={recentHistory} lookupAsset={getAssetName} />
             </section>
-            <section className="mb-8">
-              <LaptopRepairCard
-                data={laptopServiceSummary}
-                onLoanerCheckout={handleLoanerCheckout}
-                onLoanerCheckin={handleLoanerCheckin}
-                onAddRepair={handleAddRepairTicket}
-                onEditRepair={handleEditRepairTicket}
-              />
-            </section>
 
             <section id="qr-tools-overview" className="mb-8">
               <QrToolingPanel
@@ -9608,19 +10127,114 @@ const App = () => {
             onStartScanner={handleStartScanner}
             onStopScanner={handleStopScanner}
             onUseScanResult={handleUseScanResult}
-                onManualInput={setManualScanInput}
-                manualScanInput={manualScanInput}
-                scanMessage={scanMessage}
-                scannerError={scannerError}
-                videoRef={videoRef}
+            onManualInput={setManualScanInput}
+            manualScanInput={manualScanInput}
+            scanMessage={scanMessage}
+            scannerError={scannerError}
+            videoRef={videoRef}
+            employeeOptions={employeeNameOptions}
+            selectedEmployee={scanEmployee}
+            onSelectEmployee={setScanEmployee}
+          />
+            </section>
+          </>
+        )}
+
+        {activePage === 'Repairs' && (
+          <>
+            <section
+              id="repairs-hero"
+              className={`hero-shell relative mb-8 overflow-hidden rounded-3xl border p-8 shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ${
+                isDarkMode
+                  ? 'border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
+                  : 'border-slate-200 bg-gradient-to-br from-white via-blue-50 to-sky-100 text-slate-900 ring-blue-100'
+              }`}
+            >
+              <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
+              <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
+              <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/70">Repair desk</p>
+              <div className="mt-4 grid gap-6 lg:grid-cols-[1.8fr,1fr]">
+                <div className="space-y-4">
+                  <h2 className="text-4xl font-semibold leading-tight">Centralize depot status, parts ordering, and repair guides.</h2>
+                  <p className="text-sm text-white/80">
+                    See every laptop in maintenance, reserve loaners, and jump straight to Amazon parts carts or YouTube guides matched to your fleet models.
+                  </p>
+                  <div className="flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-[0.25rem] text-white/80">
+                    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">Loaner coverage</span>
+                    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">Parts &amp; consumables</span>
+                    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">How-to videos</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/15 bg-white/5 p-3 text-sm text-white/80 backdrop-blur">
+                    <label htmlFor="repair-model-search" className="text-xs font-semibold uppercase tracking-[0.2rem] text-white/70">
+                      Search by model
+                    </label>
+                    <input
+                      id="repair-model-search"
+                      type="text"
+                      value={repairModelQuery}
+                      onChange={(event) => setRepairModelQuery(event.target.value)}
+                      placeholder="e.g., Latitude 5440 or EliteBook 850 G1"
+                      className="flex-1 rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm font-semibold text-white placeholder:text-white/60 outline-none transition focus:border-emerald-200 focus:ring-2 focus:ring-emerald-300/40"
+                    />
+                    {repairModelQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setRepairModelQuery('')}
+                        className="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="rounded-3xl border border-white/15 bg-white/5 p-4 shadow-inner backdrop-blur">
+                  <p className="text-xs uppercase tracking-[0.3rem] text-white/70">Quick counts</p>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl bg-white/10 p-3 text-center">
+                      <p className="text-3xl font-semibold">{laptopServiceSummary.repairTotal || 0}</p>
+                      <p className="text-[11px] uppercase tracking-[0.2rem] text-white/60">In repair</p>
+                    </div>
+                    <div className="rounded-2xl bg-white/10 p-3 text-center">
+                      <p className="text-3xl font-semibold">{laptopServiceSummary.loanerAvailableCount || 0}</p>
+                      <p className="text-[11px] uppercase tracking-[0.2rem] text-white/60">Loaners staged</p>
+                    </div>
+                    <div className="rounded-2xl bg-white/10 p-3 text-center">
+                      <p className="text-3xl font-semibold">{laptopServiceSummary.avgRepairAgeMonths || 0} mo</p>
+                      <p className="text-[11px] uppercase tracking-[0.2rem] text-white/60">Avg age</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section id="repair-status" className="mb-8">
+              <LaptopRepairCard
+                data={laptopServiceSummary}
+                onLoanerCheckout={handleLoanerCheckout}
+                onLoanerCheckin={handleLoanerCheckin}
+                onAddRepair={handleAddRepairTicket}
+                onEditRepair={handleEditRepairTicket}
               />
+            </section>
+
+            <section id="repair-resources" className="mb-8 grid gap-6 lg:grid-cols-2">
+              <RepairPartsPanel models={filteredRepairModels} isDarkMode={isDarkMode} />
+              <RepairVideosPanel models={filteredRepairModels} isDarkMode={isDarkMode} />
             </section>
           </>
         )}
 
         {activePage === 'Employees' && (
           <>
-            <section id="employees-hero" className="relative mb-8 overflow-hidden rounded-3xl border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 p-8 text-white shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ring-white/10">
+            <section
+              id="employees-hero"
+              className={`hero-shell relative mb-8 overflow-hidden rounded-3xl border p-8 shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ${
+                isDarkMode
+                  ? 'border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
+                  : 'border-slate-200 bg-gradient-to-br from-white via-indigo-50 to-purple-100 text-slate-900 ring-indigo-100'
+              }`}
+            >
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
@@ -9661,6 +10275,7 @@ const App = () => {
                   filters={employeeFilters}
                   departments={departmentOptions}
                   locations={locationOptions}
+                  jobTitles={jobTitleSuggestionOptions}
                   onSearchChange={(value) => {
                     setEmployeeSearch(value);
                     setEmployeePage(1);
@@ -9671,7 +10286,7 @@ const App = () => {
                   }}
                   onReset={() => {
                     setEmployeeSearch('');
-                    setEmployeeFilters({ department: 'all', location: 'all' });
+                    setEmployeeFilters({ department: 'all', location: 'all', jobTitle: 'all' });
                     setEmployeePage(1);
                   }}
                 />
@@ -9686,6 +10301,7 @@ const App = () => {
                   onDelete={handleDeleteEmployee}
                   onPhoto={handleOpenPhoto}
                   downloadHref={EXCEL_EXPORTS.employees}
+                  isDarkMode={isDarkMode}
                 />
                 <div className="rounded-2xl border border-slate-100 bg-white/70 px-4 py-3">
                   <PaginationControls align="center" page={employeePage} totalPages={totalEmployeePages} onPageChange={setEmployeePage} />
@@ -9866,7 +10482,14 @@ const App = () => {
 
         {activePage === 'Reports' && (
           <>
-            <section id="reports-hero" className="relative mb-8 overflow-hidden rounded-3xl border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 p-8 text-white shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ring-white/10">
+            <section
+              id="reports-hero"
+              className={`hero-shell relative mb-8 overflow-hidden rounded-3xl border p-8 shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ${
+                isDarkMode
+                  ? 'border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
+                  : 'border-slate-200 bg-gradient-to-br from-white via-amber-50 to-yellow-100 text-slate-900 ring-amber-100'
+              }`}
+            >
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
@@ -9920,14 +10543,6 @@ const App = () => {
                     })
                   }
                 />
-                <LoanerCoverageReport
-                  data={laptopServiceSummary}
-                  onExport={() =>
-                    handleRunReport('Loaner coverage', {
-                      summary: laptopServiceSummary,
-                    })
-                  }
-                />
               </div>
             </section>
 
@@ -9963,7 +10578,14 @@ const App = () => {
 
         {activePage === 'Vendors' && (
           <>
-            <section id="vendors-hero" className="relative mb-8 overflow-hidden rounded-[2.5rem] border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 p-8 text-white shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ring-white/10">
+            <section
+              id="vendors-hero"
+              className={`hero-shell relative mb-8 overflow-hidden rounded-[2.5rem] border p-8 shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ${
+                isDarkMode
+                  ? 'border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
+                  : 'border-slate-200 bg-gradient-to-br from-white via-emerald-50 to-teal-100 text-slate-900 ring-emerald-100'
+              }`}
+            >
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
@@ -10168,7 +10790,7 @@ const App = () => {
                     : 'bg-white border border-slate-200 shadow-xl'
                 }`}
               >
-                <div className="mb-6 flex items-center gap-3">
+                <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-3">
                   <div className="rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 p-3 shadow-lg">
                     <CalendarClock className="h-7 w-7 text-white drop-shadow" />
                   </div>
@@ -10216,11 +10838,11 @@ const App = () => {
                   }`}
                 >
                   <p className={`mb-4 text-sm font-bold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>Complete Renewal Timeline</p>
-                  <div className="grid gap-2 md:grid-cols-2">
+                  <div className="grid gap-3 md:grid-cols-2">
                     {softwareRenewalAlerts.map((software) => (
                       <div
                         key={software.id}
-                        className={`flex items-center justify-between rounded-xl p-3 ${
+                        className={`flex w-full flex-col gap-4 rounded-xl p-3 sm:p-4 md:flex-row md:items-center md:justify-between ${
                           software.daysUntilRenewal < 0
                             ? isDarkMode
                               ? 'bg-gradient-to-r from-rose-900/60 via-rose-800/50 to-rose-900/60 border border-rose-500/50'
@@ -10239,10 +10861,10 @@ const App = () => {
                               : 'bg-gradient-to-r from-blue-50 via-blue-100 to-white border border-blue-200'
                             : isDarkMode
                             ? 'bg-gradient-to-r from-slate-900/40 via-slate-800/35 to-slate-900/40 border border-slate-700/60'
-                            : 'bg-gradient-to-r from-slate-50 via-slate-100 to-white border border-slate-200'
+                              : 'bg-gradient-to-r from-slate-50 via-slate-100 to-white border border-slate-200'
                         }`}
                       >
-                        <div className="flex flex-1 items-center gap-3">
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
                           {software.logo && (
                             <img src={software.logo} alt={software.software} className="h-8 w-8 rounded-lg object-contain" />
                           )}
@@ -10253,21 +10875,17 @@ const App = () => {
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
+                        <div className="flex w-full flex-wrap items-start gap-3 sm:flex-nowrap sm:items-center sm:justify-end sm:gap-4">
+                          <div className="text-left sm:text-right">
                             <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Renewal Date</p>
-                            <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
-                              {formatDate(software.renewalDate)}
-                            </p>
+                            <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{formatDate(software.renewalDate)}</p>
                           </div>
-                          <div className="text-right">
+                          <div className="text-left sm:text-right">
                             <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Annual Cost</p>
-                            <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
-                              {formatCurrency(software.annualCost)}
-                            </p>
+                            <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{formatCurrency(software.annualCost)}</p>
                           </div>
                           <span
-                            className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold ${
+                            className={`self-start whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold sm:self-auto ${
                               software.daysUntilRenewal < 0
                                 ? 'bg-rose-600 text-white shadow-[0_8px_30px_rgba(225,29,72,0.35)]'
                                 : software.daysUntilRenewal <= 30
@@ -10288,7 +10906,7 @@ const App = () => {
                               href={software.portal}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="rounded-xl bg-slate-700 p-2 text-white transition hover:bg-slate-800"
+                              className="rounded-xl bg-slate-700 p-2 text-white transition hover:bg-slate-800 sm:self-auto"
                               title="Open admin portal"
                             >
                               <ExternalLink className="h-4 w-4" />
@@ -10367,6 +10985,7 @@ const App = () => {
           onSubmit={handleActionSubmit}
           onCancel={() => setActionState(null)}
           suggestionListId={employeeSuggestionListId}
+          defaultUser={actionState.user}
         />
       )}
       {softwareForm && (
