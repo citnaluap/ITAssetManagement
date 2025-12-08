@@ -38,9 +38,9 @@ import {
   Moon,
   Menu,
   Mail,
+  DollarSign,
 } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line } from 'recharts';
-import assetSheetData from './data/assets.json';
 import employeeSheetData from './data/employees.json';
 import employeePhotoMap from './data/employeePhotos.json';
 import automateMap from './data/automateMap.json';
@@ -249,6 +249,7 @@ const STORAGE_KEYS = {
 };
 const STORAGE_VERSION_KEY = 'uds_storage_version';
 const STORAGE_VERSION = '2025-11-20-zoom-refresh';
+const API_STORAGE_BASE = (process.env.REACT_APP_API_BASE_URL || '').replace(/\/$/, '');
 
 const assetTypeIcons = {
   Laptop,
@@ -1032,7 +1033,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 305,
     used: 305,
     costPerSeat: 4.5,
-    renewal: '2025-12-31',
+    renewal: '2026-12-31',
     portal: 'https://admin.microsoft.com/',
     logo: SOFTWARE_LOGOS.m365,
     accent: { from: '#0ea5e9', to: '#2563eb' },
@@ -1050,7 +1051,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 305,
     used: 305,
     costPerSeat: 20,
-    renewal: '2025-09-01',
+    renewal: '2026-09-01',
     portal: 'https://adminconsole.adobe.com/',
     logo: SOFTWARE_LOGOS.adobe,
     accent: { from: '#fb7185', to: '#a21caf' },
@@ -1068,7 +1069,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 12,
     used: 11,
     costPerSeat: 210,
-    renewal: '2025-04-15',
+    renewal: '2026-04-15',
     portal: 'https://manage.autodesk.com/',
     logo: SOFTWARE_LOGOS.autocad,
     accent: { from: '#ef4444', to: '#991b1b' },
@@ -1086,7 +1087,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 305,
     used: 305,
     costPerSeat: 5,
-    renewal: '2025-07-01',
+    renewal: '2026-07-01',
     portal: 'https://dashboard.umbrella.com/',
     logo: SOFTWARE_LOGOS.cisco,
     accent: { from: '#0f766e', to: '#0ea5e9' },
@@ -1104,7 +1105,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 305,
     used: 305,
     costPerSeat: 1.5,
-    renewal: '2025-10-01',
+    renewal: '2026-10-01',
     portal: 'https://admin.duosecurity.com/',
     logo: SOFTWARE_LOGOS.duo,
     accent: { from: '#115e59', to: '#22c55e' },
@@ -1122,7 +1123,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 305,
     used: 305,
     costPerSeat: 3,
-    renewal: '2025-05-30',
+    renewal: '2026-05-30',
     portal: 'https://login.barracudanetworks.com/',
     logo: SOFTWARE_LOGOS.barracuda,
     accent: { from: '#0284c7', to: '#0c4a6e' },
@@ -1140,7 +1141,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 320,
     used: 265,
     costPerSeat: 6,
-    renewal: '2025-08-15',
+    renewal: '2026-08-15',
     portal: 'https://keepersecurity.com/en_US/console/#login',
     logo: SOFTWARE_LOGOS.keeper,
     accent: { from: '#f59e0b', to: '#b45309' },
@@ -1158,7 +1159,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 90,
     used: 82,
     costPerSeat: 40,
-    renewal: '2025-03-20',
+    renewal: '2026-03-20',
     portal: 'https://citrix.cloud.com/',
     logo: SOFTWARE_LOGOS.citrix,
     accent: { from: '#312e81', to: '#7c3aed' },
@@ -1176,7 +1177,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 40,
     used: 35,
     costPerSeat: 25,
-    renewal: '2025-08-10',
+    renewal: '2026-08-10',
     portal: 'https://login.nuance.com/',
     logo: SOFTWARE_LOGOS.dragon,
     accent: { from: '#e11d48', to: '#fb923c' },
@@ -1194,7 +1195,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 305,
     used: 305,
     costPerSeat: 3,
-    renewal: '2025-11-30',
+    renewal: '2026-11-30',
     portal: 'https://protect.eset.com/',
     logo: SOFTWARE_LOGOS.eset,
     accent: { from: '#0ea5e9', to: '#0369a1' },
@@ -1212,7 +1213,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 305,
     used: 305,
     costPerSeat: 4,
-    renewal: '2025-11-30',
+    renewal: '2026-11-30',
     portal: 'https://protect.eset.com/',
     logo: SOFTWARE_LOGOS.eset,
     accent: { from: '#0f172a', to: '#22d3ee' },
@@ -1230,7 +1231,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 150,
     used: 154,
     costPerSeat: 28,
-    renewal: '2025-06-01',
+    renewal: '2026-06-01',
     portal: 'https://access.paylocity.com/',
     logo: SOFTWARE_LOGOS.hrms,
     accent: { from: '#9333ea', to: '#2563eb' },
@@ -1248,7 +1249,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 120,
     used: 104,
     costPerSeat: 5,
-    renewal: '2025-12-15',
+    renewal: '2026-12-15',
     portal: SOFTWARE_ADMIN_PORTALS['apple-bm'],
     logo: SOFTWARE_LOGOS['apple-bm'],
     accent: { from: '#0f172a', to: '#111827' },
@@ -1266,7 +1267,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 305,
     used: 305,
     costPerSeat: 4,
-    renewal: '2025-11-15',
+    renewal: '2026-11-15',
     portal: SOFTWARE_ADMIN_PORTALS.automate,
     logo: SOFTWARE_LOGOS.automate,
     accent: { from: '#0f766e', to: '#14b8a6' },
@@ -1284,7 +1285,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 80,
     used: 67,
     costPerSeat: 21,
-    renewal: '2025-12-05',
+    renewal: '2026-12-05',
     portal: SOFTWARE_ADMIN_PORTALS['it-glue'],
     logo: SOFTWARE_LOGOS.itglue,
     accent: { from: '#6d28d9', to: '#7c3aed' },
@@ -1302,7 +1303,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 260,
     used: 214,
     costPerSeat: 6,
-    renewal: '2025-08-25',
+    renewal: '2026-08-25',
     portal: SOFTWARE_ADMIN_PORTALS.maas360,
     logo: SOFTWARE_LOGOS.maas360,
     accent: { from: '#0ea5e9', to: '#075985' },
@@ -1320,7 +1321,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 140,
     used: 118,
     costPerSeat: 5,
-    renewal: '2025-07-20',
+    renewal: '2026-07-20',
     portal: SOFTWARE_ADMIN_PORTALS['samsung-knox'],
     logo: SOFTWARE_LOGOS.knox,
     accent: { from: '#0f172a', to: '#1e293b' },
@@ -1338,7 +1339,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 25,
     used: 23,
     costPerSeat: 110,
-    renewal: '2025-02-28',
+    renewal: '2026-02-28',
     portal: 'https://signin.intacct.com/',
     logo: SOFTWARE_LOGOS.sage,
     accent: { from: '#16a34a', to: '#15803d' },
@@ -1356,7 +1357,7 @@ const SOFTWARE_PORTFOLIO = [
     seats: 305,
     used: 305,
     costPerSeat: 7,
-    renewal: '2026-07-21',
+    renewal: '2027-07-21',
     portal: 'https://zoom.us/account',
     logo: SOFTWARE_LOGOS.zoom,
     accent: { from: '#2563eb', to: '#60a5fa' },
@@ -1472,7 +1473,7 @@ const mapNormalizedAssetRow = (row = {}, index = 0, employeeDirectory = {}) => {
   return normalizeAssetStatus(baseAsset);
 };
 
-const buildAssetsFromSheet = (assetRows = assetSheetData, employeeRows = employeeSheetData) => {
+const buildAssetsFromSheet = (assetRows = [], employeeRows = employeeSheetData) => {
   const employeeDirectory = buildEmployeeDirectory(employeeRows);
   return (assetRows || [])
     .filter((row) => {
@@ -1779,7 +1780,41 @@ const ensureStorageVersion = () => {
   }
 };
 
+const fetchRemoteStorage = async (key) => {
+  if (!API_STORAGE_BASE || typeof fetch === 'undefined') {
+    return null;
+  }
+  try {
+    const response = await fetch(`${API_STORAGE_BASE}/storage/${encodeURIComponent(key)}`, {
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      return null;
+    }
+    return await response.json();
+  } catch {
+    return null;
+  }
+};
+
+const persistRemoteStorage = async (key, value) => {
+  if (!API_STORAGE_BASE || typeof fetch === 'undefined') {
+    return;
+  }
+  try {
+    await fetch(`${API_STORAGE_BASE}/storage/${encodeURIComponent(key)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(value),
+    });
+  } catch {
+    // Best-effort; ignore offline/API errors.
+  }
+};
+
 const usePersistentState = (key, initialValue) => {
+  const initialRef = useRef(initialValue);
   const [state, setState] = useState(() => {
     if (typeof window === 'undefined') {
       return initialValue;
@@ -1795,6 +1830,31 @@ const usePersistentState = (key, initialValue) => {
   });
 
   useEffect(() => {
+    if (!API_STORAGE_BASE) {
+      return;
+    }
+    let cancelled = false;
+    const hydrateFromApi = async () => {
+      const remoteValue = await fetchRemoteStorage(key);
+      if (cancelled || remoteValue === null) {
+        return;
+      }
+      setState((prev) => {
+        const hasLocalData = (() => {
+          if (Array.isArray(prev)) return prev.length > 0;
+          if (prev && typeof prev === 'object') return Object.keys(prev).length > 0;
+          return Boolean(prev);
+        })();
+        return hasLocalData ? prev : remoteValue;
+      });
+    };
+    hydrateFromApi();
+    return () => {
+      cancelled = true;
+    };
+  }, [key]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') {
       return;
     }
@@ -1805,6 +1865,7 @@ const usePersistentState = (key, initialValue) => {
     } catch {
       // Ignore quota errors so the dashboard still works offline.
     }
+    persistRemoteStorage(key, state);
   }, [key, state]);
 
   return [state, setState];
@@ -2284,7 +2345,7 @@ const PrimaryNav = ({
             style={{ letterSpacing: '0.025em' }}
           >
             <Search className="h-4 w-4" />
-            Command palette
+            Search
           </button>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-4 overflow-x-auto pb-1">
@@ -2789,8 +2850,8 @@ const NetworkPrinterBoard = ({
           </div>
         </div>
       </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-100 text-left text-sm">
+      <div className="overflow-hidden">
+        <table className="w-full table-auto divide-y divide-slate-100 text-left text-sm">
           <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-widest text-slate-500">
             <tr>
               <th className="px-5 py-3">
@@ -4995,9 +5056,9 @@ const QrToolingPanel = ({
 const CommandPalette = ({ open, query, onQuery, results, onSelect, onClose }) => {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur">
-      <div className="mx-auto mt-16 w-full max-w-3xl rounded-3xl border border-slate-200 bg-white shadow-2xl">
-        <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
+    <div className="sticky top-4 z-30 mx-auto mt-3 w-full max-w-4xl px-4">
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-md shadow-slate-900/5">
+        <div className="flex items-center gap-2 px-4 py-3">
           <Search className="h-4 w-4 text-slate-400" />
           <input
             autoFocus
@@ -5015,11 +5076,12 @@ const CommandPalette = ({ open, query, onQuery, results, onSelect, onClose }) =>
             type="button"
             onClick={onClose}
             className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            aria-label="Close search"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="max-h-80 overflow-y-auto">
+        <div className="max-h-80 overflow-y-auto border-t border-slate-100">
           {results.length === 0 ? (
             <p className="px-4 py-3 text-xs text-slate-500">No matches. Try another name or serial.</p>
           ) : (
@@ -5227,225 +5289,236 @@ const AssetSpotlight = ({
   const statusLabel = asset ? getAssetDisplayStatus(asset) : 'Available';
   const qualityIssues = asset ? getAssetQualityIssues(asset) : [];
   const qualityScore = asset ? getAssetQualityScore(asset) : 100;
-  const approvalStatus = asset?.approvalStatus || 'Approved';
   const ready = isAssetReady(asset || {});
-  const automateUrl = getAutomateLink(asset);
   const automateEligible = isComputerAsset(asset);
+  const assetIdLabel = asset?.sheetId || asset?.serialNumber || asset?.assetName || (asset?.id ? `Asset-${asset.id}` : 'Asset');
 
   return (
     <div className="sticky top-6 rounded-3xl border border-slate-100 bg-white/80 p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-base font-semibold text-slate-900">{asset ? 'Live snapshot' : 'Choose a device'}</p>
-        </div>
-        {asset && !ready && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onApproveIntake?.(asset)}
-              className="inline-flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 hover:border-emerald-200"
-              type="button"
-            >
-              <Check className="h-3.5 w-3.5" />
-              Approve intake
-            </button>
-          </div>
-        )}
-      </div>
-
       {asset ? (
         <>
-          <div className="mt-6 rounded-2xl bg-slate-900 p-5 text-white">
-            <div className="flex items-center gap-3">
+          {/* Hero Card with Asset ID and Assigned To prominently displayed */}
+          <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 text-white shadow-lg">
+            <div className="mb-4 flex items-start gap-3">
               <div className="rounded-2xl bg-white/10 p-3 ring-1 ring-white/20 shadow-inner">
-                <Icon className="h-6 w-6 text-white drop-shadow" />
+                <Icon className="h-8 w-8 text-white drop-shadow" />
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-xs uppercase tracking-[0.25rem] text-white/60">{asset.type}</p>
-                <p className="text-lg font-semibold leading-tight text-white">{asset.assetName}</p>
-                <p className="text-xs text-white/70">{asset.model || 'Model not set'}</p>
+                <p className="text-sm text-white/70">{asset.model || 'Model not set'}</p>
               </div>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-3 py-1">
+            
+            {/* Most Important Info: Asset ID and Assignment */}
+            <div className="grid gap-4 sm:grid-cols-2 border-t border-white/10 pt-4">
+              <div>
+                <p className="text-xs uppercase tracking-widest text-white/50 mb-1">Asset ID</p>
+                <div className="flex items-center gap-2">
+                  <Tag className="h-5 w-5 text-blue-300" />
+                  <p className="text-2xl font-bold text-white">{assetIdLabel}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-widest text-white/50 mb-1">Assigned To</p>
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-emerald-300" />
+                  <p className="text-2xl font-bold text-emerald-100">{asset.assignedTo || 'Unassigned'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Status Badges */}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white">
                 <ShieldCheck className="h-3.5 w-3.5" />
                 {statusLabel}
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-3 py-1">
-                <Sparkles className="h-3.5 w-3.5" />
-                {ready ? 'Ready' : `${qualityScore}%`}
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white">
+                <MapPin className="h-3.5 w-3.5" />
+                {asset.location || 'Location not set'}
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-3 py-1">
-                <Sparkles className="h-3.5 w-3.5" />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white">
+                <DollarSign className="h-3.5 w-3.5" />
                 {formatCurrency(asset.cost)}
               </span>
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+
+          {/* Primary Actions */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => onEdit?.(asset)}
+              className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
+            >
+              <Edit2 className="h-4 w-4" />
+              Edit Asset
+            </button>
+            {!ready && (
+              <button
+                onClick={() => onApproveIntake?.(asset)}
+                className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
+                type="button"
+              >
+                <Check className="h-4 w-4" />
+                Approve Intake
+              </button>
+            )}
+            {automateEligible && (
+              <button
+                type="button"
+                onClick={() => onOpenAutomate?.(asset)}
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-blue-300 hover:text-blue-600"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Open in Automate
+              </button>
+            )}
             {isLaptopAsset(asset) && (
               <button
                 type="button"
                 onClick={() => onRepair?.(asset)}
-                className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 transition hover:border-amber-300 hover:bg-amber-100"
+                className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-800 hover:bg-amber-100"
               >
                 <HardDrive className="h-4 w-4" />
                 Repair
               </button>
             )}
           </div>
-          <dl className="mt-4 space-y-4 text-sm">
-            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
-              <div>
-                <dt className="text-xs uppercase tracking-widest text-slate-400">Assigned to</dt>
-                <dd className="text-base font-semibold text-slate-900">{asset.assignedTo || 'Unassigned'}</dd>
+
+          {/* Asset Details */}
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Details</p>
+            <dl className="space-y-3 text-sm">
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <span className="text-slate-600">Serial Number</span>
+                <span className="font-semibold text-slate-900">{asset.serialNumber || 'Not set'}</span>
               </div>
-              <div className="text-right text-xs text-slate-400">
-                {statusLabel === 'Checked Out' ? `Checked out ${formatDate(asset.checkOutDate)}` : statusLabel}
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <span className="text-slate-600">Department</span>
+                <span className="font-semibold text-slate-900">{asset.department || 'Not set'}</span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <span className="text-slate-600">QR Code</span>
+                <span className="font-semibold text-slate-900">{asset.qrCode || 'Not generated'}</span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <span className="text-slate-600">Purchase Date</span>
+                <span className="font-semibold text-slate-900">{formatDate(asset.purchaseDate)}</span>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-slate-600">Warranty Expires</span>
+                <span className="font-semibold text-slate-900">{formatDate(asset.warrantyExpiry)}</span>
+              </div>
+            </dl>
+          </div>
+
+          {/* Owner Contact */}
+          {(ownerContact?.phone || ownerContact?.email) && (
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Contact Owner</p>
+              <div className="flex flex-wrap gap-2">
+                {ownerContact?.phone && (
+                  <a
+                    href={`tel:${ownerContact.phone}`}
+                    className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    <PhoneCall className="h-4 w-4" />
+                    {ownerContact.phone}
+                  </a>
+                )}
+                {ownerContact?.email && (
+                  <a
+                    href={`mailto:${ownerContact.email}`}
+                    className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                  >
+                    <Mail className="h-4 w-4" />
+                    {ownerContact.email}
+                  </a>
+                )}
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-slate-600">
-                <MapPin className="h-4 w-4 text-slate-400" />
-                <span>{asset.location || 'Not set'}</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-600">
-                <Tag className="h-4 w-4 text-slate-400" />
-                <span>{asset.qrCode || 'Not generated'}</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-slate-600">
-                <CalendarClock className="h-4 w-4 text-slate-400" />
-                <span>Purchased {formatDate(asset.purchaseDate)}</span>
-              </div>
-              <div className="text-slate-600">Warranty ends {formatDate(asset.warrantyExpiry)}</div>
-            </div>
-            <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/80 p-3 text-xs text-slate-700">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-slate-800">Intake readiness</span>
-                <span
-                  className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${ready ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}
-                >
-                  {ready ? 'Ready' : approvalStatus}
+          )}
+
+          {/* Quality Check for Unapproved Assets */}
+          {!ready && (
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-amber-700">Intake Readiness</p>
+                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+                  {qualityScore}% Complete
                 </span>
               </div>
-              {qualityIssues.length === 0 ? (
-                <p className="mt-2 text-slate-600">All critical fields captured. You can approve and deploy.</p>
-              ) : (
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600">
+              {qualityIssues.length > 0 && (
+                <ul className="space-y-1 text-xs text-amber-800">
                   {qualityIssues.map((issue) => (
-                    <li key={issue}>{issue}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            {asset.type === 'Printer' && (
-              <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.3rem] text-blue-400">Printer consumables</p>
-                <div className="mt-2 flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Toner type</span>
-                  <span className="text-sm font-semibold text-slate-900">
-                    {getPrinterToner(asset) || 'Not specified'}
-                  </span>
-                </div>
-              </div>
-            )}
-          </dl>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            {automateEligible && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => onOpenAutomate?.(asset)}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
-                >
-                  Open in Automate
-                  <ExternalLink className="h-4 w-4" />
-                </button>
-                <a
-                  href={automateUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-600"
-                  title="Open directly (no pre-warm)"
-                >
-                  Direct link
-                </a>
-              </>
-            )}
-            <button
-              type="button"
-              onClick={() => onEdit?.(asset)}
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600"
-            >
-              Edit / Update asset
-              <Edit2 className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-slate-100 bg-white/70 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">Repair history</p>
-              {repairHistory.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-500">No maintenance records for this asset.</p>
-              ) : (
-                <ul className="mt-3 space-y-3">
-                  {repairHistory.map((item) => (
-                    <li key={item.id} className="rounded-xl bg-slate-50 p-3 text-sm">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="font-semibold text-slate-800">{item.type}</p>
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            item.status === 'Completed' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
-                          }`}
-                        >
-                          {item.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500">{formatDate(item.date)}</p>
-                      <p className="mt-1 text-xs text-slate-500">{item.description}</p>
+                    <li key={issue} className="flex items-start gap-2">
+                      <span className="text-amber-500 mt-0.5">•</span>
+                      <span>{issue}</span>
                     </li>
                   ))}
                 </ul>
               )}
             </div>
-            <div className="rounded-2xl border border-slate-100 bg-white/70 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">Owner history</p>
-            {ownerHistory.length === 0 ? (
-              <p className="mt-3 text-sm text-slate-500">No ownership changes recorded.</p>
-            ) : (
-              <ul className="mt-3 space-y-3">
-                {ownerHistory.map((entry) => (
-                  <li key={entry.id} className="rounded-xl bg-slate-50 p-3 text-sm">
-                    <p className="font-semibold text-slate-800">
-                        {entry.action} &rarr; {entry.user || 'Unassigned'}
-                    </p>
-                    <p className="text-xs text-slate-500">{formatDate(entry.date)}</p>
-                    {entry.notes && <p className="mt-1 text-xs text-slate-500">{entry.notes}</p>}
-                  </li>
-                ))}
-                </ul>
+          )}
+
+          {/* Printer-Specific Info */}
+          {asset.type === 'Printer' && (
+            <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-700 mb-2">Consumables</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-700">Toner Type</span>
+                <span className="text-sm font-semibold text-slate-900">
+                  {getPrinterToner(asset) || 'Not specified'}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* History Sections - Only show if there's data */}
+          {(repairHistory.length > 0 || ownerHistory.length > 0) && (
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              {repairHistory.length > 0 && (
+                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Repair History</p>
+                  <ul className="space-y-2">
+                    {repairHistory.map((item) => (
+                      <li key={item.id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <p className="text-sm font-semibold text-slate-900">{item.type}</p>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                              item.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500">{formatDate(item.date)}</p>
+                        {item.description && <p className="mt-1 text-xs text-slate-600">{item.description}</p>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {ownerHistory.length > 0 && (
+                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Owner History</p>
+                  <ul className="space-y-2">
+                    {ownerHistory.map((entry) => (
+                      <li key={entry.id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                        <p className="text-sm font-semibold text-slate-900">
+                          {entry.action} → {entry.user || 'Unassigned'}
+                        </p>
+                        <p className="text-xs text-slate-500">{formatDate(entry.date)}</p>
+                        {entry.notes && <p className="mt-1 text-xs text-slate-600">{entry.notes}</p>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
-          </div>
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
-            <button
-              type="button"
-              onClick={() => window.open(`tel:${ownerContact?.phone || ''}`, '_self')}
-              disabled={!ownerContact?.phone}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <PhoneCall className="h-4 w-4" />
-              Call owner
-            </button>
-            <button
-              type="button"
-              onClick={() => ownerContact?.email && window.open(`mailto:${ownerContact.email}`, '_self')}
-              disabled={!ownerContact?.email}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Mail className="h-4 w-4" />
-              Email owner
-            </button>
-          </div>
+          )}
         </>
       ) : (
         <div className="mt-6 rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
@@ -6380,6 +6453,7 @@ const App = () => {
   const [history, setHistory] = usePersistentState(STORAGE_KEYS.history, BASE_HISTORY);
   const [softwareSuites, setSoftwareSuites] = usePersistentState(STORAGE_KEYS.licenses, BASE_LICENSES);
   const [repairTickets, setRepairTickets] = usePersistentState(STORAGE_KEYS.laptopRepairs, []);
+  const assetCount = Array.isArray(assets) ? assets.length : 0;
   const [isMobile, setIsMobile] = useState(false);
   const [clearedWarrantyAlerts, setClearedWarrantyAlerts] = usePersistentState(
     STORAGE_KEYS.clearedWarrantyAlerts,
@@ -6903,6 +6977,24 @@ const App = () => {
   useEffect(() => {
     let cancelled = false;
     const loadAssetsFromWorkbook = async () => {
+      const hasExistingAssets = (() => {
+        if (assetCount > 0) {
+          return true;
+        }
+        if (typeof window === 'undefined') {
+          return false;
+        }
+        try {
+          const saved = window.localStorage.getItem(STORAGE_KEYS.assets);
+          const parsed = JSON.parse(saved || 'null');
+          return Array.isArray(parsed) && parsed.length > 0;
+        } catch {
+          return false;
+        }
+      })();
+      if (hasExistingAssets) {
+        return;
+      }
       try {
         const assetSources = [EXCEL_EXPORTS.assets, '/Tables/Asset List 11-18-25.xlsx', '/Tables/Asset%20List%2011-18-25.xlsx'];
         let buffer = null;
@@ -6940,7 +7032,7 @@ const App = () => {
     return () => {
       cancelled = true;
     };
-  }, [setAssets, setAssetPage]);
+  }, [assetCount, setAssets, setAssetPage]);
   useEffect(() => {
     let cancelled = false;
     const syncDatesFromWorkbook = async () => {
@@ -8695,8 +8787,10 @@ const App = () => {
         return;
       }
       if (item.kind === 'employee') {
-        setCommandPaletteOpen(false);
         setActivePage('Employees');
+        setEmployeeSearch(item.label || '');
+        setEmployeeFilters({ department: 'all', location: 'all', jobTitle: 'all' });
+        setEmployeePage(1);
         setExpandedEmployeeId(item.id);
         setTimeout(() => {
           const el = document.getElementById(`employee-card-${item.id}`);
@@ -8707,7 +8801,17 @@ const App = () => {
         }, 300);
       }
     },
-    [assets, handleEditPrinter, handleOpenAutomate, networkPrinters],
+    [
+      assets,
+      handleEditPrinter,
+      handleOpenAutomate,
+      networkPrinters,
+      setActivePage,
+      setEmployeeFilters,
+      setEmployeePage,
+      setEmployeeSearch,
+      setExpandedEmployeeId,
+    ],
   );
 
   const handleSaveAsset = async (payload) => {
@@ -9207,7 +9311,7 @@ const App = () => {
 
   const menuUtilityItems = [
     {
-      label: 'Command palette',
+      label: 'Search',
       onClick: () => {
         setCommandPaletteOpen(true);
         setMenuOpen(false);
@@ -9726,6 +9830,14 @@ const App = () => {
             <option key={`title-suggestion-${title}`} value={title} />
           ))}
         </datalist>
+        <CommandPalette
+          open={commandPaletteOpen}
+          query={commandQuery}
+          onQuery={setCommandQuery}
+          results={commandResults}
+          onSelect={handleCommandSelect}
+          onClose={() => setCommandPaletteOpen(false)}
+        />
         {isOffline && (
           <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Offline mode: changes will queue locally until you reconnect.
@@ -10611,74 +10723,76 @@ const App = () => {
         )}
 
         {activePage === 'Vendors' && (
-          <>
-            <section
-              id="vendors-hero"
-              className={`hero-shell relative mb-8 overflow-hidden rounded-[2.5rem] border p-8 shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ${
-                isDarkMode
-                  ? 'border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
-                  : 'border-slate-200 bg-gradient-to-br from-white via-emerald-50 to-teal-100 text-slate-900 ring-emerald-100'
-              }`}
-              style={heroAccentStyle}
-            >
-              <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
-              <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
-              <div className="grid gap-8 lg:grid-cols-2">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/60">Vendor galaxy</p>
-                  <h2 className="mt-4 text-4xl font-semibold leading-tight">
-                    Bold partnerships powering laptops, networks, and carrier logistics.
-                  </h2>
-                  <p className="mt-3 text-sm text-white/80">
-                    Showcase vendor accountability with live device counts, SLAs, and lightning-fast contacts from a single pane.
-                  </p>
-                  <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <div className="rounded-2xl bg-white/10 p-4 text-center">
-                      <p className="text-xs uppercase tracking-widest text-white/70">Vendors engaged</p>
-                      <p className="mt-2 text-3xl font-semibold">{vendorProfiles.length}</p>
-                    </div>
-                    <div className="rounded-2xl bg-white/10 p-4 text-center">
-                      <p className="text-xs uppercase tracking-widest text-white/70">Devices covered</p>
-                      <p className="mt-2 text-3xl font-semibold">{vendorTotals.devices}</p>
-                    </div>
-                    <div className="rounded-2xl bg-white/10 p-4 text-center">
-                      <p className="text-xs uppercase tracking-widest text-white/70">Active today</p>
-                      <p className="mt-2 text-3xl font-semibold text-emerald-300">{vendorTotals.active}</p>
+          <div className="overflow-x-hidden">
+            <div className="overflow-x-hidden">
+              <section
+                id="vendors-hero"
+                className={`hero-shell relative mb-8 w-full max-w-full overflow-hidden rounded-[2.5rem] border p-8 shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ${
+                  isDarkMode
+                    ? 'border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
+                    : 'border-slate-200 bg-gradient-to-br from-white via-emerald-50 to-teal-100 text-slate-900 ring-emerald-100'
+                }`}
+                style={heroAccentStyle}
+              >
+                <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
+                <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
+                <div className="grid max-w-full gap-8 overflow-hidden lg:grid-cols-2">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/60">Vendor galaxy</p>
+                    <h2 className="mt-4 text-4xl font-semibold leading-tight">
+                      Bold partnerships powering laptops, networks, and carrier logistics.
+                    </h2>
+                    <p className="mt-3 text-sm text-white/80">
+                      Showcase vendor accountability with live device counts, SLAs, and lightning-fast contacts from a single pane.
+                    </p>
+                    <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="rounded-2xl bg-white/10 p-4 text-center">
+                        <p className="text-xs uppercase tracking-widest text-white/70">Vendors engaged</p>
+                        <p className="mt-2 text-3xl font-semibold">{vendorProfiles.length}</p>
+                      </div>
+                      <div className="rounded-2xl bg-white/10 p-4 text-center">
+                        <p className="text-xs uppercase tracking-widest text-white/70">Devices covered</p>
+                        <p className="mt-2 text-3xl font-semibold">{vendorTotals.devices}</p>
+                      </div>
+                      <div className="rounded-2xl bg-white/10 p-4 text-center">
+                        <p className="text-xs uppercase tracking-widest text-white/70">Active today</p>
+                        <p className="mt-2 text-3xl font-semibold text-emerald-300">{vendorTotals.active}</p>
+                      </div>
                     </div>
                   </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {vendorProfiles.slice(0, 4).map((vendor) => (
+                      <a
+                        key={`vendor-mosaic-${vendor.id}`}
+                        className="relative block h-36 overflow-hidden rounded-3xl border border-white/15 bg-white/5 backdrop-blur transition hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(0,0,0,0.35)] hover:border-cyan-200/60"
+                        href={
+                          vendor.contact?.url ||
+                          (vendor.id === 'brother'
+                            ? 'https://weaverassociatesinc.infoflopay.com/'
+                            : vendor.id === 'canon'
+                              ? 'https://www.colonyproducts.com/'
+                              : vendor.id === 'dell'
+                                ? 'https://www.dell.com/'
+                                : vendor.id === 'verizon'
+                                  ? 'https://www.verizon.com/business/my-business/'
+                                  : vendor.contact?.href || '#')
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <img src={vendor.image} alt={`${vendor.name} collage`} className="absolute inset-0 h-full w-full object-cover opacity-70" loading="lazy" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-900/50 to-blue-900/65" />
+                        <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-cyan-400/30 blur-3xl" />
+                        <p className="absolute bottom-4 left-4 text-lg font-semibold text-cyan-100 leading-tight drop-shadow-sm">
+                          {vendor.name}
+                        </p>
+                      </a>
+                    ))}
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  {vendorProfiles.slice(0, 4).map((vendor) => (
-                    <a
-                      key={`vendor-mosaic-${vendor.id}`}
-                      className="relative block h-36 overflow-hidden rounded-3xl border border-white/15 bg-white/5 backdrop-blur transition hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(0,0,0,0.35)] hover:border-cyan-200/60"
-                      href={
-                        vendor.contact?.url ||
-                        (vendor.id === 'brother'
-                          ? 'https://weaverassociatesinc.infoflopay.com/'
-                          : vendor.id === 'canon'
-                            ? 'https://www.colonyproducts.com/'
-                            : vendor.id === 'dell'
-                              ? 'https://www.dell.com/'
-                              : vendor.id === 'verizon'
-                                ? 'https://www.verizon.com/business/my-business/'
-                                : vendor.contact?.href || '#')
-                      }
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <img src={vendor.image} alt={`${vendor.name} collage`} className="absolute inset-0 h-full w-full object-cover opacity-70" loading="lazy" />
-                      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-900/50 to-blue-900/65" />
-                      <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-cyan-400/30 blur-3xl" />
-                      <p className="absolute bottom-4 left-4 text-lg font-semibold text-cyan-100 leading-tight drop-shadow-sm">
-                        {vendor.name}
-                      </p>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </section>
+              </section>
+            </div>
 
             <section className="mb-8 grid gap-6 lg:grid-cols-[2fr,1fr]">
               <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
@@ -10712,7 +10826,7 @@ const App = () => {
               </div>
             </section>
 
-            <section className="mb-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
+            <section className="mb-8 space-y-6">
               <NetworkPrinterBoard
                 printers={networkPrinters}
                 title="Network Printers and Copiers"
@@ -10736,7 +10850,7 @@ const App = () => {
                 <VendorCard key={vendor.id} vendor={vendor} />
               ))}
             </section>
-          </>
+          </div>
         )}
 
         {activePage === 'Software' && (
@@ -11082,14 +11196,6 @@ const App = () => {
         </div>
       )}
       {printerForm && <PrinterFormModal printer={printerForm} onSubmit={handleSavePrinter} onCancel={() => setPrinterForm(null)} />}
-      <CommandPalette
-        open={commandPaletteOpen}
-        query={commandQuery}
-        onQuery={setCommandQuery}
-        results={commandResults}
-        onSelect={handleCommandSelect}
-        onClose={() => setCommandPaletteOpen(false)}
-      />
       {flashMessage && (
         <div className="fixed bottom-6 right-6 z-50 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-lg">
           {flashMessage}
