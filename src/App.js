@@ -227,6 +227,17 @@ const LIGHT_MODE_STYLES = `
   }
 `;
 
+const PAGE_ACCENTS = {
+  Overview: { from: '#dbeafe', to: '#bfdbfe' },
+  Hardware: { from: '#ecfdf3', to: '#bbf7d0' },
+  Repairs: { from: '#fff7ed', to: '#fed7aa' },
+  Employees: { from: '#fef3c7', to: '#fde68a' },
+  Reports: { from: '#f3e8ff', to: '#e9d5ff' },
+  Vendors: { from: '#e0f2fe', to: '#bae6fd' },
+  Software: { from: '#ede9fe', to: '#c7d2fe' },
+  default: { from: '#e2e8f0', to: '#e5e7eb' },
+};
+
 const STORAGE_KEYS = {
   assets: 'uds_assets',
   licenses: 'uds_licenses',
@@ -1018,9 +1029,9 @@ const SOFTWARE_PORTFOLIO = [
     vendor: 'Microsoft',
     owner: 'IT Operations',
     category: 'Productivity & Collaboration',
-    seats: 480,
-    used: 452,
-    costPerSeat: 32,
+    seats: 305,
+    used: 305,
+    costPerSeat: 4.5,
     renewal: '2025-12-31',
     portal: 'https://admin.microsoft.com/',
     logo: SOFTWARE_LOGOS.m365,
@@ -1036,9 +1047,9 @@ const SOFTWARE_PORTFOLIO = [
     vendor: 'Adobe',
     owner: 'Creative Services',
     category: 'Creative Suite',
-    seats: 65,
-    used: 58,
-    costPerSeat: 55,
+    seats: 305,
+    used: 305,
+    costPerSeat: 20,
     renewal: '2025-09-01',
     portal: 'https://adminconsole.adobe.com/',
     logo: SOFTWARE_LOGOS.adobe,
@@ -1072,9 +1083,9 @@ const SOFTWARE_PORTFOLIO = [
     vendor: 'Cisco',
     owner: 'Infrastructure',
     category: 'Network & VPN',
-    seats: 220,
-    used: 205,
-    costPerSeat: 18,
+    seats: 305,
+    used: 305,
+    costPerSeat: 5,
     renewal: '2025-07-01',
     portal: 'https://dashboard.umbrella.com/',
     logo: SOFTWARE_LOGOS.cisco,
@@ -1090,9 +1101,9 @@ const SOFTWARE_PORTFOLIO = [
     vendor: 'Cisco',
     owner: 'Security Operations',
     category: 'Identity & MFA',
-    seats: 480,
-    used: 458,
-    costPerSeat: 4,
+    seats: 305,
+    used: 305,
+    costPerSeat: 1.5,
     renewal: '2025-10-01',
     portal: 'https://admin.duosecurity.com/',
     logo: SOFTWARE_LOGOS.duo,
@@ -1108,9 +1119,9 @@ const SOFTWARE_PORTFOLIO = [
     vendor: 'Barracuda Networks',
     owner: 'Security Operations',
     category: 'Security',
-    seats: 480,
-    used: 465,
-    costPerSeat: 6,
+    seats: 305,
+    used: 305,
+    costPerSeat: 3,
     renewal: '2025-05-30',
     portal: 'https://login.barracudanetworks.com/',
     logo: SOFTWARE_LOGOS.barracuda,
@@ -1180,9 +1191,9 @@ const SOFTWARE_PORTFOLIO = [
     vendor: 'ESET',
     owner: 'Infrastructure',
     category: 'Endpoint Protection',
-    seats: 520,
-    used: 503,
-    costPerSeat: 7,
+    seats: 305,
+    used: 305,
+    costPerSeat: 3,
     renewal: '2025-11-30',
     portal: 'https://protect.eset.com/',
     logo: SOFTWARE_LOGOS.eset,
@@ -1198,9 +1209,9 @@ const SOFTWARE_PORTFOLIO = [
     vendor: 'ESET',
     owner: 'Infrastructure',
     category: 'Endpoint Protection',
-    seats: 420,
-    used: 318,
-    costPerSeat: 8,
+    seats: 305,
+    used: 305,
+    costPerSeat: 4,
     renewal: '2025-11-30',
     portal: 'https://protect.eset.com/',
     logo: SOFTWARE_LOGOS.eset,
@@ -1252,9 +1263,9 @@ const SOFTWARE_PORTFOLIO = [
     vendor: 'ConnectWise',
     owner: 'Infrastructure',
     category: 'RMM & Automation',
-    seats: 520,
-    used: 508,
-    costPerSeat: 9,
+    seats: 305,
+    used: 305,
+    costPerSeat: 4,
     renewal: '2025-11-15',
     portal: SOFTWARE_ADMIN_PORTALS.automate,
     logo: SOFTWARE_LOGOS.automate,
@@ -1342,10 +1353,9 @@ const SOFTWARE_PORTFOLIO = [
     vendor: 'Zoom',
     owner: 'IT Operations',
     category: 'Meetings & UC',
-    seats: 300,
-    used: 257,
-    annualCost: 48534,
-    costPerSeat: 162,
+    seats: 305,
+    used: 305,
+    costPerSeat: 7,
     renewal: '2026-07-21',
     portal: 'https://zoom.us/account',
     logo: SOFTWARE_LOGOS.zoom,
@@ -1729,6 +1739,10 @@ const computeSheetInsights = (assets) => {
   const locationCounts = {};
   let remoteAssignments = 0;
   const counts = assets.reduce((acc, asset) => {
+    const status = getAssetDisplayStatus(asset);
+    if (status === 'Retired') {
+      return acc;
+    }
     acc[asset.type] = (acc[asset.type] || 0) + 1;
     const key = asset.location || 'Unassigned';
     locationCounts[key] = (locationCounts[key] || 0) + 1;
@@ -1743,7 +1757,8 @@ const computeSheetInsights = (assets) => {
     .slice(0, 3)
     .map(([location, count]) => ({ location, count }));
 
-  const remoteShare = assets.length ? Math.round((remoteAssignments / assets.length) * 100) : 0;
+  const activeCount = Object.values(counts).reduce((sum, value) => sum + value, 0);
+  const remoteShare = activeCount ? Math.round((remoteAssignments / activeCount) * 100) : 0;
 
   return { counts, topLocations, remoteShare };
 };
@@ -2312,34 +2327,6 @@ const QuickActionCard = ({ title, description, icon: Icon, actionLabel, onAction
       {actionLabel}
       <ArrowRightLeft className="h-4 w-4" />
     </button>
-  </div>
-);
-
-const EmployeeSummaryCard = ({ total = 0, departments = 0, onAdd }) => (
-  <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-400">Employees</p>
-        <p className="mt-2 text-2xl font-semibold text-slate-900">{total}</p>
-        <p className="text-sm text-slate-500">{departments} departments</p>
-      </div>
-      <div className="flex items-center gap-2 text-slate-500">
-        <span className="h-10 w-10 rounded-2xl bg-blue-50 p-2 text-blue-600">
-          <Users className="h-full w-full" />
-        </span>
-      </div>
-    </div>
-    <div className="mt-4 flex flex-wrap gap-2">
-      <button
-        type="button"
-        onClick={onAdd}
-        className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-500"
-      >
-        <Plus className="h-4 w-4" />
-        Add employee
-      </button>
-      <p className="text-xs text-slate-500">Keep records current before checkouts and audits.</p>
-    </div>
   </div>
 );
 
@@ -6545,10 +6532,17 @@ const App = () => {
     const loadOrgChart = async () => {
       try {
         const fileName = encodeURIComponent('HUB and Org Chart 11-25.xlsx');
-        const response = await fetch(`${PUBLIC_URL}/tables/${fileName}`);
-        if (!response.ok) {
-          return;
+        // Try both folder casings to avoid 404s on case-sensitive hosts.
+        const orgChartUrls = [`${PUBLIC_URL}/Tables/${fileName}`, `${PUBLIC_URL}/tables/${fileName}`];
+        let response = null;
+        for (const url of orgChartUrls) {
+          const attempt = await fetch(url);
+          if (attempt.ok) {
+            response = attempt;
+            break;
+          }
         }
+        if (!response?.ok) return;
         const buffer = await response.arrayBuffer();
         const workbook = XLSX.read(buffer, { type: 'array' });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -6886,6 +6880,14 @@ const App = () => {
     }
     return saved === 'true';
   });
+  const pageAccent = useMemo(() => PAGE_ACCENTS[activePage] || PAGE_ACCENTS.default, [activePage]);
+  const heroAccentStyle = useMemo(
+    () => ({
+      borderColor: isDarkMode ? `${pageAccent.to}55` : `${pageAccent.to}80`,
+      boxShadow: `0 24px 80px ${pageAccent.to}33`,
+    }),
+    [isDarkMode, pageAccent],
+  );
   const videoRef = useRef(null);
   const fallbackCanvasRef = useRef(null);
   const scanLoopRef = useRef(null);
@@ -7478,6 +7480,22 @@ const App = () => {
       const isUpmc = employee.department === 'upmc' || employee.department === 'hcbsupmc';
       if (isUpmc) {
         return;
+      }
+      const hrmsSuite = suiteById.hrms;
+      const isHr = employee.department === 'humanresources';
+      const isFin = employee.department === 'financialservices';
+      if ((isHr || isFin) && hrmsSuite) {
+        if (!seededAssignments[employee.key]) seededAssignments[employee.key] = [];
+        const alreadyHasHrms = seededAssignments[employee.key].some((entry) => entry.suiteId === 'hrms');
+        if (!alreadyHasHrms) {
+          seededAssignments[employee.key].push({
+            suiteId: 'hrms',
+            name: hrmsSuite.software || 'HRMS',
+            vendor: hrmsSuite.vendor,
+            licenseKey: hrmsSuite.licenseKey,
+            expiryDate: hrmsSuite.expiryDate || hrmsSuite.renewal || '',
+          });
+        }
       }
       if (employee.role === 'accessibilitydesigner') {
         const autocadSuite = suiteById.autocad;
@@ -9080,6 +9098,13 @@ const App = () => {
       onAction: () => setAssetForm(defaultAsset),
     },
     {
+      title: 'Add employee record',
+      description: 'Keep people data current before checkouts and approvals.',
+      icon: Users,
+      actionLabel: 'Add employee',
+      onAction: handleAddEmployee,
+    },
+    {
       title: 'Scan asset label',
       description: 'Use your camera to jump into a device record without scrolling the table.',
       icon: Scan,
@@ -9092,13 +9117,6 @@ const App = () => {
       icon: CalendarClock,
       actionLabel: 'Open alerts',
       onAction: () => setWarrantyModalOpen(true),
-    },
-    {
-      title: 'Share executive snapshot',
-      description: 'Export JSON for finance, compliance, or reporting workflows.',
-      icon: Share2,
-      actionLabel: 'Export data',
-      onAction: handleExport,
     },
   ];
 
@@ -9723,6 +9741,7 @@ const App = () => {
                 ? 'border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
                 : 'border border-slate-200 bg-gradient-to-br from-white via-blue-50 to-sky-100 text-slate-900 ring-blue-100'
             }`}
+            style={heroAccentStyle}
           >
             <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
             <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
@@ -9809,6 +9828,7 @@ const App = () => {
                 ? 'border-slate-900/70 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900 text-white ring-blue-500/15'
                 : 'border-slate-200 bg-gradient-to-br from-white via-sky-50 to-blue-100 text-slate-900 ring-blue-100'
             }`}
+            style={heroAccentStyle}
           >
             <div className="absolute inset-0 opacity-40">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.2),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(236,72,153,0.18),transparent_30%)] blur-3xl" />
@@ -9946,7 +9966,13 @@ const App = () => {
 
         <section id="overview-people" className="mb-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
           <SpendHotspotsCard costByDepartment={costByDepartment} topLocations={sheetInsights.topLocations} />
-          <EmployeeSummaryCard total={employeeGallery.length} departments={employeeDepartmentCount} onAdd={handleAddEmployee} />
+          <QuickActionCard
+            title="Add employee record"
+            description="Keep headcount current before checkouts and audits."
+            icon={Users}
+            actionLabel="Add employee"
+            onAction={handleAddEmployee}
+          />
         </section>
 
         <section id="overview-actions" className="mb-8 grid gap-6 lg:grid-cols-[2fr,1fr]">
@@ -9985,6 +10011,7 @@ const App = () => {
                   ? 'border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
                   : 'border-slate-200 bg-gradient-to-br from-white via-blue-50 to-sky-100 text-slate-900 ring-blue-100'
               }`}
+              style={heroAccentStyle}
             >
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
@@ -10149,6 +10176,7 @@ const App = () => {
                   ? 'border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
                   : 'border-slate-200 bg-gradient-to-br from-white via-blue-50 to-sky-100 text-slate-900 ring-blue-100'
               }`}
+              style={heroAccentStyle}
             >
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
@@ -10234,6 +10262,7 @@ const App = () => {
                   ? 'border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
                   : 'border-slate-200 bg-gradient-to-br from-white via-indigo-50 to-purple-100 text-slate-900 ring-indigo-100'
               }`}
+              style={heroAccentStyle}
             >
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
@@ -10439,38 +10468,42 @@ const App = () => {
                   <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">
                     Supervisor: {terminationProfile?.supervisor || 'Not set'}
                   </span>
-                  <button
-                    type="button"
-                    disabled={!terminationProfile?.supervisorEmail}
-                    onClick={() => {
-                      if (!terminationProfile?.supervisorEmail) return;
-                      const subject = encodeURIComponent(`Offboarding ${terminationEmployee}`);
-                      const assetLines =
-                        terminationAssets.length === 0
-                          ? ['- No assets found for this employee in the system.']
-                          : terminationAssets.map((asset) => {
-                              const name = asset.assetName || asset.model || `Asset ${asset.id}`;
-                              const type = asset.type || 'Device';
-                              const serial = asset.serialNumber || 'No serial';
-                              return `- ${name} (${type}, Serial: ${serial})`;
-                            });
-                      const supervisorFirstName = (terminationProfile.supervisor || '').split(' ')[0];
-                      const body = encodeURIComponent(
-                        `Hi ${supervisorFirstName || terminationProfile.supervisor || ''},\n\nI hope you're doing well! I wanted to reach out regarding ${terminationEmployee}'s offboarding process.\n\nWould you mind helping us coordinate the return of the following assets? Once we have them back, our IT team will take care of wrapping up account access and permissions.\n\nAssets to return:\n${assetLines.join(
-                          '\n',
-                        )}\n\nThanks so much for your help with this! Let me know if you have any questions.\n\nBest,`,
-                      );
-                      window.location.href = `mailto:${terminationProfile.supervisorEmail}?subject=${subject}&body=${body}`;
-                    }}
-                    className={`inline-flex items-center gap-2 rounded-2xl px-3 py-1 font-semibold transition ${
-                      terminationProfile?.supervisorEmail
-                        ? 'border border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300'
-                        : 'border border-slate-200 bg-slate-100 text-slate-400'
-                    }`}
-                  >
-                    <Mail className="h-4 w-4" />
-                    Email Supervisor
-                  </button>
+                  {terminationProfile?.supervisorEmail ? (
+                    <a
+                      href={(() => {
+                        const subject = encodeURIComponent(`Offboarding ${terminationEmployee}`);
+                        const assetLines =
+                          terminationAssets.length === 0
+                            ? ['- No assets found for this employee in the system.']
+                            : terminationAssets.map((asset) => {
+                                const name = asset.assetName || asset.model || `Asset ${asset.id}`;
+                                const type = asset.type || 'Device';
+                                const serial = asset.serialNumber || 'No serial';
+                                return `- ${name} (${type}, Serial: ${serial})`;
+                              });
+                        const supervisorFirstName = (terminationProfile.supervisor || '').split(' ')[0];
+                        const body = encodeURIComponent(
+                          `Hi ${supervisorFirstName || terminationProfile.supervisor || ''},\n\nI hope you're doing well! I wanted to reach out regarding ${terminationEmployee}'s offboarding process.\n\nWould you mind helping us coordinate the return of the following assets? Once we have them back, our IT team will take care of wrapping up account access and permissions.\n\nAssets to return:\n${assetLines.join(
+                            '\n',
+                          )}\n\nThanks so much for your help with this! Let me know if you have any questions.\n\nBest,`,
+                        );
+                        return `mailto:${terminationProfile.supervisorEmail}?subject=${subject}&body=${body}`;
+                      })()}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-3 py-1 font-semibold text-blue-700 transition hover:border-blue-300"
+                    >
+                      <Mail className="h-4 w-4" />
+                      Email Supervisor
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 px-3 py-1 font-semibold text-slate-400"
+                    >
+                      <Mail className="h-4 w-4" />
+                      Email Supervisor
+                    </button>
+                  )}
                 </div>
                 <p className="mt-3 text-xs text-slate-500">
                   Remind IT to revoke software access and retrieve badges, accessories, and loaners during offboarding.
@@ -10489,6 +10522,7 @@ const App = () => {
                   ? 'border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
                   : 'border-slate-200 bg-gradient-to-br from-white via-amber-50 to-yellow-100 text-slate-900 ring-amber-100'
               }`}
+              style={heroAccentStyle}
             >
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
@@ -10585,6 +10619,7 @@ const App = () => {
                   ? 'border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
                   : 'border-slate-200 bg-gradient-to-br from-white via-emerald-50 to-teal-100 text-slate-900 ring-emerald-100'
               }`}
+              style={heroAccentStyle}
             >
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
@@ -10707,7 +10742,10 @@ const App = () => {
         {activePage === 'Software' && (
           <>
             <section id="software-hero" className="mb-8">
-              <div className="relative overflow-hidden rounded-3xl border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 p-8 text-white shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ring-white/10">
+              <div
+                className="hero-shell relative overflow-hidden rounded-3xl border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 p-8 text-white shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ring-white/10"
+                style={heroAccentStyle}
+              >
                 <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
                 <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
                 <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
