@@ -1814,7 +1814,6 @@ const persistRemoteStorage = async (key, value) => {
 };
 
 const usePersistentState = (key, initialValue) => {
-  const initialRef = useRef(initialValue);
   const [state, setState] = useState(() => {
     if (typeof window === 'undefined') {
       return initialValue;
@@ -9034,6 +9033,8 @@ const App = () => {
   };
 
   const handleActionSubmit = async ({ assetId, mode, user, notes, date }) => {
+    const currentAsset = assets.find((item) => item.id === assetId);
+    const previousOwner = currentAsset?.assignedTo || '';
     setAssets((prev) =>
       prev.map((asset) => {
         if (asset.id !== assetId) {
@@ -9066,7 +9067,7 @@ const App = () => {
         id: Date.now(),
         assetId,
         action: mode === 'checkout' ? 'Check Out' : 'Check In',
-        user: mode === 'checkout' ? user : 'Unassigned',
+        user: mode === 'checkout' ? user : previousOwner || 'Unassigned',
         notes,
         date,
       },
