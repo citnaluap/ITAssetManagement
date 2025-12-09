@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
 import * as XLSX from 'xlsx';
