@@ -251,6 +251,7 @@ const STORAGE_VERSION_KEY = 'uds_storage_version';
 const STORAGE_VERSION = '2025-11-20-zoom-refresh';
 const API_STORAGE_BASE = (process.env.REACT_APP_API_BASE_URL || '').replace(/\/$/, '');
 const LOANER_PAGE_SIZE = 6;
+const FILTERS_STORAGE_KEY = 'uds_asset_filters';
 
 const assetTypeIcons = {
   Laptop,
@@ -6985,7 +6986,31 @@ const App = () => {
     ];
   }, [sheetInsights]);
 
-  const [filters, setFilters] = useState({ search: '', type: 'all', status: 'all', hideRetired: true });
+  const defaultAssetFilters = useMemo(
+    () => ({ search: '', type: 'all', status: 'all', hideRetired: true }),
+    [],
+  );
+  const [filters, setFilters] = useState(() => {
+    if (typeof window === 'undefined') {
+      return { ...defaultAssetFilters };
+    }
+    try {
+      const saved = window.localStorage.getItem(FILTERS_STORAGE_KEY);
+      if (!saved) return { ...defaultAssetFilters };
+      const parsed = JSON.parse(saved);
+      return { ...defaultAssetFilters, ...parsed };
+    } catch {
+      return { ...defaultAssetFilters };
+    }
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
+    } catch {
+      // ignore storage errors
+    }
+  }, [filters, defaultAssetFilters]);
   const [assetPage, setAssetPage] = useState(1);
   const [assetForm, setAssetForm] = useState(null);
   const [actionState, setActionState] = useState(null);
@@ -8594,7 +8619,7 @@ const App = () => {
     [setAssets],
   );
   const handleSpotlightFilter = (type) => {
-    setFilters({ search: '', type: type || 'all', status: 'all', hideRetired: true });
+    setFilters({ ...defaultAssetFilters, type: type || 'all' });
     if (typeof window === 'undefined') {
       return;
     }
@@ -10270,7 +10295,7 @@ const App = () => {
                     embedded
                     filters={filters}
                     onChange={handleFilterChange}
-                    onReset={() => setFilters({ search: '', type: 'all', status: 'all', hideRetired: true })}
+                    onReset={() => setFilters({ ...defaultAssetFilters })}
                     types={typeOptions}
                   />
                   {(filters.search || filters.type !== 'all' || filters.status !== 'all' || !filters.hideRetired) && (
@@ -10282,7 +10307,7 @@ const App = () => {
                       {!filters.hideRetired && <span className="rounded-full bg-white px-2 py-1">Show retired</span>}
                       <button
                         type="button"
-                        onClick={() => setFilters({ search: '', type: 'all', status: 'all', hideRetired: true })}
+                        onClick={() => setFilters({ ...defaultAssetFilters })}
                         className="rounded-full bg-slate-200 px-2 py-1 font-semibold text-slate-700 hover:bg-slate-300"
                       >
                         Clear
@@ -11375,7 +11400,7 @@ const App = () => {
           onWarranty={() => setWarrantyModalOpen(true)}
           onFilters={() => {
             setActivePage('Hardware');
-            setFilters({ search: '', type: 'all', status: 'all', hideRetired: true });
+            setFilters({ ...defaultAssetFilters });
             const section = document.getElementById('asset-table');
             if (section) {
               section.scrollIntoView({ behavior: 'smooth', block: 'start' });
