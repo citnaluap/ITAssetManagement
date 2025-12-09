@@ -6472,7 +6472,10 @@ const App = () => {
   const buildApiUrl = useCallback(
     (path) => {
       if (!apiBaseUrl) return path;
-      return `${apiBaseUrl}${path}`;
+      // Avoid double /api when the base already includes /api
+      const normalizedPath =
+        apiBaseUrl.endsWith('/api') && path.startsWith('/api') ? path.replace(/^\/api/, '') : path;
+      return `${apiBaseUrl}${normalizedPath}`;
     },
     [apiBaseUrl],
   );
