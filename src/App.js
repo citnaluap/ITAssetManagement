@@ -9419,6 +9419,13 @@ const App = () => {
       onAction: () => setAssetForm(defaultAsset),
     },
     {
+      title: 'Add employee record',
+      description: 'Keep people data current before checkouts and approvals.',
+      icon: Users,
+      actionLabel: 'Add employee',
+      onAction: handleAddEmployee,
+    },
+    {
       title: 'Scan asset label',
       description: 'Use your camera to jump into a device record without scrolling the table.',
       icon: Scan,
@@ -10286,15 +10293,8 @@ const App = () => {
           </section>
         )}
 
-        <section id="overview-people" className="mb-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
+        <section id="overview-people" className="mb-8">
           <SpendHotspotsCard costByDepartment={costByDepartment} topLocations={sheetInsights.topLocations} />
-          <QuickActionCard
-            title="Add employee record"
-            description="Keep headcount current before checkouts and audits."
-            icon={Users}
-            actionLabel="Add employee"
-            onAction={handleAddEmployee}
-          />
         </section>
 
         <section id="overview-actions" className="mb-8 grid gap-6 lg:grid-cols-[2fr,1fr]">
