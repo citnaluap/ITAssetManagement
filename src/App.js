@@ -3909,9 +3909,6 @@ Reply to this email with your updates. Photos are welcome. Thank you!`,
 );
 
 const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair, onEditRepair }) => {
-  if (!data) {
-    return null;
-  }
   const {
     repairs = [],
     repairTotal = 0,
@@ -3921,7 +3918,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
     loanersDeployed = [],
     loanerDeployedCount = 0,
     loanerTotal = 0,
-  } = data;
+  } = data || {};
   const [availablePage, setAvailablePage] = useState(1);
   const [deployedPage, setDeployedPage] = useState(1);
   const availableTotalPages = Math.max(1, Math.ceil(loanersAvailable.length / LOANER_PAGE_SIZE));
@@ -4391,24 +4388,28 @@ const LicenseRiskReport = ({ data = [], onExport }) => {
 
 // eslint-disable-next-line no-unused-vars
 const LoanerCoverageReport = ({ data, onExport }) => {
-  if (!data) {
-    return null;
-  }
+  const {
+    loanersAvailable = [],
+    loanersDeployed = [],
+    loanerAvailableCount = 0,
+    loanerDeployedCount = 0,
+    loanerTotal = 0,
+  } = data || {};
   const [availablePage, setAvailablePage] = useState(1);
   const [deployedPage, setDeployedPage] = useState(1);
-  const availableTotalPages = Math.max(1, Math.ceil(data.loanersAvailable.length / LOANER_PAGE_SIZE));
-  const deployedTotalPages = Math.max(1, Math.ceil(data.loanersDeployed.length / LOANER_PAGE_SIZE));
+  const availableTotalPages = Math.max(1, Math.ceil(loanersAvailable.length / LOANER_PAGE_SIZE));
+  const deployedTotalPages = Math.max(1, Math.ceil(loanersDeployed.length / LOANER_PAGE_SIZE));
   useEffect(() => {
     setAvailablePage((prev) => Math.min(prev, availableTotalPages));
   }, [availableTotalPages]);
   useEffect(() => {
     setDeployedPage((prev) => Math.min(prev, deployedTotalPages));
   }, [deployedTotalPages]);
-  const pagedAvailable = data.loanersAvailable.slice(
+  const pagedAvailable = loanersAvailable.slice(
     (availablePage - 1) * LOANER_PAGE_SIZE,
     availablePage * LOANER_PAGE_SIZE,
   );
-  const pagedDeployed = data.loanersDeployed.slice(
+  const pagedDeployed = loanersDeployed.slice(
     (deployedPage - 1) * LOANER_PAGE_SIZE,
     deployedPage * LOANER_PAGE_SIZE,
   );
@@ -4419,7 +4420,7 @@ const LoanerCoverageReport = ({ data, onExport }) => {
           <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Loaner coverage</p>
           <p className="text-xl font-semibold text-slate-900">Readiness summary</p>
           <p className="text-xs text-slate-500">
-            {data.loanerAvailableCount}/{data.loanerTotal} laptops are staged
+            {loanerAvailableCount}/{loanerTotal} laptops are staged
           </p>
         </div>
         <button
@@ -4433,21 +4434,21 @@ const LoanerCoverageReport = ({ data, onExport }) => {
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 text-center">
           <p className="text-xs uppercase tracking-[0.3rem] text-emerald-600">Available</p>
-          <p className="mt-1 text-2xl font-semibold text-emerald-700">{data.loanerAvailableCount}</p>
+          <p className="mt-1 text-2xl font-semibold text-emerald-700">{loanerAvailableCount}</p>
         </div>
         <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-center">
           <p className="text-xs uppercase tracking-[0.3rem] text-blue-600">Deployed</p>
-          <p className="mt-1 text-2xl font-semibold text-blue-700">{data.loanerDeployedCount}</p>
+          <p className="mt-1 text-2xl font-semibold text-blue-700">{loanerDeployedCount}</p>
         </div>
         <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-center">
           <p className="text-xs uppercase tracking-[0.3rem] text-slate-500">Pool size</p>
-          <p className="mt-1 text-2xl font-semibold text-slate-700">{data.loanerTotal}</p>
+          <p className="mt-1 text-2xl font-semibold text-slate-700">{loanerTotal}</p>
         </div>
       </div>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500">Ready for checkout</p>
-          {data.loanersAvailable.length === 0 ? (
+          {loanersAvailable.length === 0 ? (
             <p className="mt-2 text-xs text-slate-500">No devices staged.</p>
           ) : (
             <ul className="mt-2 space-y-2">
@@ -4458,7 +4459,7 @@ const LoanerCoverageReport = ({ data, onExport }) => {
               ))}
             </ul>
           )}
-          {data.loanersAvailable.length > LOANER_PAGE_SIZE && (
+          {loanersAvailable.length > LOANER_PAGE_SIZE && (
             <div className="mt-2">
               <PaginationControls
                 page={availablePage}
@@ -4471,7 +4472,7 @@ const LoanerCoverageReport = ({ data, onExport }) => {
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500">In the field</p>
-          {data.loanersDeployed.length === 0 ? (
+          {loanersDeployed.length === 0 ? (
             <p className="mt-2 text-xs text-slate-500">No active deployments.</p>
           ) : (
             <ul className="mt-2 space-y-2">
@@ -4482,7 +4483,7 @@ const LoanerCoverageReport = ({ data, onExport }) => {
               ))}
             </ul>
           )}
-          {data.loanersDeployed.length > LOANER_PAGE_SIZE && (
+          {loanersDeployed.length > LOANER_PAGE_SIZE && (
             <div className="mt-2">
               <PaginationControls
                 page={deployedPage}
