@@ -6985,7 +6985,7 @@ const App = () => {
     ];
   }, [sheetInsights]);
 
-  const [filters, setFilters] = useState({ search: '', type: 'all', status: 'all', hideRetired: false });
+  const [filters, setFilters] = useState({ search: '', type: 'all', status: 'all', hideRetired: true });
   const [assetPage, setAssetPage] = useState(1);
   const [assetForm, setAssetForm] = useState(null);
   const [actionState, setActionState] = useState(null);
@@ -8594,7 +8594,7 @@ const App = () => {
     [setAssets],
   );
   const handleSpotlightFilter = (type) => {
-    setFilters({ search: '', type: type || 'all', status: 'all', hideRetired: false });
+    setFilters({ search: '', type: type || 'all', status: 'all', hideRetired: true });
     if (typeof window === 'undefined') {
       return;
     }
@@ -10270,19 +10270,19 @@ const App = () => {
                     embedded
                     filters={filters}
                     onChange={handleFilterChange}
-                    onReset={() => setFilters({ search: '', type: 'all', status: 'all', hideRetired: false })}
+                    onReset={() => setFilters({ search: '', type: 'all', status: 'all', hideRetired: true })}
                     types={typeOptions}
                   />
-                  {(filters.search || filters.type !== 'all' || filters.status !== 'all' || filters.hideRetired) && (
+                  {(filters.search || filters.type !== 'all' || filters.status !== 'all' || !filters.hideRetired) && (
                     <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50/70 px-3 py-2 text-xs text-slate-700">
                       <span className="font-semibold text-slate-600">Active filters:</span>
                       {filters.search && <span className="rounded-full bg-white px-2 py-1">Search: {filters.search}</span>}
                       {filters.type !== 'all' && <span className="rounded-full bg-white px-2 py-1">Type: {filters.type}</span>}
                       {filters.status !== 'all' && <span className="rounded-full bg-white px-2 py-1">Status: {filters.status}</span>}
-                      {filters.hideRetired && <span className="rounded-full bg-white px-2 py-1">Hide retired</span>}
+                      {!filters.hideRetired && <span className="rounded-full bg-white px-2 py-1">Show retired</span>}
                       <button
                         type="button"
-                        onClick={() => setFilters({ search: '', type: 'all', status: 'all', hideRetired: false })}
+                        onClick={() => setFilters({ search: '', type: 'all', status: 'all', hideRetired: true })}
                         className="rounded-full bg-slate-200 px-2 py-1 font-semibold text-slate-700 hover:bg-slate-300"
                       >
                         Clear
@@ -11375,7 +11375,7 @@ const App = () => {
           onWarranty={() => setWarrantyModalOpen(true)}
           onFilters={() => {
             setActivePage('Hardware');
-            setFilters({ search: '', type: 'all', status: 'all', hideRetired: false });
+            setFilters({ search: '', type: 'all', status: 'all', hideRetired: true });
             const section = document.getElementById('asset-table');
             if (section) {
               section.scrollIntoView({ behavior: 'smooth', block: 'start' });
