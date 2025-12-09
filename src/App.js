@@ -250,6 +250,7 @@ const STORAGE_KEYS = {
 const STORAGE_VERSION_KEY = 'uds_storage_version';
 const STORAGE_VERSION = '2025-11-20-zoom-refresh';
 const API_STORAGE_BASE = (process.env.REACT_APP_API_BASE_URL || '').replace(/\/$/, '');
+const LOANER_PAGE_SIZE = 6;
 
 const assetTypeIcons = {
   Laptop,
@@ -2233,9 +2234,9 @@ const sortLoaners = (collection) =>
     repairs: mergedRepairs.slice(0, 6),
     repairTotal: mergedRepairs.length,
     avgRepairAgeMonths,
-    loanersAvailable: sortLoaners(availableLoanersRaw).slice(0, 6),
+    loanersAvailable: sortLoaners(availableLoanersRaw),
     loanerAvailableCount: availableLoanersRaw.length,
-    loanersDeployed: sortLoaners(deployedLoanersRaw).slice(0, 6),
+    loanersDeployed: sortLoaners(deployedLoanersRaw),
     loanerDeployedCount: deployedLoanersRaw.length,
     loanerTotal: loanerPool.length,
   };
@@ -3921,6 +3922,24 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
     loanerDeployedCount = 0,
     loanerTotal = 0,
   } = data;
+  const [availablePage, setAvailablePage] = useState(1);
+  const [deployedPage, setDeployedPage] = useState(1);
+  const availableTotalPages = Math.max(1, Math.ceil(loanersAvailable.length / LOANER_PAGE_SIZE));
+  const deployedTotalPages = Math.max(1, Math.ceil(loanersDeployed.length / LOANER_PAGE_SIZE));
+  useEffect(() => {
+    setAvailablePage((prev) => Math.min(prev, availableTotalPages));
+  }, [availableTotalPages]);
+  useEffect(() => {
+    setDeployedPage((prev) => Math.min(prev, deployedTotalPages));
+  }, [deployedTotalPages]);
+  const pagedLoanersAvailable = loanersAvailable.slice(
+    (availablePage - 1) * LOANER_PAGE_SIZE,
+    availablePage * LOANER_PAGE_SIZE,
+  );
+  const pagedLoanersDeployed = loanersDeployed.slice(
+    (deployedPage - 1) * LOANER_PAGE_SIZE,
+    deployedPage * LOANER_PAGE_SIZE,
+  );
   const coveragePercent = loanerTotal ? Math.round((loanerAvailableCount / loanerTotal) * 100) : 0;
   return (
     <div className="rounded-3xl border border-slate-100 bg-white/90 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
@@ -4027,7 +4046,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
               <p className="text-xs text-slate-400 dark:text-slate-500">No devices ready.</p>
             ) : (
               <ul className="space-y-2">
-                {loanersAvailable.map((loaner) => (
+                {pagedLoanersAvailable.map((loaner) => (
                   <li
                     key={loaner.id}
                     className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3 dark:border-emerald-900/40 dark:bg-emerald-900/30"
@@ -4049,6 +4068,16 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
                 ))}
               </ul>
             )}
+            {loanersAvailable.length > LOANER_PAGE_SIZE && (
+              <div className="mt-3">
+                <PaginationControls
+                  page={availablePage}
+                  totalPages={availableTotalPages}
+                  onPageChange={setAvailablePage}
+                  align="end"
+                />
+              </div>
+            )}
           </div>
           <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800/60">
             <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500 dark:text-slate-400">Currently deployed</p>
@@ -4056,7 +4085,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">No loaners currently checked out.</p>
             ) : (
               <ul className="mt-2 space-y-2">
-                {loanersDeployed.map((loaner) => (
+                {pagedLoanersDeployed.map((loaner) => (
                   <li
                     key={loaner.id}
                     className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/70"
@@ -4074,11 +4103,21 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
                         className="rounded-2xl border border-blue-200 bg-white px-3 py-1 text-xs font-semibold text-blue-700 transition hover:border-blue-300 dark:border-blue-900 dark:bg-blue-900/30 dark:text-blue-200"
                       >
                         Check in
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+            {loanersDeployed.length > LOANER_PAGE_SIZE && (
+              <div className="mt-3">
+                <PaginationControls
+                  page={deployedPage}
+                  totalPages={deployedTotalPages}
+                  onPageChange={setDeployedPage}
+                  align="end"
+                />
+              </div>
             )}
             <p className="mt-3 text-[11px] text-slate-400 dark:text-slate-500">
               {loanerDeployedCount} out in the field - keep at least 2 staged for emergencies.
@@ -4355,6 +4394,24 @@ const LoanerCoverageReport = ({ data, onExport }) => {
   if (!data) {
     return null;
   }
+  const [availablePage, setAvailablePage] = useState(1);
+  const [deployedPage, setDeployedPage] = useState(1);
+  const availableTotalPages = Math.max(1, Math.ceil(data.loanersAvailable.length / LOANER_PAGE_SIZE));
+  const deployedTotalPages = Math.max(1, Math.ceil(data.loanersDeployed.length / LOANER_PAGE_SIZE));
+  useEffect(() => {
+    setAvailablePage((prev) => Math.min(prev, availableTotalPages));
+  }, [availableTotalPages]);
+  useEffect(() => {
+    setDeployedPage((prev) => Math.min(prev, deployedTotalPages));
+  }, [deployedTotalPages]);
+  const pagedAvailable = data.loanersAvailable.slice(
+    (availablePage - 1) * LOANER_PAGE_SIZE,
+    availablePage * LOANER_PAGE_SIZE,
+  );
+  const pagedDeployed = data.loanersDeployed.slice(
+    (deployedPage - 1) * LOANER_PAGE_SIZE,
+    deployedPage * LOANER_PAGE_SIZE,
+  );
   return (
     <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between">
@@ -4394,12 +4451,22 @@ const LoanerCoverageReport = ({ data, onExport }) => {
             <p className="mt-2 text-xs text-slate-500">No devices staged.</p>
           ) : (
             <ul className="mt-2 space-y-2">
-              {data.loanersAvailable.map((loaner) => (
+              {pagedAvailable.map((loaner) => (
                 <li key={loaner.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-2 text-xs text-slate-600">
                   <span className="font-semibold text-slate-900">{loaner.assetId}</span> - {loaner.location}
                 </li>
               ))}
             </ul>
+          )}
+          {data.loanersAvailable.length > LOANER_PAGE_SIZE && (
+            <div className="mt-2">
+              <PaginationControls
+                page={availablePage}
+                totalPages={availableTotalPages}
+                onPageChange={setAvailablePage}
+                align="end"
+              />
+            </div>
           )}
         </div>
         <div>
@@ -4408,12 +4475,22 @@ const LoanerCoverageReport = ({ data, onExport }) => {
             <p className="mt-2 text-xs text-slate-500">No active deployments.</p>
           ) : (
             <ul className="mt-2 space-y-2">
-              {data.loanersDeployed.map((loaner) => (
+              {pagedDeployed.map((loaner) => (
                 <li key={loaner.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-2 text-xs text-slate-600">
                   <span className="font-semibold text-slate-900">{loaner.assetId}</span> {'->'} {loaner.assignedTo}
                 </li>
               ))}
             </ul>
+          )}
+          {data.loanersDeployed.length > LOANER_PAGE_SIZE && (
+            <div className="mt-2">
+              <PaginationControls
+                page={deployedPage}
+                totalPages={deployedTotalPages}
+                onPageChange={setDeployedPage}
+                align="end"
+              />
+            </div>
           )}
         </div>
       </div>
