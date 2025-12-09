@@ -249,7 +249,17 @@ const STORAGE_KEYS = {
 };
 const STORAGE_VERSION_KEY = 'uds_storage_version';
 const STORAGE_VERSION = '2025-11-20-zoom-refresh';
-const API_STORAGE_BASE = (process.env.REACT_APP_API_BASE_URL || '').replace(/\/$/, '');
+const resolveApiBaseUrl = () => {
+  const envBase = process.env.REACT_APP_API_BASE_URL;
+  const fromEnvOrOrigin =
+    (envBase && envBase.trim()) || (typeof window !== 'undefined' ? window.location.origin : '');
+  if (!fromEnvOrOrigin) {
+    return '';
+  }
+  const normalized = fromEnvOrOrigin.replace(/\/$/, '');
+  return normalized.endsWith('/api') ? normalized : `${normalized}/api`;
+};
+const API_STORAGE_BASE = resolveApiBaseUrl();
 const LOANER_PAGE_SIZE = 6;
 const FILTERS_STORAGE_KEY = 'uds_asset_filters';
 
@@ -1716,9 +1726,24 @@ const buildWarrantyAlertKey = (alert = {}) => {
   return `${assetKey}::${expiryKey}`;
 };
 
-const buildMaintenanceWorkOrders = (assets) => {
-  // Pending real maintenance data source; avoid rendering fabricated work orders.
-  return [];
+const buildMaintenanceWorkOrders = (assets, repairTickets = []) => {
+  // Convert repair tickets into work orders for the maintenance board
+  return repairTickets.map((ticket) => {
+    const asset = assets.find((a) => a.id === ticket.assetId || a.assetName === ticket.assetId);
+    return {
+      id: ticket.id,
+      assetName: ticket.assetId || 'Unknown Asset',
+      model: ticket.model || asset?.model || '',
+      status: ticket.status || 'Planned',
+      severity: 'Normal',
+      vendor: 'Internal IT',
+      eta: ticket.estimatedCompletion || 'TBD',
+      attachments: 0,
+      technician: '',
+      notes: ticket.issue || '',
+      assignedTo: ticket.assignedTo || asset?.assignedTo || 'Unassigned',
+    };
+  });
 };
 
 const computeSheetInsights = (assets) => {
@@ -1829,7 +1854,16 @@ const usePersistentState = (key, initialValue) => {
           if (prev && typeof prev === 'object') return Object.keys(prev).length > 0;
           return Boolean(prev);
         })();
-        return hasLocalData ? prev : remoteValue;
+        if (!hasLocalData) {
+          return remoteValue;
+        }
+        try {
+          const localSnapshot = JSON.stringify(prev);
+          const remoteSnapshot = JSON.stringify(remoteValue);
+          return localSnapshot === remoteSnapshot ? prev : remoteValue;
+        } catch {
+          return remoteValue;
+        }
       });
     };
     hydrateFromApi();
@@ -2012,15 +2046,68 @@ const AMAZON_PART_CATEGORIES = [
   { label: 'Charger / AC adapter', query: 'USB-C 65W charger' },
   { label: 'Keyboard + palmrest', query: 'keyboard palmrest replacement' },
   { label: 'SSD upgrade (NVMe/SATA)', query: 'NVMe SSD 1TB kit' },
+  { label: 'RAM upgrade (SODIMM)', query: 'ram upgrade sodimm kit' },
 ];
 const DIFFICULT_REPAIR_TOPICS = [
   { label: 'LCD + bezel swap', query: 'screen replacement' },
   { label: 'Keyboard + trackpad', query: 'keyboard replacement' },
   { label: 'Battery + fan service', query: 'battery replacement disassembly' },
   { label: 'SSD upgrade + imaging', query: 'ssd upgrade clone windows' },
+  { label: 'RAM upgrade + timing', query: 'ram upgrade install dual channel' },
 ];
 const buildAmazonSearch = (model, keyword) => `https://www.amazon.com/s?k=${encodeURIComponent(`${model} ${keyword}`)}`;
 const buildYoutubeSearch = (model, keyword) => `https://www.youtube.com/results?search_query=${encodeURIComponent(`${model} ${keyword}`)}`;
+const normalizeNameCase = (name = '') => {
+  const trimmed = name.trim();
+  if (!trimmed) return '';
+  const hasLower = /[a-z]/.test(trimmed);
+  const base = hasLower ? trimmed : trimmed.toLowerCase();
+  return base.replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const extractFirstName = (fullName = '') => {
+  const trimmed = fullName.trim();
+  if (!trimmed) return '';
+  if (trimmed.includes(',')) {
+    // Handle "Last, First" formats gracefully.
+    const parts = trimmed.split(',').map((part) => part.trim()).filter(Boolean);
+    if (parts[1]) {
+      const first = normalizeNameCase(parts[1]).split(/\s+/)[0];
+      if (first) return first;
+    }
+  }
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  if (words.length >= 2 && !/[a-z]/.test(trimmed) && /[A-Z]/.test(trimmed)) {
+    // Likely "LAST FIRST" all-caps; treat the second token as the first name.
+    return normalizeNameCase(words[1]);
+  }
+  return normalizeNameCase(words[0] || '');
+};
+const buildSupervisorMailto = (supervisorEmail, supervisorName, employeeName, assets = []) => {
+  if (!supervisorEmail) return '';
+  const trimmedEmail = supervisorEmail.trim();
+  if (!trimmedEmail) return '';
+  const prettySupervisorName = normalizeNameCase(supervisorName || '');
+  const subject = encodeURIComponent(`Offboarding ${employeeName || 'team member'}`);
+  const assetLines =
+    assets.length === 0
+      ? ['- No assets found for this employee in the system.']
+      : assets.map((asset) => {
+          const name = asset.assetName || asset.model || `Asset ${asset.id}`;
+          const type = asset.type || 'Device';
+          const serial = asset.serialNumber || 'No serial';
+          return `- ${name} (${type}, Serial: ${serial})`;
+        });
+  const supervisorFirstName = extractFirstName(prettySupervisorName || supervisorName || '');
+  const body = encodeURIComponent(
+    `Hi ${supervisorFirstName || prettySupervisorName || supervisorName || ''},\n\nI hope you're doing well! I wanted to reach out regarding ${
+      employeeName || 'this employee'
+    }'s offboarding process.\n\nWould you mind helping us coordinate the return of the following assets? Once we have them back, our IT team will take care of wrapping up account access and permissions.\n\nAssets to return:\n${assetLines.join(
+      '\n',
+    )}\n\nThanks so much for your help with this! Let me know if you have any questions.\n\nBest,`,
+  );
+  return `mailto:${trimmedEmail}?subject=${subject}&body=${body}`;
+};
 
 const hashString = (value = '') => {
   let hash = 0;
@@ -3638,7 +3725,7 @@ const EmployeeDirectoryGrid = ({
         </a>
       )}
     </div>
-    <div className="grid gap-6 p-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-6 p-6 sm:grid-cols-2 lg:grid-cols-3 place-items-center">
       {members.map((member) => {
         const memberKey = member.id || normalizeKey(member.name || '');
         const isExpanded = expandedId === memberKey;
@@ -3646,9 +3733,9 @@ const EmployeeDirectoryGrid = ({
         const licenses = getLicenses(member);
         const assignmentCount = assignments.length;
         const licenseCount = licenses.length;
-        const supervisorLabel = member.supervisor || 'Not set';
+        const supervisorLabel = member.supervisor ? normalizeNameCase(member.supervisor) : 'Not set';
         const cardClasses = [
-          'rounded-xl border p-4 shadow-sm transition-all duration-200',
+          'w-full max-w-md rounded-xl border p-4 shadow-sm transition-all duration-200',
           isDarkMode
             ? 'border-slate-700/70 bg-slate-900/70 backdrop-blur-sm hover:border-purple-400/80 hover:shadow-lg'
             : 'border-slate-200 bg-white hover:border-purple-300 hover:shadow-md',
@@ -4123,7 +4210,7 @@ const RepairPartsPanel = ({ models = [], isDarkMode = false }) => {
           <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Parts ordering</p>
           <p className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Amazon quick links by model</p>
           <p className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-            One-click carts for batteries, displays, chargers, keyboards, and SSDs for your most common laptops.
+            One-click carts for batteries, displays, chargers, keyboards, SSDs, and RAM for your most common laptops.
           </p>
         </div>
         <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-100">
@@ -4194,7 +4281,7 @@ const RepairVideosPanel = ({ models = [], isDarkMode = false }) => {
           <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Repair playbooks</p>
           <p className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>How-to videos for tricky fixes</p>
           <p className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-            Pre-filtered YouTube searches for screens, keyboards, thermals, and storage upgrades.
+            Pre-filtered YouTube searches for screens, keyboards, thermals, storage, and RAM upgrades.
           </p>
         </div>
         <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-100">
@@ -6538,7 +6625,7 @@ const App = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState('');
   const sentWarrantyAlertRef = useRef(new Set());
-  const apiBaseUrl = (process.env.REACT_APP_API_BASE_URL || '').replace(/\/$/, '');
+  const apiBaseUrl = resolveApiBaseUrl();
   const buildApiUrl = useCallback(
     (path) => {
       if (!apiBaseUrl) return path;
@@ -6773,7 +6860,7 @@ const App = () => {
     () => warrantyReminders.filter((item) => !item.overdue && item.daysRemaining >= 0 && item.daysRemaining <= 30),
     [warrantyReminders],
   );
-  const maintenanceWorkOrders = useMemo(() => buildMaintenanceWorkOrders(assets), [assets]);
+  const maintenanceWorkOrders = useMemo(() => buildMaintenanceWorkOrders(assets, repairTickets), [assets, repairTickets]);
   const laptopServiceSummary = useMemo(
     () => computeLaptopServiceSummary(assets, maintenanceWorkOrders, repairTickets),
     [assets, maintenanceWorkOrders, repairTickets],
@@ -8084,6 +8171,16 @@ const App = () => {
     }
     return employeeLookupByName[normalized] || null;
   }, [employeeLookupByName, terminationEmployee]);
+  const terminationSupervisorMailto = useMemo(
+    () =>
+      buildSupervisorMailto(
+        terminationProfile?.supervisorEmail,
+        terminationProfile?.supervisor,
+        terminationEmployee,
+        terminationAssets,
+      ),
+    [terminationProfile, terminationEmployee, terminationAssets],
+  );
   const handleEmployeeCardToggle = useCallback(
     (memberId) => {
       setExpandedEmployeeId((prev) => (prev === memberId ? null : memberId));
@@ -8101,18 +8198,19 @@ const App = () => {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
-    // Bypass auth in development mode when API is not available
+
     const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
-    const skipAuth = isDevelopment && !apiBaseUrl;
-    
-    if (skipAuth) {
+    const requireAuth = String(process.env.REACT_APP_REQUIRE_AUTH || '').toLowerCase() === 'true';
+    const allowDevBypass = isDevelopment && !requireAuth;
+
+    // Fast bypass when no API base is configured locally.
+    if (allowDevBypass && !apiBaseUrl) {
       setAuthUser({ name: 'Dev User', email: 'dev@udservices.org', sub: 'dev', expiresAt: Date.now() + 86400000 });
       setAuthLoading(false);
       setAuthError('');
       return;
     }
-    
+
     const fetchSession = async () => {
       setAuthLoading(true);
       try {
@@ -8120,8 +8218,13 @@ const App = () => {
         if (resp.ok) {
           const isJson = (resp.headers.get('content-type') || '').includes('application/json');
           if (!isJson) {
-            setAuthUser(null);
-            setAuthError('');
+            if (allowDevBypass) {
+              setAuthUser({ name: 'Dev User', email: 'dev@udservices.org', sub: 'dev', expiresAt: Date.now() + 86400000 });
+              setAuthError('Auth API returned non-JSON; using dev bypass.');
+            } else {
+              setAuthUser(null);
+              setAuthError('Authentication response was invalid.');
+            }
             return;
           }
           const data = await resp.json();
@@ -8129,10 +8232,22 @@ const App = () => {
           setAuthError('');
           return;
         }
+
+        if (allowDevBypass && (resp.status === 404 || resp.status >= 500)) {
+          setAuthUser({ name: 'Dev User', email: 'dev@udservices.org', sub: 'dev', expiresAt: Date.now() + 86400000 });
+          setAuthError('Auth service unavailable; using dev bypass.');
+          return;
+        }
+
         setAuthError('');
         setAuthUser(null);
       } catch (error) {
-        setAuthError('');
+        if (allowDevBypass) {
+          setAuthUser({ name: 'Dev User', email: 'dev@udservices.org', sub: 'dev', expiresAt: Date.now() + 86400000 });
+          setAuthError('Auth request failed; using dev bypass.');
+          return;
+        }
+        setAuthError('Authentication failed. Please retry.');
         setAuthUser(null);
       } finally {
         setAuthLoading(false);
@@ -9302,13 +9417,6 @@ const App = () => {
       icon: Plus,
       actionLabel: 'Add asset',
       onAction: () => setAssetForm(defaultAsset),
-    },
-    {
-      title: 'Add employee record',
-      description: 'Keep people data current before checkouts and approvals.',
-      icon: Users,
-      actionLabel: 'Add employee',
-      onAction: handleAddEmployee,
     },
     {
       title: 'Scan asset label',
@@ -10681,29 +10789,20 @@ const App = () => {
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-600">
                   <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">
-                    Supervisor: {terminationProfile?.supervisor || 'Not set'}
+                    Supervisor: {terminationProfile?.supervisor ? normalizeNameCase(terminationProfile.supervisor) : 'Not set'}
                   </span>
-                  {terminationProfile?.supervisorEmail ? (
+                  {terminationSupervisorMailto ? (
                     <a
-                      href={(() => {
-                        const subject = encodeURIComponent(`Offboarding ${terminationEmployee}`);
-                        const assetLines =
-                          terminationAssets.length === 0
-                            ? ['- No assets found for this employee in the system.']
-                            : terminationAssets.map((asset) => {
-                                const name = asset.assetName || asset.model || `Asset ${asset.id}`;
-                                const type = asset.type || 'Device';
-                                const serial = asset.serialNumber || 'No serial';
-                                return `- ${name} (${type}, Serial: ${serial})`;
-                              });
-                        const supervisorFirstName = (terminationProfile.supervisor || '').split(' ')[0];
-                        const body = encodeURIComponent(
-                          `Hi ${supervisorFirstName || terminationProfile.supervisor || ''},\n\nI hope you're doing well! I wanted to reach out regarding ${terminationEmployee}'s offboarding process.\n\nWould you mind helping us coordinate the return of the following assets? Once we have them back, our IT team will take care of wrapping up account access and permissions.\n\nAssets to return:\n${assetLines.join(
-                            '\n',
-                          )}\n\nThanks so much for your help with this! Let me know if you have any questions.\n\nBest,`,
-                        );
-                        return `mailto:${terminationProfile.supervisorEmail}?subject=${subject}&body=${body}`;
-                      })()}
+                      href={terminationSupervisorMailto}
+                      onClick={(event) => {
+                        // Improve reliability on mobile by forcing navigation.
+                        event.preventDefault();
+                        try {
+                          window.location.assign(terminationSupervisorMailto);
+                        } catch {
+                          window.location.href = terminationSupervisorMailto;
+                        }
+                      }}
                       className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-3 py-1 font-semibold text-blue-700 transition hover:border-blue-300"
                     >
                       <Mail className="h-4 w-4" />
