@@ -1716,25 +1716,8 @@ const buildWarrantyAlertKey = (alert = {}) => {
 };
 
 const buildMaintenanceWorkOrders = (assets) => {
-  const statuses = ['Planned', 'In Progress', 'Awaiting Parts', 'Completed'];
-  const severities = ['Normal', 'High', 'Urgent'];
-  return assets
-    .filter((asset) => asset.warrantyExpiry)
-    .slice(0, 12)
-    .map((asset, index) => {
-      const eta = new Date();
-      eta.setDate(eta.getDate() + (index + 1) * 3);
-      return {
-        id: `WO-${asset.id}`,
-        assetId: asset.id,
-        assetName: asset.assetName,
-        vendor: asset.brand || 'Preferred vendor',
-        status: statuses[index % statuses.length],
-        attachments: asset.checkedOut ? 2 : 1,
-        severity: severities[index % severities.length],
-        eta: eta.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      };
-    });
+  // Pending real maintenance data source; avoid rendering fabricated work orders.
+  return [];
 };
 
 const computeSheetInsights = (assets) => {
