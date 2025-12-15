@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
+﻿import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
 import * as XLSX from 'xlsx';
@@ -7453,6 +7453,7 @@ const App = () => {
   const streamRef = useRef(null);
   const lastScanTsRef = useRef(0);
   const keyFobNormalizedRef = useRef(false);
+  const phoneMergeRef = useRef(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const employeeSuggestionListId = 'employee-name-suggestions';
   const modelSuggestionListId = 'asset-model-suggestions';
@@ -7518,6 +7519,164 @@ const App = () => {
       cancelled = true;
     };
   }, [assetCount, setAssets, setAssetPage]);
+
+  useEffect(() => {
+    if (phoneMergeRef.current) return;
+    if (!assets || assets.length === 0) return;
+    
+    const mergeNewPhones = async () => {
+      console.log('Starting phone merge from New Phones.xlsx...');
+      try {
+        const sources = [
+          `${PUBLIC_URL}/Tables/New Phones.xlsx`,
+          `${PUBLIC_URL}/Tables/New%20Phones.xlsx`,
+          '/Tables/New Phones.xlsx', 
+          '/Tables/New%20Phones.xlsx'
+        ];
+        let buffer = null;
+        for (const url of sources) {
+          try {
+            console.log('Attempting to fetch:', url);
+            const response = await fetch(url);
+            if (response.ok) {
+              buffer = await response.arrayBuffer();
+              console.log('Successfully loaded New Phones.xlsx from:', url);
+              break;
+            }
+          } catch (error) {
+            console.warn('New Phones fetch failed for', url, error);
+          }
+        }
+        if (!buffer) {
+          console.error('Failed to load New Phones.xlsx from any source');
+          return;
+        }
+        let rows = [];
+        try {
+          const workbook = XLSX.read(buffer, { type: 'array' });
+          console.log('Workbook sheets:', workbook.SheetNames);
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          if (!sheet) {
+            console.error('No sheet found in workbook');
+            return;
+          }
+          rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+          console.log(`Parsed ${rows.length} phone records from Excel`);
+          if (rows.length > 0) {
+            console.log('Sample row:', rows[0]);
+          }
+        } catch (error) {
+          console.error('New Phones parse failed', error);
+          return;
+        }
+        if (!Array.isArray(rows) || rows.length === 0) {
+          console.error('No phone data found in Excel file');
+          return;
+        }
+
+        const normalizePhone = (value = '') => String(value).replace(/\D+/g, '');
+        const phoneAssets = rows
+          .map((row, index) => {
+            const mobileRaw = row['Mobile number'] || row['Mobile Number'] || row['Phone'] || row['Mobile'] || row['Cell'] || '';
+            const mobile = normalizePhone(mobileRaw);
+            const username = formatRosterName(row.Username || row['Username'] || row['User'] || row['Name'] || row['Employee Name'] || row['Employee'] || '');
+            const assignedTo = username || 'Unassigned';
+            const model = row['Equipment Model'] || row['Equipment'] || row['Model'] || row['Device Model'] || 'Phone';
+            const deviceId = normalizePhone(row['Device ID'] || row['IMEI'] || row['DeviceID'] || row['Serial Number'] || row['Serial'] || '');
+            const purchaseDate = normalizeSheetDate(row['Upgrade date'] || row['Upgrade Date'] || row['Upgrade'] || row['Purchase Date'] || row['Date'] || '');
+            const baseName = mobile || deviceId || `Phone-${index + 1}`;
+            const payload = {
+              id: `phone-${deviceId || mobile || index + 1}`,
+              assetName: baseName,
+              deviceName: baseName,
+              type: 'Phone',
+              brand: model ? model.split(' ')[0] : 'Phone',
+              model,
+              serialNumber: deviceId || mobile,
+              assignedTo,
+              department: 'UDS',
+              location: 'Mobile',
+              status: assignedTo && normalizeKey(assignedTo) !== 'unassigned' ? 'Checked Out' : 'Available',
+              purchaseDate,
+              warrantyExpiry: '',
+              retiredDate: '',
+              cost: 0,
+              checkedOut: assignedTo && normalizeKey(assignedTo) !== 'unassigned',
+              checkOutDate: purchaseDate,
+              qrCode: `QR-${deviceId || mobile || index + 1}`,
+              approvalStatus: 'Approved',
+              _matchKeys: new Set(
+                [deviceId, mobile, baseName]
+                  .filter(Boolean)
+                  .map(normalizeKey),
+              ),
+              _phoneKeys: new Set([deviceId, mobile].filter(Boolean)),
+            };
+            return normalizeAssetStatus(payload);
+          })
+          .filter(Boolean);
+
+        console.log(`Created ${phoneAssets.length} phone asset objects`);
+        if (phoneAssets.length > 0) {
+          console.log('Sample phone asset:', phoneAssets[0]);
+        }
+
+        if (!phoneAssets.length) {
+          console.error('No valid phone assets created from Excel data');
+          return;
+        }
+
+        const phoneLookup = phoneAssets.reduce((acc, phone) => {
+          const ownerKey = normalizeKey(phone.assignedTo || '');
+          const phoneKey = normalizePhone(phone.assetName || phone.deviceName || phone.serialNumber || '');
+          if (!phoneKey) return acc;
+          const composite = `${phoneKey}::${ownerKey}`;
+          acc[composite] = phone;
+          return acc;
+        }, {});
+        const used = new Set();
+        const extractDigits = (value = '') => {
+          const digits = String(value || '').replace(/\D+/g, '');
+          return digits.length >= 7 ? digits : '';
+        };
+        setAssets((prev) => {
+          console.log(`Merging phones. Current assets: ${prev.length}`);
+          const merged = [];
+          prev.forEach((asset) => {
+            if (normalizeKey(asset.type || '') !== 'phone') {
+              merged.push(asset);
+              return;
+            }
+            const ownerKey = normalizeKey(asset.assignedTo || '');
+            const phoneKey =
+              extractDigits(asset.assetName) ||
+              extractDigits(asset.deviceName) ||
+              extractDigits(asset.sheetId) ||
+              extractDigits(asset.serialNumber) ||
+              extractDigits(asset.qrCode);
+            const composite = phoneKey ? `${phoneKey}::${ownerKey}` : '';
+            const match = composite ? phoneLookup[composite] : null;
+            if (match) {
+              used.add(match.id);
+              merged.push({ ...match, id: asset.id || match.id, _matchKeys: undefined, _phoneKeys: undefined });
+            }
+          });
+          phoneAssets.forEach((phone) => {
+            if (used.has(phone.id)) return;
+            merged.push({ ...phone, _matchKeys: undefined, _phoneKeys: undefined });
+          });
+          console.log(`Merge complete. New total: ${merged.length} (added ${merged.length - prev.length} phones)`);
+          return merged;
+        });
+      } catch (error) {
+        console.error('Phone merge failed:', error);
+      } finally {
+        phoneMergeRef.current = true;
+      }
+    };
+    mergeNewPhones();
+  }, [setAssets, assets]);
   useEffect(() => {
     let cancelled = false;
     const syncDatesFromWorkbook = async () => {
