@@ -2087,6 +2087,7 @@ const AMAZON_PART_CATEGORIES = [
   { label: 'Battery', query: 'battery' },
   { label: 'Charger / AC adapter', query: 'USB-C 65W charger' },
   { label: 'Keyboard + palmrest', query: 'keyboard palmrest replacement' },
+  { label: 'Webcam module', query: 'laptop webcam replacement' },
   { label: 'SSD upgrade (NVMe/SATA)', query: 'NVMe SSD 1TB kit' },
   { label: 'RAM upgrade (SODIMM)', query: 'ram upgrade sodimm kit' },
 ];
@@ -2095,6 +2096,7 @@ const DIFFICULT_REPAIR_TOPICS = [
   { label: 'Keyboard + trackpad', query: 'keyboard replacement' },
   { label: 'Battery + fan service', query: 'battery replacement disassembly' },
   { label: 'SSD upgrade + imaging', query: 'ssd upgrade clone windows' },
+  { label: 'Webcam replacement', query: 'laptop webcam replacement tutorial' },
   { label: 'RAM upgrade + timing', query: 'ram upgrade install dual channel' },
 ];
 const buildAmazonSearch = (model, keyword) => `https://www.amazon.com/s?k=${encodeURIComponent(`${model} ${keyword}`)}`;
