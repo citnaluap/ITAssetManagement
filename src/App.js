@@ -11356,16 +11356,7 @@ const App = () => {
                   {terminationSupervisorMailto ? (
                     <a
                       href={terminationSupervisorMailto}
-                      onClick={(event) => {
-                        // Improve reliability on mobile by forcing navigation.
-                        event.preventDefault();
-                        try {
-                          window.location.assign(terminationSupervisorMailto);
-                        } catch {
-                          window.location.href = terminationSupervisorMailto;
-                        }
-                      }}
-                      className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-3 py-1 font-semibold text-blue-700 transition hover:border-blue-300"
+                      className="inline-flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-3 py-1 font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
                     >
                       <Mail className="h-4 w-4" />
                       Email Supervisor
