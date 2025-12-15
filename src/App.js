@@ -7174,9 +7174,13 @@ const App = () => {
             .trim();
           if (managerName || managerEmail) {
             acc[key] = { supervisor: managerName, supervisorEmail: managerEmail };
+            if (managerEmail) {
+              console.log('Found supervisor email in org chart 1:', { name, managerEmail });
+            }
           }
           return acc;
         }, {});
+        console.log('Org chart loader 1: Loaded supervisor data for', Object.keys(supervisorMap).length, 'employees');
         if (cancelled) return;
         setEmployeeGallery((prev) =>
           prev.map((member) => {
@@ -7991,6 +7995,10 @@ const App = () => {
               supervisorEmail,
             };
 
+            if (supervisorEmail) {
+              console.log('Found supervisor email in org chart 2:', { name, supervisorEmail });
+            }
+
             if (nameKey) {
               supervisorLookup[nameKey] = supervisorData;
             }
@@ -8001,6 +8009,7 @@ const App = () => {
               supervisorLookup[emailKey] = supervisorData;
             }
           });
+          console.log('Org chart loader 2: Loaded supervisor data for', Object.keys(supervisorLookup).length, 'lookup keys');
           
           // Update employee gallery with supervisor data
           if (!cancelled && Object.keys(supervisorLookup).length > 0) {
