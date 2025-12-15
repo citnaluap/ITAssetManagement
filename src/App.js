@@ -864,6 +864,12 @@ const normalizeStatusLabel = (value = '') => {
   }
   return null;
 };
+const sanitizeEmail = (value = '') => {
+  const match = String(value || '')
+    .trim()
+    .match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+  return match ? match[0].toLowerCase() : '';
+};
 
 const normalizeAssetStatus = (asset) => {
   if (!asset) {
@@ -7960,17 +7966,15 @@ const App = () => {
                 row['1st Level Supervisor'] ||
                 row['Manager'] ||
                 '').toString().trim();
-            const supervisorEmail = (
+            const supervisorEmail = sanitizeEmail(
               row["Supervisor's Email"] ||
-              row['Supervisor Email'] ||
-              row['Manager E-Mail Address'] ||
-              row['Manager Email Address'] ||
-              row['Manager Email'] ||
-              ''
-            )
-              .toString()
-              .trim();
-            const employeeEmail = (row['E-Mail Address'] || row['Email'] || '').toString().trim();
+                row['Supervisor Email'] ||
+                row['Manager E-Mail Address'] ||
+                row['Manager Email Address'] ||
+                row['Manager Email'] ||
+                ''
+            );
+            const employeeEmail = sanitizeEmail(row['E-Mail Address'] || row['Email'] || '');
             
             if (!firstName && !lastName && !employeeId && !employeeEmail) return;
             
@@ -7985,7 +7989,7 @@ const App = () => {
               supervisor,
               supervisorEmail,
             };
-            
+
             if (nameKey) {
               supervisorLookup[nameKey] = supervisorData;
             }
