@@ -7363,7 +7363,7 @@ const App = () => {
   }, [sheetInsights]);
 
   const defaultAssetFilters = useMemo(
-    () => ({ search: '', type: 'all', status: 'all', hideRetired: true }),
+    () => ({ search: '', type: 'all', status: 'all', hideRetired: true, readiness: 'all' }),
     [],
   );
   const [filters, setFilters] = useState(() => {
@@ -8141,6 +8141,14 @@ const App = () => {
       if (filters.hideRetired && statusLabel === 'Retired') {
         return false;
       }
+      const quality = assetQualityMap[asset.id] || { issues: [] };
+      const hasIssues = quality.issues.length > 0;
+      if (filters.readiness === 'needs' && !hasIssues) {
+        return false;
+      }
+      if (filters.readiness === 'ready' && hasIssues) {
+        return false;
+      }
       const matchesSearch =
         !query ||
         asset.assetName.toLowerCase().includes(query) ||
@@ -8171,12 +8179,12 @@ const App = () => {
     });
 
     return sorted;
-  }, [assetSort.direction, assetSort.key, assets, filters]);
+  }, [assetQualityMap, assetSort.direction, assetSort.key, assets, filters]);
   const ASSET_PAGE_SIZE = assetPageSize;
   const totalAssetPages = Math.max(1, Math.ceil(filteredAssets.length / ASSET_PAGE_SIZE));
   useEffect(() => {
     setAssetPage(1);
-  }, [filters.search, filters.type, filters.status, filters.hideRetired, assetSort.key, assetSort.direction, assetPageSize]);
+  }, [filters.search, filters.type, filters.status, filters.hideRetired, filters.readiness, assetSort.key, assetSort.direction, assetPageSize]);
   useEffect(() => {
     if (assetPage > totalAssetPages) {
       setAssetPage(totalAssetPages);
@@ -9434,6 +9442,12 @@ const App = () => {
     [],
   );
 
+  const handleNeedsInfoClick = useCallback(() => {
+    setFilters({ ...defaultAssetFilters, readiness: 'needs' });
+    setAssetPage(1);
+    handleJumpToSection('Hardware', 'asset-table');
+  }, [defaultAssetFilters, handleJumpToSection]);
+
   const [scanEmployee, setScanEmployee] = useState('');
 
   const handleUseScanResult = () => {
@@ -9565,6 +9579,9 @@ const App = () => {
   const handleActionSubmit = async ({ assetId, mode, user, notes, date }) => {
     const currentAsset = assets.find((item) => item.id === assetId);
     const previousOwner = currentAsset?.assignedTo || '';
+    const normalizedUser = normalizeKey(user);
+    const normalizedPrevOwner = normalizeKey(previousOwner);
+
     setAssets((prev) =>
       prev.map((asset) => {
         if (asset.id !== assetId) {
@@ -9591,17 +9608,23 @@ const App = () => {
       }),
     );
 
-    setHistory((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        assetId,
-        action: mode === 'checkout' ? 'Check Out' : 'Check In',
-        user: mode === 'checkout' ? user : previousOwner || 'Unassigned',
-        notes,
-        date,
-      },
-    ]);
+    const skipHistory =
+      (mode === 'checkout' && normalizedUser === 'unassigned') ||
+      (mode === 'checkin' && (!previousOwner || normalizedPrevOwner === 'unassigned'));
+
+    if (!skipHistory) {
+      setHistory((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          assetId,
+          action: mode === 'checkout' ? 'Check Out' : 'Check In',
+          user: mode === 'checkout' ? user : previousOwner || 'Unassigned',
+          notes,
+          date,
+        },
+      ]);
+    }
 
     setActionState(null);
   };
@@ -10708,12 +10731,24 @@ const App = () => {
               </section>
 
             <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {coordinatorKpis.map((kpi) => (
-                <div key={kpi.label} className="rounded-2xl border border-slate-100 bg-white p-4 text-sm shadow-sm">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-400">{kpi.label}</p>
-                  <p className="mt-2 text-2xl font-semibold text-slate-900">{kpi.value}</p>
-                </div>
-              ))}
+              {coordinatorKpis.map((kpi) => {
+                const isNeedsInfo = kpi.label === 'Needs info';
+                const Wrapper = isNeedsInfo ? 'button' : 'div';
+                return (
+                  <Wrapper
+                    key={kpi.label}
+                    type={isNeedsInfo ? 'button' : undefined}
+                    onClick={isNeedsInfo ? handleNeedsInfoClick : undefined}
+                    className={`rounded-2xl border border-slate-100 bg-white p-4 text-left text-sm shadow-sm ${
+                      isNeedsInfo ? 'transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md' : ''
+                    }`}
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-400">{kpi.label}</p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-900">{kpi.value}</p>
+                    {isNeedsInfo && <p className="mt-1 text-xs text-slate-500">Show assets missing required fields</p>}
+                  </Wrapper>
+                );
+              })}
             </section>
 
             <section className="mb-8 grid gap-4 md:grid-cols-3">
@@ -10756,12 +10791,17 @@ const App = () => {
                     onReset={() => setFilters({ ...defaultAssetFilters })}
                     types={typeOptions}
                   />
-                  {(filters.search || filters.type !== 'all' || filters.status !== 'all' || !filters.hideRetired) && (
+                  {(filters.search || filters.type !== 'all' || filters.status !== 'all' || filters.readiness !== 'all' || !filters.hideRetired) && (
                     <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50/70 px-3 py-2 text-xs text-slate-700">
                       <span className="font-semibold text-slate-600">Active filters:</span>
                       {filters.search && <span className="rounded-full bg-white px-2 py-1">Search: {filters.search}</span>}
                       {filters.type !== 'all' && <span className="rounded-full bg-white px-2 py-1">Type: {filters.type}</span>}
                       {filters.status !== 'all' && <span className="rounded-full bg-white px-2 py-1">Status: {filters.status}</span>}
+                      {filters.readiness !== 'all' && (
+                        <span className="rounded-full bg-white px-2 py-1">
+                          Readiness: {filters.readiness === 'needs' ? 'Needs info' : 'Ready'}
+                        </span>
+                      )}
                       {!filters.hideRetired && <span className="rounded-full bg-white px-2 py-1">Show retired</span>}
                       <button
                         type="button"
