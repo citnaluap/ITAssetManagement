@@ -499,7 +499,9 @@ const DEFAULT_SUITE_IDS = [
   'eset-endpoint',
   'eset-encryption',
   'm365',
-  'zoom',
+  'zoom-workplace-business',
+  'zoom-workplace-business-plus',
+  'zoom-meetings-basic',
 ];
 const DEFAULT_SUITE_SET = new Set(DEFAULT_SUITE_IDS);
 const EXCEL_EXPORTS = {
@@ -514,8 +516,8 @@ const PRINTER_VENDOR_DIRECTORY = {
     badge: 'bg-rose-50 text-rose-700 ring-rose-100',
     brands: ['Canon'],
     contact: {
-      label: 'Order from Colony',
-      href: 'https://www.colonyproducts.com/contact/order-supplies/',
+      label: 'Submit service request',
+      href: 'https://www.colonyproducts.com/contact/service-request/',
       external: true,
     },
   },
@@ -526,9 +528,9 @@ const PRINTER_VENDOR_DIRECTORY = {
     badge: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
     brands: ['HP', 'Lexmark', 'Epson'],
     contact: {
-      label: 'Email Sara Smoker',
-      href: 'mailto:Sara@weaverassociatesinc.com?subject=Printer%20service%20request',
-      external: false,
+      label: 'Submit repair ticket',
+      href: 'https://weaverassociatesinc.com/resources/send-a-message.html',
+      external: true,
     },
   },
 };
@@ -1361,22 +1363,58 @@ const SOFTWARE_PORTFOLIO = [
     criticality: 'High',
   },
   {
-    id: 'zoom',
-    software: 'Zoom One Business',
+    id: 'zoom-workplace-business',
+    software: 'Zoom Workplace Business',
     vendor: 'Zoom',
     owner: 'IT Operations',
     category: 'Meetings & UC',
-    seats: 305,
-    used: 305,
+    seats: 12,
+    used: 7,
     costPerSeat: 7,
     renewal: '2027-07-21',
-    portal: 'https://zoom.us/account',
+    portal: SOFTWARE_ADMIN_PORTALS.zoom,
     logo: SOFTWARE_LOGOS.zoom,
     accent: { from: '#2563eb', to: '#60a5fa' },
-    description: 'Video conferencing, webinars, and digital signage feeds.',
+    description: 'Core Zoom Workplace licenses for standard collaboration.',
     stack: ['Meetings', 'Rooms', 'Webinars'],
     deployment: 'Cloud',
     criticality: 'Medium',
+  },
+  {
+    id: 'zoom-workplace-business-plus',
+    software: 'Zoom Workplace Business Plus (US/CA Unlimited)',
+    vendor: 'Zoom',
+    owner: 'IT Operations',
+    category: 'Meetings & UC',
+    seats: 148,
+    used: 140,
+    costPerSeat: 7,
+    renewal: '2027-07-21',
+    portal: SOFTWARE_ADMIN_PORTALS.zoom,
+    logo: SOFTWARE_LOGOS.zoom,
+    accent: { from: '#1d4ed8', to: '#60a5fa' },
+    description: 'Business Plus with US/CA unlimited calling and advanced workloads.',
+    stack: ['Meetings', 'Rooms', 'Webinars', 'Phone'],
+    deployment: 'Cloud',
+    criticality: 'High',
+  },
+  {
+    id: 'zoom-meetings-basic',
+    software: 'Zoom Meetings Basic',
+    vendor: 'Zoom',
+    owner: 'IT Operations',
+    category: 'Meetings & UC',
+    seats: 33,
+    used: 4,
+    costPerSeat: 0,
+    renewal: '2027-07-21',
+    portal: SOFTWARE_ADMIN_PORTALS.zoom,
+    logo: SOFTWARE_LOGOS.zoom,
+    accent: { from: '#38bdf8', to: '#60a5fa' },
+    description: 'Free basic meeting accounts for light-use collaborators.',
+    stack: ['Meetings'],
+    deployment: 'Cloud',
+    criticality: 'Low',
   },
 ];
 
@@ -1992,7 +2030,8 @@ const getAssetQualityIssues = (asset = {}) => {
   if (!asset.location) {
     issues.push('Location missing');
   }
-  if (!asset.assignedTo) {
+  const hasAssignee = Boolean(asset.assignedTo) || normalizeKey(asset.assignedTo || '') === 'unassigned';
+  if (!hasAssignee) {
     issues.push('Assigned to missing');
   }
   if (!asset.status) {
@@ -2002,13 +2041,14 @@ const getAssetQualityIssues = (asset = {}) => {
 };
 
 const getAssetQualityScore = (asset = {}) => {
+  const hasAssignee = Boolean(asset.assignedTo) || normalizeKey(asset.assignedTo || '') === 'unassigned';
   const fields = [
     asset.type,
     asset.assetName || asset.sheetId || asset.id,
     asset.serialNumber,
     asset.model,
     asset.location,
-    asset.assignedTo,
+    hasAssignee,
     asset.status,
   ];
   const total = fields.length;
@@ -2462,18 +2502,34 @@ const QuickActionCard = ({ title, description, icon: Icon, actionLabel, onAction
   </div>
 );
 
-const DeviceSpotlightCard = ({ title, stats = [], stat, description, image, meta, onStatClick }) => {
+const DeviceSpotlightCard = ({ title, stats = [], stat, description, image, meta, onStatClick, isDarkMode = false }) => {
   const displayStats = stats.length ? stats : stat ? [{ label: stat }] : [];
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-900 text-white shadow-2xl hover-lift transition-all duration-500">
-      {image && <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-40 transition-opacity duration-700 hover:opacity-50" />}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-blue-900/80 to-purple-900/70" />
+    <div className={`relative overflow-hidden rounded-3xl border shadow-2xl hover-lift transition-all duration-500 ${
+      isDarkMode 
+        ? 'border-slate-700 bg-slate-900 text-white' 
+        : 'border-slate-200 bg-white text-slate-900'
+    }`}>
+      {image && <img src={image} alt="" className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 hover:opacity-50 ${
+        isDarkMode ? 'opacity-40' : 'opacity-20'
+      }`} />}
+      <div className={`absolute inset-0 ${
+        isDarkMode 
+          ? 'bg-gradient-to-br from-slate-900/95 via-blue-900/80 to-purple-900/70' 
+          : 'bg-gradient-to-br from-white/95 via-blue-50/90 to-purple-50/80'
+      }`} />
       <div className="relative flex h-full flex-col justify-between p-5">
         <div>
-          {meta && <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/60">{meta}</p>}
-          <p className="text-lg font-semibold">{title}</p>
-          <p className="mt-1 text-sm text-white/70">{description}</p>
+          {meta && <p className={`text-[11px] font-semibold uppercase tracking-[0.35rem] ${
+            isDarkMode ? 'text-white/60' : 'text-slate-500'
+          }`}>{meta}</p>}
+          <p className={`text-3xl font-semibold ${
+            isDarkMode ? 'text-white' : 'text-slate-900'
+          }`}>{title}</p>
+          <p className={`mt-1 text-sm ${
+            isDarkMode ? 'text-white/70' : 'text-slate-600'
+          }`}>{description}</p>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {displayStats.map((item, index) => {
@@ -2483,18 +2539,26 @@ const DeviceSpotlightCard = ({ title, stats = [], stat, description, image, meta
               <button
                 type="button"
                 onClick={() => onStatClick(item.type)}
-                className="text-left text-2xl font-semibold text-white underline decoration-white/60 underline-offset-4 transition hover:text-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                className={`text-left text-2xl font-semibold underline underline-offset-4 transition focus-visible:outline-none focus-visible:ring-2 ${
+                  isDarkMode 
+                    ? 'text-white decoration-white/60 hover:text-blue-100 focus-visible:ring-white/60' 
+                    : 'text-slate-900 decoration-slate-400 hover:text-blue-600 focus-visible:ring-blue-300'
+                }`}
               >
                 {item.label}
               </button>
             ) : (
-              <span className="text-2xl font-semibold">{item.label}</span>
+              <span className={`text-2xl font-semibold ${
+                isDarkMode ? 'text-white' : 'text-slate-900'
+              }`}>{item.label}</span>
             );
 
             return (
               <Fragment key={key}>
                 {content}
-                {index < displayStats.length - 1 && <span className="text-2xl font-semibold text-white/50">/</span>}
+                {index < displayStats.length - 1 && <span className={`text-2xl font-semibold ${
+                  isDarkMode ? 'text-white/50' : 'text-slate-400'
+                }`}>/</span>}
               </Fragment>
             );
           })}
@@ -2535,7 +2599,7 @@ const PaginationControls = ({ page, totalPages, onPageChange, align = 'between' 
   );
 };
 
-const SnapshotMetricsRow = ({ metrics = [] }) => (
+const SnapshotMetricsRow = ({ metrics = [], isDarkMode = false }) => (
   <div className="glass-card rounded-3xl p-6 shadow-lg">
     <p className="text-[11px] font-bold uppercase tracking-[0.35rem] bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Daily signals</p>
     <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -3044,47 +3108,6 @@ const NetworkPrinterBoard = ({
   );
 };
 
-const PrinterVendorSummary = ({ vendors = [], title = 'Printer service partners', subtitle }) => {
-  return (
-    <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
-      <div className="border-b border-slate-100 px-5 py-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Vendor routing</p>
-        <p className="text-lg font-semibold text-slate-900">{title}</p>
-        {subtitle && <p className="text-sm text-slate-500">{subtitle}</p>}
-      </div>
-      <div className="space-y-4 p-5">
-        {vendors.map((vendor) => (
-          <div key={vendor.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">{vendor.name}</p>
-                <p className="text-xs text-slate-500">{vendor.description}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-semibold text-slate-900">{vendor.deviceCount}</p>
-                <p className="text-xs text-slate-500">printers</p>
-              </div>
-            </div>
-            <p className="mt-2 text-xs text-slate-500">Brands: {vendor.brands.join(', ')}</p>
-            {vendor.contact && (
-              <a
-                href={vendor.contact.href}
-                target={vendor.contact.external ? '_blank' : '_self'}
-                rel={vendor.contact.external ? 'noreferrer' : undefined}
-                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:underline"
-              >
-                {vendor.contact.label}
-                {vendor.contact.external && <ExternalLink className="h-3.5 w-3.5" />}
-              </a>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-
 const SoftwareSuiteCard = ({ suite, onEdit, onDelete }) => {
   const { status, delta } = getLicenseHealth(suite.seats, suite.used);
   const badgeStyle =
@@ -3208,28 +3231,50 @@ const SoftwareSuiteCard = ({ suite, onEdit, onDelete }) => {
   );
 };
 
-const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll }) => {
+const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll, isDarkMode = false }) => {
   if (!alerts.length) {
     return null;
   }
   const highlight = alerts.slice(0, 3);
   const nextExpiry = highlight[0]?.warrantyExpiry ? formatDate(highlight[0].warrantyExpiry) : null;
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-slate-200/70 bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 p-6 text-white shadow-[0_20px_60px_rgba(15,23,42,0.55)]">
-      <div className="absolute inset-0 opacity-40 blur-3xl">
-        <div className="absolute -left-10 -top-8 h-40 w-40 rounded-full bg-cyan-500/40" />
-        <div className="absolute bottom-0 right-0 h-48 w-48 rounded-full bg-amber-400/30" />
+    <div
+      className={`relative overflow-hidden rounded-3xl border p-6 ${
+        isDarkMode
+          ? 'border-slate-800/70 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white shadow-[0_20px_60px_rgba(15,23,42,0.55)]'
+          : 'border-amber-100 bg-gradient-to-br from-white via-amber-50/70 to-orange-50 text-slate-900 shadow-[0_16px_45px_rgba(15,23,42,0.12)]'
+      }`}
+    >
+      <div className={`absolute inset-0 blur-3xl ${isDarkMode ? 'opacity-40' : 'opacity-30'}`}>
+        <div
+          className={`absolute -left-10 -top-8 h-40 w-40 rounded-full ${isDarkMode ? 'bg-cyan-500/40' : 'bg-amber-200/60'}`}
+        />
+        <div
+          className={`absolute bottom-0 right-0 h-48 w-48 rounded-full ${isDarkMode ? 'bg-amber-400/30' : 'bg-orange-200/50'}`}
+        />
       </div>
       <div className="relative flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 shadow-inner">
-            <CalendarClock className="h-5 w-5 text-amber-200" />
+          <span
+            className={`flex h-11 w-11 items-center justify-center rounded-2xl ring-1 ${
+              isDarkMode
+                ? 'bg-white/10 ring-white/20 shadow-inner'
+                : 'bg-white ring-amber-200 shadow-sm'
+            }`}
+          >
+            <CalendarClock className={`h-5 w-5 ${isDarkMode ? 'text-amber-200' : 'text-amber-700'}`} />
           </span>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-white/70">Warranty alerts</p>
-            <p className="text-xl font-semibold text-white">Expiring within 30 days</p>
-            <p className="text-sm text-white/70">
-              {alerts.length} device{alerts.length === 1 ? '' : 's'} need attention {nextExpiry ? `— next on ${nextExpiry}` : ''}
+            <p
+              className={`text-[11px] font-semibold uppercase tracking-[0.3rem] ${
+                isDarkMode ? 'text-white/70' : 'text-amber-700/80'
+              }`}
+            >
+              Warranty alerts
+            </p>
+            <p className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Expiring within 30 days</p>
+            <p className={`text-sm ${isDarkMode ? 'text-white/70' : 'text-slate-700'}`}>
+              {alerts.length} device{alerts.length === 1 ? '' : 's'} need attention {nextExpiry ? `- next on ${nextExpiry}` : ''}
             </p>
           </div>
         </div>
@@ -3237,7 +3282,11 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll }) => {
           {typeof onClearAll === 'function' && (
             <button
               type="button"
-              className="rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/30 hover:bg-white/15"
+              className={`rounded-2xl px-4 py-2 text-xs font-semibold transition hover:-translate-y-0.5 ${
+                isDarkMode
+                  ? 'border border-white/20 bg-white/10 text-white hover:border-white/30 hover:bg-white/15'
+                  : 'border border-amber-200 bg-white/80 text-amber-800 shadow-sm hover:border-amber-300 hover:bg-white'
+              }`}
               onClick={() => onClearAll(alerts)}
             >
               Clear all
@@ -3246,7 +3295,11 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll }) => {
           {typeof onViewAll === 'function' && (
             <button
               type="button"
-              className="rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-4 py-2 text-xs font-semibold text-slate-900 shadow-lg shadow-amber-500/30 transition hover:-translate-y-0.5"
+              className={`rounded-2xl px-4 py-2 text-xs font-semibold shadow-lg transition hover:-translate-y-0.5 ${
+                isDarkMode
+                  ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 shadow-amber-500/30'
+                  : 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-amber-400/50'
+              }`}
               onClick={onViewAll}
             >
               View all
@@ -3256,17 +3309,49 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll }) => {
       </div>
 
       <div className="relative mt-5 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner backdrop-blur">
-          <p className="text-[11px] uppercase tracking-[0.25rem] text-white/60">Total alerts</p>
-          <p className="mt-2 text-3xl font-semibold text-white">{alerts.length}</p>
+        <div
+          className={`rounded-2xl border p-4 shadow-inner backdrop-blur ${
+            isDarkMode ? 'border-white/10 bg-white/5' : 'border-amber-100 bg-white/80'
+          }`}
+        >
+          <p
+            className={`text-[11px] uppercase tracking-[0.25rem] ${
+              isDarkMode ? 'text-white/60' : 'text-amber-700/70'
+            }`}
+          >
+            Total alerts
+          </p>
+          <p className={`mt-2 text-3xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{alerts.length}</p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner backdrop-blur">
-          <p className="text-[11px] uppercase tracking-[0.25rem] text-white/60">Next expiry</p>
-          <p className="mt-2 text-lg font-semibold text-amber-100">{nextExpiry || '—'}</p>
+        <div
+          className={`rounded-2xl border p-4 shadow-inner backdrop-blur ${
+            isDarkMode ? 'border-white/10 bg-white/5' : 'border-amber-100 bg-white/80'
+          }`}
+        >
+          <p
+            className={`text-[11px] uppercase tracking-[0.25rem] ${
+              isDarkMode ? 'text-white/60' : 'text-amber-700/70'
+            }`}
+          >
+            Next expiry
+          </p>
+          <p className={`mt-2 text-lg font-semibold ${isDarkMode ? 'text-amber-100' : 'text-amber-700'}`}>{nextExpiry || '-'}</p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner backdrop-blur">
-          <p className="text-[11px] uppercase tracking-[0.25rem] text-white/60">Action</p>
-          <p className="mt-2 text-sm font-semibold text-white">Schedule service or renew coverage</p>
+        <div
+          className={`rounded-2xl border p-4 shadow-inner backdrop-blur ${
+            isDarkMode ? 'border-white/10 bg-white/5' : 'border-amber-100 bg-white/80'
+          }`}
+        >
+          <p
+            className={`text-[11px] uppercase tracking-[0.25rem] ${
+              isDarkMode ? 'text-white/60' : 'text-amber-700/70'
+            }`}
+          >
+            Action
+          </p>
+          <p className={`mt-2 text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+            Schedule service or renew coverage
+          </p>
         </div>
       </div>
 
@@ -3274,30 +3359,48 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll }) => {
         {highlight.map((alert, index) => (
           <div
             key={`${alert.assetId || alert.assetName}-warranty`}
-            className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm shadow-inner backdrop-blur"
+            className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm ${
+              isDarkMode ? 'border-white/10 bg-white/5 shadow-inner backdrop-blur' : 'border-amber-100/80 bg-white/80 shadow-sm'
+            }`}
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/20 text-amber-100 ring-1 ring-amber-300/40">
+              <div
+                className={`flex h-9 w-9 items-center justify-center rounded-xl ring-1 ${
+                  isDarkMode ? 'bg-amber-500/20 text-amber-100 ring-amber-300/40' : 'bg-amber-100 text-amber-700 ring-amber-200'
+                }`}
+              >
                 {index + 1}
               </div>
               <div>
-                <p className="font-semibold text-white">{alert.assetName || alert.model || 'Device'}</p>
-                <p className="text-xs text-white/70">
-                  {alert.location || 'Location TBD'} · {alert.assignedTo || 'Unassigned'}
+                <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                  {alert.assetName || alert.model || 'Device'}
+                </p>
+                <p className={`text-xs ${isDarkMode ? 'text-white/70' : 'text-slate-600'}`}>
+                  {alert.location || 'Location TBD'} | {alert.assignedTo || 'Unassigned'}
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-xs uppercase tracking-wide text-white/60">Expires</p>
-              <p className="text-sm font-semibold text-amber-100">{formatDate(alert.warrantyExpiry)}</p>
+              <p className={`text-xs uppercase tracking-wide ${isDarkMode ? 'text-white/60' : 'text-amber-700/70'}`}>Expires</p>
+              <p className={`text-sm font-semibold ${isDarkMode ? 'text-amber-100' : 'text-amber-700'}`}>{formatDate(alert.warrantyExpiry)}</p>
             </div>
           </div>
         ))}
         {alerts.length > highlight.length && (
-          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs font-semibold text-white/80 backdrop-blur">
+          <div
+            className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-xs font-semibold ${
+              isDarkMode
+                ? 'border-white/10 bg-white/5 text-white/80 backdrop-blur'
+                : 'border-amber-100 bg-white/90 text-slate-800 shadow-sm'
+            }`}
+          >
             <span>+{alerts.length - highlight.length} more devices in queue</span>
             {typeof onViewAll === 'function' && (
-              <button type="button" className="text-amber-200 underline underline-offset-4" onClick={onViewAll}>
+              <button
+                type="button"
+                className={isDarkMode ? 'text-amber-200 underline underline-offset-4' : 'text-amber-700 underline underline-offset-4'}
+                onClick={onViewAll}
+              >
                 Review all
               </button>
             )}
@@ -3585,7 +3688,7 @@ const AnalyticsInsightsPanel = ({ costData = [], depreciation = [] }) => (
   </div>
 );
 
-const MaintenanceWorkflowBoard = ({ workOrders = [] }) => {
+const MaintenanceWorkflowBoard = ({ workOrders = [], isDarkMode = false }) => {
   const columns = [
     { label: 'Planned', key: 'Planned', color: 'from-sky-100 to-white', chip: 'bg-sky-500/10 text-sky-700' },
     { label: 'In Progress', key: 'In Progress', color: 'from-amber-100 to-white', chip: 'bg-amber-500/10 text-amber-700' },
@@ -3623,7 +3726,11 @@ const MaintenanceWorkflowBoard = ({ workOrders = [] }) => {
           <p className="text-sm text-slate-500">Track vendor SLAs, attachments, ETA, and technician notes.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-          <span className="rounded-full bg-slate-900 text-white px-3 py-1 shadow-sm">Total {totals.total}</span>
+          <span className={`rounded-full px-3 py-1 shadow-sm ${
+            isDarkMode 
+              ? 'bg-slate-900 text-white' 
+              : 'bg-slate-900 text-white'
+          }`}>Total {totals.total}</span>
           {columns.map((col) => (
             <span
               key={col.key}
@@ -3979,7 +4086,7 @@ Reply to this email with your updates. Photos are welcome. Thank you!`,
   </div>
 );
 
-const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair, onEditRepair }) => {
+const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair, onEditRepair, isDarkMode = false }) => {
   const {
     repairs = [],
     repairTotal = 0,
@@ -4010,18 +4117,38 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
   );
   const coveragePercent = loanerTotal ? Math.round((loanerAvailableCount / loanerTotal) * 100) : 0;
   return (
-    <div className="rounded-3xl border border-slate-100 bg-white/90 p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800/60">
+    <div
+      className={`rounded-3xl border p-6 shadow-lg ${
+        isDarkMode
+          ? 'border-slate-800/70 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white'
+          : 'border-amber-100 bg-gradient-to-br from-white via-amber-50/70 to-orange-50 text-slate-900 shadow-[0_16px_45px_rgba(15,23,42,0.12)]'
+      }`}
+    >
+      <div
+        className={`flex flex-wrap items-center justify-between gap-3 border-b pb-4 ${
+          isDarkMode ? 'border-white/10' : 'border-amber-100'
+        }`}
+      >
         <div className="flex flex-wrap items-center gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400 dark:text-slate-500">Repair desk</p>
-            <p className="text-xl font-semibold text-slate-900 dark:text-white">Laptop service status</p>
+            <p
+              className={`text-[11px] font-semibold uppercase tracking-[0.35rem] ${
+                isDarkMode ? 'text-white/70' : 'text-amber-700/80'
+              }`}
+            >
+              Repair desk
+            </p>
+            <p className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Laptop service status</p>
           </div>
           {typeof onAddRepair === 'function' && (
             <button
               type="button"
               onClick={onAddRepair}
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600 dark:border-slate-700 dark:text-slate-200 dark:hover:border-blue-400"
+              className={`inline-flex items-center gap-2 rounded-2xl px-3 py-1.5 text-xs font-semibold transition hover:-translate-y-0.5 ${
+                isDarkMode
+                  ? 'border border-white/20 bg-white/10 text-white hover:border-white/30 hover:bg-white/15'
+                  : 'border border-amber-200 bg-white text-amber-800 shadow-sm hover:border-blue-200 hover:text-blue-700'
+              }`}
             >
               <Plus className="h-4 w-4" />
               Add
@@ -4029,105 +4156,161 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
           )}
         </div>
         <div className="text-right">
-          <p className="text-xs uppercase tracking-widest text-slate-400 dark:text-slate-500">Avg age in repair</p>
-          <p className="text-2xl font-semibold text-slate-900 dark:text-white">{avgRepairAgeMonths || 0} mo</p>
+          <p className={`text-xs uppercase tracking-widest ${isDarkMode ? 'text-white/60' : 'text-amber-700/80'}`}>Avg age in repair</p>
+          <p className={`text-2xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{avgRepairAgeMonths || 0} mo</p>
         </div>
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.5fr,1fr]">
-        <div className="rounded-2xl border border-slate-100 bg-white/90 p-4 dark:border-slate-800 dark:bg-slate-800/70">
+        <div
+          className={`rounded-2xl border p-4 ${
+            isDarkMode ? 'border-white/10 bg-white/5 shadow-inner backdrop-blur' : 'border-amber-100 bg-white/90 shadow-sm'
+          }`}
+        >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500 dark:text-slate-400">Laptops out for repair</p>
-              <p className="text-sm text-slate-600 dark:text-slate-200">{repairTotal} devices</p>
+              <p
+                className={`text-xs font-semibold uppercase tracking-[0.25rem] ${
+                  isDarkMode ? 'text-white/70' : 'text-amber-700/80'
+                }`}
+              >
+                Laptops out for repair
+              </p>
+              <p className={`text-sm ${isDarkMode ? 'text-white/80' : 'text-slate-700'}`}>{repairTotal} devices</p>
             </div>
-            <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-100">
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                isDarkMode ? 'bg-amber-900/40 text-amber-100 ring-1 ring-amber-500/30' : 'bg-amber-100 text-amber-800 ring-1 ring-amber-200'
+              }`}
+            >
               {repairTotal > 0 ? 'In progress' : 'All clear'}
             </span>
           </div>
           {repairs.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-500 dark:text-slate-300">No laptops currently staged at the depot.</p>
+            <p className={`mt-4 text-sm ${isDarkMode ? 'text-white/70' : 'text-slate-600'}`}>No laptops currently staged at the depot.</p>
           ) : (
             <ul className="mt-4 space-y-3">
               {repairs.map((item) => (
                 <li
                   key={item.id}
-                  className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-800/80"
+                  className={`rounded-2xl border p-3 ${
+                    isDarkMode ? 'border-white/10 bg-white/5 shadow-inner backdrop-blur' : 'border-amber-100 bg-white'
+                  }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.assetId}</p>
+                    <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{item.assetId}</p>
                     <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-500 dark:bg-slate-900/70 dark:text-slate-200">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                          isDarkMode ? 'bg-white/10 text-white ring-1 ring-white/15' : 'bg-white text-slate-700 ring-1 ring-slate-200'
+                        }`}
+                      >
                         {item.status}
                       </span>
                       {typeof onEditRepair === 'function' && (
                         <button
                           type="button"
                           onClick={() => onEditRepair(item)}
-                          className="rounded-full border border-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-600 dark:border-slate-700 dark:text-slate-200 dark:hover:border-blue-400"
+                          className={`rounded-full px-2 py-1 text-[11px] font-semibold transition hover:-translate-y-0.5 ${
+                            isDarkMode
+                              ? 'border border-white/20 text-white hover:border-blue-300 hover:text-blue-100'
+                              : 'border border-slate-200 text-slate-700 hover:border-blue-200 hover:text-blue-700'
+                          }`}
                         >
                           Edit
                         </button>
                       )}
                     </div>
                   </div>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-300">{item.issue}</p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Assigned to <span className="font-semibold text-slate-900">{item.assignedTo}</span> - {item.model}
+                  <p className={`mt-1 text-xs ${isDarkMode ? 'text-white/70' : 'text-slate-600'}`}>{item.issue}</p>
+                  <p className={`mt-1 text-xs ${isDarkMode ? 'text-white/70' : 'text-slate-600'}`}>
+                    Assigned to <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{item.assignedTo}</span> - {item.model}
                   </p>
                 </li>
               ))}
             </ul>
           )}
         </div>
-        <div className="rounded-2xl border border-slate-100 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-800/70">
+        <div
+          className={`rounded-2xl border p-4 ${
+            isDarkMode ? 'border-white/10 bg-white/5 shadow-inner backdrop-blur' : 'border-amber-100 bg-white/90 shadow-sm'
+          }`}
+        >
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500 dark:text-slate-400">Loaner coverage</p>
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                <p
+                  className={`text-xs font-semibold uppercase tracking-[0.25rem] ${
+                    isDarkMode ? 'text-white/70' : 'text-amber-700/80'
+                  }`}
+                >
+                  Loaner coverage
+                </p>
+                <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
                   {loanerAvailableCount}/{loanerTotal} staged
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-300">Tap a device below to reserve or return it.</p>
+                <p className={`text-xs ${isDarkMode ? 'text-white/70' : 'text-slate-600'}`}>Tap a device below to reserve or return it.</p>
               </div>
-              <div className="rounded-2xl bg-blue-50 px-4 py-2 text-center text-xs font-semibold text-blue-700 shadow-sm dark:bg-blue-900/30 dark:text-blue-100">
+              <div
+                className={`rounded-2xl px-4 py-2 text-center text-xs font-semibold shadow-sm ${
+                  isDarkMode ? 'bg-blue-900/30 text-blue-100 ring-1 ring-blue-500/30' : 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
+                }`}
+              >
                 {coveragePercent}% ready
-                <p className="text-[10px] font-medium text-blue-600/80 dark:text-blue-200/70">Loaner health</p>
+                <p className={`text-[10px] font-medium ${isDarkMode ? 'text-blue-200/70' : 'text-blue-600/80'}`}>Loaner health</p>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3 text-center text-[11px] font-semibold uppercase tracking-wide">
-              <div className="rounded-xl border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-900/60">
-                <p className="text-lg text-emerald-600 dark:text-emerald-200">{loanerAvailableCount}</p>
-                <p className="text-slate-500 dark:text-slate-300">Available</p>
+              <div
+                className={`rounded-xl border p-2 ${
+                  isDarkMode ? 'border-white/10 bg-white/5 text-white' : 'border-emerald-100 bg-white text-slate-800'
+                }`}
+              >
+                <p className={`text-lg ${isDarkMode ? 'text-emerald-200' : 'text-emerald-700'}`}>{loanerAvailableCount}</p>
+                <p className={isDarkMode ? 'text-white/70' : 'text-slate-600'}>Available</p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-900/60">
-                <p className="text-lg text-amber-600 dark:text-amber-200">{loanerDeployedCount}</p>
-                <p className="text-slate-500 dark:text-slate-300">Deployed</p>
+              <div
+                className={`rounded-xl border p-2 ${
+                  isDarkMode ? 'border-white/10 bg-white/5 text-white' : 'border-amber-100 bg-white text-slate-800'
+                }`}
+              >
+                <p className={`text-lg ${isDarkMode ? 'text-amber-200' : 'text-amber-700'}`}>{loanerDeployedCount}</p>
+                <p className={isDarkMode ? 'text-white/70' : 'text-slate-600'}>Deployed</p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-900/60">
-                <p className="text-lg text-slate-800 dark:text-slate-100">{loanerTotal}</p>
-                <p className="text-slate-500 dark:text-slate-300">Total</p>
+              <div
+                className={`rounded-xl border p-2 ${
+                  isDarkMode ? 'border-white/10 bg-white/5 text-white' : 'border-slate-200 bg-white text-slate-800'
+                }`}
+              >
+                <p className={`text-lg ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{loanerTotal}</p>
+                <p className={isDarkMode ? 'text-white/70' : 'text-slate-600'}>Total</p>
               </div>
             </div>
           </div>
           <div className="mt-3">
             {loanersAvailable.length === 0 ? (
-              <p className="text-xs text-slate-400 dark:text-slate-500">No devices ready.</p>
+              <p className={`text-xs ${isDarkMode ? 'text-white/60' : 'text-slate-600'}`}>No devices ready.</p>
             ) : (
               <ul className="space-y-2">
                 {pagedLoanersAvailable.map((loaner) => (
                   <li
                     key={loaner.id}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3 dark:border-emerald-900/40 dark:bg-emerald-900/30"
+                    className={`flex items-center justify-between gap-3 rounded-2xl border p-3 ${
+                      isDarkMode ? 'border-emerald-900/40 bg-emerald-900/30' : 'border-emerald-100 bg-emerald-50/80'
+                    }`}
                   >
                     <div>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{loaner.assetId}</p>
-                      <p className="text-[11px] text-emerald-600 dark:text-emerald-200">{loaner.location}</p>
+                      <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{loaner.assetId}</p>
+                      <p className={`text-[11px] ${isDarkMode ? 'text-emerald-200' : 'text-emerald-700'}`}>{loaner.location}</p>
                     </div>
                     {typeof onLoanerCheckout === 'function' && (
                       <button
                         type="button"
                         onClick={() => onLoanerCheckout(loaner.asset)}
-                        className="rounded-2xl border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-700 transition hover:border-emerald-300 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100 dark:hover:border-emerald-700"
+                        className={`rounded-2xl px-3 py-1 text-xs font-semibold transition hover:-translate-y-0.5 ${
+                          isDarkMode
+                            ? 'border border-emerald-800 bg-emerald-950 text-emerald-100 hover:border-emerald-700'
+                            : 'border border-emerald-200 bg-white text-emerald-700 shadow-sm hover:border-emerald-300'
+                        }`}
                       >
                         Check out
                       </button>
@@ -4148,27 +4331,39 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
             )}
           </div>
           <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800/60">
-            <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500 dark:text-slate-400">Currently deployed</p>
+            <p
+              className={`text-xs font-semibold uppercase tracking-[0.25rem] ${
+                isDarkMode ? 'text-white/70' : 'text-amber-700/80'
+              }`}
+            >
+              Currently deployed
+            </p>
             {loanersDeployed.length === 0 ? (
-              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">No loaners currently checked out.</p>
+              <p className={`mt-2 text-xs ${isDarkMode ? 'text-white/70' : 'text-slate-600'}`}>No loaners currently checked out.</p>
             ) : (
               <ul className="mt-2 space-y-2">
                 {pagedLoanersDeployed.map((loaner) => (
                   <li
                     key={loaner.id}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/70"
+                    className={`flex items-center justify-between gap-3 rounded-2xl border p-3 ${
+                      isDarkMode ? 'border-white/10 bg-white/5 shadow-inner backdrop-blur' : 'border-slate-100 bg-white'
+                    }`}
                   >
                     <div>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{loaner.assetId}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-300">
-                        Assigned to <span className="font-semibold text-slate-900 dark:text-white">{loaner.assignedTo}</span> - {loaner.location}
+                      <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{loaner.assetId}</p>
+                      <p className={`text-xs ${isDarkMode ? 'text-white/70' : 'text-slate-600'}`}>
+                        Assigned to <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{loaner.assignedTo}</span> - {loaner.location}
                       </p>
                     </div>
                     {typeof onLoanerCheckin === 'function' && (
                       <button
                         type="button"
                         onClick={() => onLoanerCheckin(loaner.asset)}
-                        className="rounded-2xl border border-blue-200 bg-white px-3 py-1 text-xs font-semibold text-blue-700 transition hover:border-blue-300 dark:border-blue-900 dark:bg-blue-900/30 dark:text-blue-200"
+                        className={`rounded-2xl px-3 py-1 text-xs font-semibold transition hover:-translate-y-0.5 ${
+                          isDarkMode
+                            ? 'border border-blue-900 bg-blue-900/30 text-blue-200 hover:border-blue-700'
+                            : 'border border-blue-200 bg-white text-blue-700 shadow-sm hover:border-blue-300'
+                        }`}
                       >
                         Check in
                     </button>
@@ -4187,7 +4382,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
                 />
               </div>
             )}
-            <p className="mt-3 text-[11px] text-slate-400 dark:text-slate-500">
+            <p className={`mt-3 text-[11px] ${isDarkMode ? 'text-white/60' : 'text-slate-600'}`}>
               {loanerDeployedCount} out in the field - keep at least 2 staged for emergencies.
             </p>
           </div>
@@ -4202,24 +4397,42 @@ const RepairPartsPanel = ({ models = [], isDarkMode = false }) => {
   return (
     <div
       className={`rounded-3xl border p-6 shadow-lg ${
-        isDarkMode ? 'border-slate-800/70 bg-slate-900/70' : 'border-slate-100 bg-white'
+        isDarkMode
+          ? 'border-slate-800/70 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white'
+          : 'border-amber-100 bg-gradient-to-br from-white via-amber-50/60 to-orange-50 text-slate-900 shadow-[0_12px_36px_rgba(15,23,42,0.12)]'
       }`}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Parts ordering</p>
+          <p
+            className={`text-[11px] font-semibold uppercase tracking-[0.35rem] ${
+              isDarkMode ? 'text-white/70' : 'text-amber-700/80'
+            }`}
+          >
+            Parts ordering
+          </p>
           <p className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Amazon quick links by model</p>
-          <p className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+          <p className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
             One-click carts for batteries, displays, chargers, keyboards, SSDs, and RAM for your most common laptops.
           </p>
         </div>
-        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-100">
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${
+            isDarkMode
+              ? 'bg-emerald-900/40 text-emerald-100 ring-emerald-500/30'
+              : 'bg-emerald-50 text-emerald-700 ring-emerald-100'
+          }`}
+        >
           Replacement parts
         </span>
       </div>
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         {topModels.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+          <div
+            className={`rounded-2xl border border-dashed p-4 text-sm ${
+              isDarkMode ? 'border-white/20 bg-white/5 text-white/70' : 'border-amber-200/70 bg-white/80 text-slate-700'
+            }`}
+          >
             No laptop models detected yet. Add a laptop asset to unlock one-click ordering.
           </div>
         ) : (
@@ -4227,17 +4440,21 @@ const RepairPartsPanel = ({ models = [], isDarkMode = false }) => {
             <div
               key={`parts-${entry.model}`}
               className={`rounded-2xl border p-4 ${
-                isDarkMode ? 'border-slate-800 bg-slate-900/60' : 'border-slate-100 bg-slate-50/80'
+                isDarkMode ? 'border-white/10 bg-white/5 shadow-inner backdrop-blur' : 'border-amber-100 bg-white/95 shadow-sm'
               }`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{entry.model}</p>
-                  <p className={`text-[11px] uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <p className={`text-[11px] uppercase tracking-widest ${isDarkMode ? 'text-white/60' : 'text-amber-700/70'}`}>
                     {entry.count} in fleet
                   </p>
                 </div>
-                <div className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-slate-500 shadow-sm dark:bg-slate-800 dark:text-slate-200">
+                <div
+                  className={`rounded-full px-3 py-1 text-[11px] font-semibold ring-1 ${
+                    isDarkMode ? 'bg-white/10 text-white/80 ring-white/15' : 'bg-white text-slate-700 ring-slate-200'
+                  }`}
+                >
                   Parts bundle
                 </div>
               </div>
@@ -4248,7 +4465,11 @@ const RepairPartsPanel = ({ models = [], isDarkMode = false }) => {
                     href={buildAmazonSearch(entry.model, part.query)}
                     target="_blank"
                     rel="noreferrer"
-                    className="group inline-flex items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-blue-400"
+                    className={`group inline-flex items-center justify-between gap-2 rounded-2xl border px-3 py-2 text-xs font-semibold transition hover:-translate-y-0.5 ${
+                      isDarkMode
+                        ? 'border-white/10 bg-white/5 text-white hover:border-blue-300 hover:text-blue-100'
+                        : 'border-slate-200 bg-white text-slate-700 shadow-sm hover:border-blue-200 hover:text-blue-700'
+                    }`}
                   >
                     <span className="truncate">{part.label}</span>
                     <ExternalLink className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-500" />
@@ -4260,7 +4481,7 @@ const RepairPartsPanel = ({ models = [], isDarkMode = false }) => {
         )}
       </div>
       {topModels.length > 0 && (
-        <p className={`mt-4 text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+        <p className={`mt-4 text-xs ${isDarkMode ? 'text-white/70' : 'text-slate-600'}`}>
           Showing the top {topModels.length} laptop models by inventory count. Links open Amazon searches with the model pre-filled.
         </p>
       )}
@@ -4273,24 +4494,40 @@ const RepairVideosPanel = ({ models = [], isDarkMode = false }) => {
   return (
     <div
       className={`rounded-3xl border p-6 shadow-lg ${
-        isDarkMode ? 'border-slate-800/70 bg-slate-900/70' : 'border-slate-100 bg-white'
+        isDarkMode
+          ? 'border-slate-800/70 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white'
+          : 'border-amber-100 bg-gradient-to-br from-white via-blue-50/60 to-sky-50 text-slate-900 shadow-[0_12px_36px_rgba(15,23,42,0.12)]'
       }`}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Repair playbooks</p>
+          <p
+            className={`text-[11px] font-semibold uppercase tracking-[0.35rem] ${
+              isDarkMode ? 'text-white/70' : 'text-blue-800/80'
+            }`}
+          >
+            Repair playbooks
+          </p>
           <p className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>How-to videos for tricky fixes</p>
-          <p className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+          <p className={`text-sm ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
             Pre-filtered YouTube searches for screens, keyboards, thermals, storage, and RAM upgrades.
           </p>
         </div>
-        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-100">
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${
+            isDarkMode ? 'bg-blue-900/40 text-blue-100 ring-blue-500/30' : 'bg-blue-50 text-blue-700 ring-blue-100'
+          }`}
+        >
           Video guides
         </span>
       </div>
       <div className="mt-5 space-y-3">
         {focusModels.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+          <div
+            className={`rounded-2xl border border-dashed p-4 text-sm ${
+              isDarkMode ? 'border-white/20 bg-white/5 text-white/70' : 'border-blue-200/70 bg-white/80 text-slate-700'
+            }`}
+          >
             Add laptop assets to surface tailored repair videos.
           </div>
         ) : (
@@ -4298,17 +4535,21 @@ const RepairVideosPanel = ({ models = [], isDarkMode = false }) => {
             <div
               key={`videos-${entry.model}`}
               className={`rounded-2xl border p-4 ${
-                isDarkMode ? 'border-slate-800 bg-slate-900/60' : 'border-slate-100 bg-slate-50/80'
+                isDarkMode ? 'border-white/10 bg-white/5 shadow-inner backdrop-blur' : 'border-blue-100 bg-white/95 shadow-sm'
               }`}
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{entry.model}</p>
-                  <p className={`text-[11px] uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <p className={`text-[11px] uppercase tracking-widest ${isDarkMode ? 'text-white/60' : 'text-blue-800/80'}`}>
                     Difficult repairs
                   </p>
                 </div>
-                <div className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-slate-500 shadow-sm dark:bg-slate-800 dark:text-slate-200">
+                <div
+                  className={`rounded-full px-3 py-1 text-[11px] font-semibold ring-1 ${
+                    isDarkMode ? 'bg-white/10 text-white/80 ring-white/15' : 'bg-white text-slate-700 ring-slate-200'
+                  }`}
+                >
                   {entry.count} devices
                 </div>
               </div>
@@ -4319,7 +4560,11 @@ const RepairVideosPanel = ({ models = [], isDarkMode = false }) => {
                     href={buildYoutubeSearch(entry.model, topic.query)}
                     target="_blank"
                     rel="noreferrer"
-                    className="group inline-flex items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-rose-400"
+                    className={`group inline-flex items-center justify-between gap-2 rounded-2xl border px-3 py-2 text-xs font-semibold transition hover:-translate-y-0.5 ${
+                      isDarkMode
+                        ? 'border-white/10 bg-white/5 text-white hover:border-rose-300 hover:text-rose-100'
+                        : 'border-slate-200 bg-white text-slate-700 shadow-sm hover:border-rose-200 hover:text-rose-700'
+                    }`}
                   >
                     <span className="truncate">{topic.label}</span>
                     <ExternalLink className="h-3.5 w-3.5 text-slate-400 group-hover:text-rose-500" />
@@ -6760,6 +7005,48 @@ const App = () => {
       { title: 'Verizon lines', count: verizonCount, note: 'Active smartphones' },
     ];
   }, [vendorProfiles]);
+  const printerRepairTickets = useMemo(() => {
+    const printerLookup = new Map(
+      networkPrinters.map((printer) => [
+        normalizeKey(`${printer.deviceType || 'Printer'} @ ${printer.location || 'Unknown'}`),
+        printer,
+      ]),
+    );
+    const keywords = ['printer', 'copier', 'canon', 'hp', 'brother', 'lexmark', 'epson', 'toner'];
+    return repairTickets
+      .filter((ticket) => {
+        const normalizedId = normalizeKey(ticket.assetId || '');
+        if (printerLookup.has(normalizedId)) return true;
+        const haystack = `${ticket.assetId || ''} ${ticket.model || ''} ${ticket.issue || ''}`.toLowerCase();
+        return keywords.some((keyword) => haystack.includes(keyword));
+      })
+      .map((ticket) => {
+        const normalizedId = normalizeKey(ticket.assetId || '');
+        const printer = printerLookup.get(normalizedId);
+        const vendorId = printer?.vendor || '';
+        const vendorName =
+          vendorId === 'colony'
+            ? 'Colony Products'
+            : vendorId === 'weaver'
+              ? 'Weaver Associates'
+              : (ticket.assignedTo || '').trim();
+        const vendorBadge =
+          vendorId === 'colony'
+            ? 'bg-rose-50 text-rose-700 ring-rose-100'
+            : vendorId === 'weaver'
+              ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
+              : 'bg-slate-100 text-slate-700 ring-slate-200';
+        return {
+          ...ticket,
+          printerLabel: printer
+            ? `${printer.deviceType || 'Printer'} @ ${printer.location || 'Unknown'}`
+            : ticket.assetId || 'Printer or Copier',
+          vendorBadge,
+          vendorName: vendorName || 'Unassigned',
+          brand: printer?.model || ticket.model || '',
+        };
+      });
+  }, [networkPrinters, repairTickets]);
   const [employeeGallery, setEmployeeGallery] = usePersistentState(STORAGE_KEYS.employees, BASE_EMPLOYEE_GALLERY);
   useEffect(() => {
     let cancelled = false;
@@ -7029,44 +7316,44 @@ const App = () => {
 
     return [
       {
-        title: 'Compute fleet',
+        title: 'Computers',
         stats: [{ label: formatLabel(counts.Computer || 0, 'computer'), type: 'Computer' }],
-        description: 'Live pull from the Asset List workbook keeps your laptops and desktops current.',
+        description: 'Laptops and desktops.',
         image: MEDIA.devices.computer,
         meta: 'Hardware pulse',
       },
       {
-        title: 'Display grid',
+        title: 'Displays',
         stats: [{ label: formatLabel(counts.Monitor || 0, 'display'), type: 'Monitor' }],
-        description: 'Conference rooms and hoteling desks stay paired with procurement.',
+        description: 'Monitors for desks and conference rooms.',
         image: MEDIA.devices.monitor,
         meta: 'Peripherals',
       },
       {
-        title: 'Dock inventory',
+        title: 'Docking Stations',
         stats: [{ label: formatLabel(counts.Dock || 0, 'dock'), type: 'Dock' }],
-        description: 'Hoteling docks keep travelers connected and are tracked from the Asset List.',
+        description: 'Docking stations for workstations.',
         image: MEDIA.devices.dock,
         meta: 'Workspace',
       },
       {
-        title: 'Print backbone',
+        title: 'Printers',
         stats: [{ label: formatLabel(counts.Printer || 0, 'printer'), type: 'Printer' }],
-        description: 'Brother + HP devices mirrored from the Asset List for compliance.',
+        description: 'Printers and multifunction devices.',
         image: MEDIA.devices.printer,
         meta: 'Facilities',
       },
       {
-        title: 'Mobile fleet',
+        title: 'Phones',
         stats: [{ label: formatLabel(counts.Phone || 0, 'phone'), type: 'Phone' }],
-        description: 'Phones and tablets stay aligned with the source workbook and naming conventions.',
+        description: 'Phones and tablets.',
         image: MEDIA.devices.phone,
         meta: 'Mobility',
       },
       {
-        title: 'Access control',
+        title: 'KeyFobs',
         stats: [{ label: formatLabel(counts['Key Fob'] || 0, 'key fob'), type: 'Key Fob' }],
-        description: 'Badge + door fob inventory lives beside the rest of the Asset List.',
+        description: 'Badges and door fobs.',
         image: MEDIA.devices.keyfob,
         meta: 'Security',
       },
@@ -7146,6 +7433,18 @@ const App = () => {
     }),
     [isDarkMode, pageAccent],
   );
+  const heroHeadingClass = isDarkMode ? 'text-white' : 'text-slate-900';
+  const heroSubtextClass = isDarkMode ? 'text-white/80' : 'text-slate-600';
+  const heroLabelClass = isDarkMode ? 'text-white/70' : 'text-slate-500';
+  const heroChipClass = isDarkMode
+    ? 'border border-white/20 bg-white/10 text-white'
+    : 'border border-slate-200 bg-white text-slate-800 shadow-sm';
+  const heroPanelClass = isDarkMode
+    ? 'border border-white/15 bg-white/5 text-white'
+    : 'border border-slate-200 bg-white text-slate-800 shadow-sm';
+  const heroStatCardClass = isDarkMode
+    ? 'border border-white/15 bg-white/10 text-white'
+    : 'border border-slate-200 bg-white text-slate-800 shadow-sm';
   const videoRef = useRef(null);
   const fallbackCanvasRef = useRef(null);
   const scanLoopRef = useRef(null);
@@ -8844,12 +9143,28 @@ const App = () => {
     [],
   );
 
+  const handleOpenPrinterTicket = useCallback(
+    (printer) => {
+      const printerLabel = printer ? `${printer.deviceType || 'Printer'} @ ${printer.location || 'Unknown'}` : 'Printer / Copier';
+      setRepairTicketForm({
+        ...EMPTY_REPAIR_TICKET,
+        assetId: printerLabel,
+        model: printer?.model || '',
+        location: printer?.location || '',
+        issue: printer ? `Service request for ${printer.deviceType || 'printer'}` : '',
+        status: 'Awaiting intake',
+        severity: 'Normal',
+      });
+      setActivePage('Vendors');
+    },
+    [setActivePage, setRepairTicketForm],
+  );
+
   const handleReportPrinter = useCallback(
     (printer) => {
-      if (!printer) return;
-      setFlashMessage(`Issue logged for ${printer.deviceType} (${printer.model}). Include toner/counter in ticket.`);
+      handleOpenPrinterTicket(printer);
     },
-    [],
+    [handleOpenPrinterTicket],
   );
 
   const handleAddRepairTicket = useCallback(() => {
@@ -10076,59 +10391,61 @@ const App = () => {
             <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
             <div className="relative space-y-5">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/70 shadow-sm backdrop-blur">
+              <div
+                className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.35rem] shadow-sm backdrop-blur ${heroChipClass}`}
+              >
                 <Sparkles className="h-4 w-4" />
                 Asset command center
               </div>
-              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                <div className="max-w-3xl">
-                  <h1 className="text-4xl font-semibold leading-tight md:text-5xl">One command surface for every asset lifecycle</h1>
-                  <p className="mt-3 text-base text-white/75">
-                    Monitor procurement, deployment, and renewals from a single, human-friendly surface. Everything updates in real time so you can make confident decisions.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2 text-right text-sm font-semibold text-white/70">
-                  <span className="inline-flex items-center justify-end gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.2rem]">
-                    <ShieldCheck className="h-4 w-4" />
-                    Compliance ready
-                  </span>
-                  <span className="inline-flex items-center justify-end gap-2 rounded-full border border-white/20 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.2rem]">
-                    <ArrowRightLeft className="h-4 w-4" />
-                    Live audit logs
-                  </span>
-                </div>
+              <div>
+                <h1 className={`text-4xl font-semibold leading-tight md:text-5xl ${heroHeadingClass}`}>One command surface for every asset lifecycle</h1>
+                <p className={`mt-3 text-base ${heroSubtextClass}`}>
+                  Monitor procurement, deployment, and renewals from a single, human-friendly surface.
+                </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-sm shadow-inner backdrop-blur">
-                  <p className="text-[11px] uppercase tracking-[0.3rem] text-white/60">Snapshot</p>
-                  <p className="mt-1 text-lg font-semibold text-white">Share executive view</p>
+                <div className={`rounded-2xl p-4 text-sm shadow-inner ${heroStatCardClass}`}>
+                  <p className={`text-[11px] uppercase tracking-[0.3rem] ${heroLabelClass}`}>Snapshot</p>
+                  <p className={`mt-1 text-lg font-semibold ${heroHeadingClass}`}>Share executive view</p>
                   <button
                     onClick={handleExport}
-                    className="btn-primary mt-3 inline-flex items-center gap-2 rounded-xl border border-white/25 bg-gradient-to-r from-white/25 via-white/10 to-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/40"
+                    className={`btn-primary mt-3 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition hover:-translate-y-0.5 ${
+                      isDarkMode
+                        ? 'border border-white/25 bg-gradient-to-r from-white/25 via-white/10 to-white/5 text-white hover:border-white/40'
+                        : 'border border-slate-200 bg-gradient-to-r from-white via-slate-50 to-slate-100 text-slate-800 hover:border-blue-200'
+                    }`}
                   >
                     <Share2 className="h-4 w-4" />
                     Export data
                   </button>
                 </div>
-                <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-sm shadow-inner backdrop-blur">
-                  <p className="text-[11px] uppercase tracking-[0.3rem] text-white/60">Support</p>
-                  <p className="mt-1 text-lg font-semibold text-white">Open HelpDesk Portal</p>
+                <div className={`rounded-2xl p-4 text-sm shadow-inner ${heroStatCardClass}`}>
+                  <p className={`text-[11px] uppercase tracking-[0.3rem] ${heroLabelClass}`}>Support</p>
+                  <p className={`mt-1 text-lg font-semibold ${heroHeadingClass}`}>Open HelpDesk Portal</p>
                   <button
                     type="button"
                     onClick={handleOpenHelpDeskPortal}
-                    className="btn-primary mt-3 inline-flex items-center gap-2 rounded-xl border border-white/25 bg-gradient-to-r from-white/20 via-white/10 to-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/40"
+                    className={`btn-primary mt-3 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition hover:-translate-y-0.5 ${
+                      isDarkMode
+                        ? 'border border-white/25 bg-gradient-to-r from-white/20 via-white/10 to-white/5 text-white hover:border-white/40'
+                        : 'border border-slate-200 bg-gradient-to-r from-white via-slate-50 to-slate-100 text-slate-800 hover:border-blue-200'
+                    }`}
                   >
                     <ArrowRightLeft className="h-4 w-4" />
                     Launch portal
                   </button>
                 </div>
-                <div className="rounded-2xl border border-white/15 bg-white/10 p-4 text-sm shadow-inner backdrop-blur">
-                  <p className="text-[11px] uppercase tracking-[0.3rem] text-white/60">Watchlist</p>
-                  <p className="mt-1 text-lg font-semibold text-white">Warranty alerts</p>
+                <div className={`rounded-2xl p-4 text-sm shadow-inner ${heroStatCardClass}`}>
+                  <p className={`text-[11px] uppercase tracking-[0.3rem] ${heroLabelClass}`}>Watchlist</p>
+                  <p className={`mt-1 text-lg font-semibold ${heroHeadingClass}`}>Warranty alerts</p>
                   <button
                     type="button"
                     onClick={() => setWarrantyModalOpen(true)}
-                    className="btn-primary mt-3 inline-flex items-center gap-2 rounded-xl border border-white/25 bg-gradient-to-r from-white/20 via-white/10 to-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/40"
+                    className={`btn-primary mt-3 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition hover:-translate-y-0.5 ${
+                      isDarkMode
+                        ? 'border border-white/25 bg-gradient-to-r from-white/20 via-white/10 to-white/5 text-white hover:border-white/40'
+                        : 'border border-slate-200 bg-gradient-to-r from-white via-slate-50 to-slate-100 text-slate-800 hover:border-blue-200'
+                    }`}
                   >
                     <CalendarClock className="h-4 w-4" />
                     View alerts
@@ -10136,17 +10453,17 @@ const App = () => {
                 </div>
               </div>
               <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                  <p className="text-[11px] uppercase tracking-[0.3rem] text-white/60">Assets tracked</p>
-                  <p className="mt-2 text-3xl font-semibold">{stats.total}</p>
+                <div className={`rounded-2xl p-4 ${heroStatCardClass}`}>
+                  <p className={`text-[11px] uppercase tracking-[0.3rem] ${heroLabelClass}`}>Assets tracked</p>
+                  <p className={`mt-2 text-3xl font-semibold ${heroHeadingClass}`}>{stats.total}</p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                  <p className="text-[11px] uppercase tracking-[0.3rem] text-white/60">Inventory value</p>
-                  <p className="mt-2 text-3xl font-semibold">{formatCurrency(stats.totalValue)}</p>
+                <div className={`rounded-2xl p-4 ${heroStatCardClass}`}>
+                  <p className={`text-[11px] uppercase tracking-[0.3rem] ${heroLabelClass}`}>Inventory value</p>
+                  <p className={`mt-2 text-3xl font-semibold ${heroHeadingClass}`}>{formatCurrency(stats.totalValue)}</p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-                  <p className="text-[11px] uppercase tracking-[0.3rem] text-white/60">Warranty alerts</p>
-                  <p className="mt-2 text-3xl font-semibold">{stats.expiringSoon}</p>
+                <div className={`rounded-2xl p-4 ${heroStatCardClass}`}>
+                  <p className={`text-[11px] uppercase tracking-[0.3rem] ${heroLabelClass}`}>Warranty alerts</p>
+                  <p className={`mt-2 text-3xl font-semibold ${heroHeadingClass}`}>{stats.expiringSoon}</p>
                 </div>
               </div>
             </div>
@@ -10163,27 +10480,27 @@ const App = () => {
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.2),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(236,72,153,0.18),transparent_30%)] blur-3xl" />
             </div>
             <div className="relative">
-              <p className="text-xs font-semibold uppercase tracking-[0.3rem] text-white/60">Fleet health</p>
-              <p className="mt-3 text-4xl font-semibold">{utilization}%</p>
-              <p className="text-sm text-white/70">Checked out utilisation</p>
-              <div className="mt-4 h-2 w-full rounded-full bg-white/10">
+              <p className={`text-xs font-semibold uppercase tracking-[0.3rem] ${heroLabelClass}`}>Fleet health</p>
+              <p className={`mt-3 text-4xl font-semibold ${heroHeadingClass}`}>{utilization}%</p>
+              <p className={`text-sm ${heroSubtextClass}`}>Checked out utilisation</p>
+              <div className={`mt-4 h-2 w-full rounded-full ${isDarkMode ? 'bg-white/10' : 'bg-slate-200'}`}>
                 <div
                   className="h-2 rounded-full bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-300 shadow-[0_0_0_6px_rgba(59,130,246,0.2)]"
                   style={{ width: `${utilization}%` }}
                 />
               </div>
               <div className="mt-6 space-y-4 text-sm">
-                <div className="flex items-center justify-between rounded-2xl bg-white/5 px-3 py-2">
-                  <span className="text-white/70">Active hardware</span>
-                  <span className="font-semibold">{stats.available} available</span>
+                <div className={`flex items-center justify-between rounded-2xl px-3 py-2 ${heroPanelClass}`}>
+                  <span className={heroSubtextClass}>Active hardware</span>
+                  <span className={`font-semibold ${heroHeadingClass}`}>{stats.available} available</span>
                 </div>
-                <div className="flex items-center justify-between rounded-2xl bg-white/5 px-3 py-2">
-                  <span className="text-white/70">Checked out</span>
-                  <span className="font-semibold">{stats.checkedOut} devices</span>
+                <div className={`flex items-center justify-between rounded-2xl px-3 py-2 ${heroPanelClass}`}>
+                  <span className={heroSubtextClass}>Checked out</span>
+                  <span className={`font-semibold ${heroHeadingClass}`}>{stats.checkedOut} devices</span>
                 </div>
-                <div className="flex items-center justify-between rounded-2xl bg-white/5 px-3 py-2">
-                  <span className="text-white/70">License usage</span>
-                  <span className="font-semibold">{licenseInsights.percent}% of {licenseInsights.seats} seats</span>
+                <div className={`flex items-center justify-between rounded-2xl px-3 py-2 ${heroPanelClass}`}>
+                  <span className={heroSubtextClass}>License usage</span>
+                  <span className={`font-semibold ${heroHeadingClass}`}>{licenseInsights.percent}% of {licenseInsights.seats} seats</span>
                 </div>
               </div>
             </div>
@@ -10212,6 +10529,7 @@ const App = () => {
               alerts={warrantyAlerts30}
               onViewAll={() => setWarrantyModalOpen(true)}
               onClearAll={() => handleClearAllWarrantyAlerts(warrantyAlerts30)}
+              isDarkMode={isDarkMode}
             />
           </section>
         )}
@@ -10240,50 +10558,80 @@ const App = () => {
               </div>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 {softwareRenewalsDue90Days.slice(0, 2).map((software) => (
-                  <div key={software.id} className="rounded-2xl border border-slate-200 bg-slate-900 p-4 shadow-md text-white">
+                  <div key={software.id} className={`rounded-2xl border p-4 shadow-md ${
+                    isDarkMode 
+                      ? 'border-slate-700 bg-slate-900 text-white' 
+                      : 'border-slate-200 bg-white text-slate-900'
+                  }`}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
-                        <p className="font-semibold text-white text-sm">{software.software}</p>
-                        <p className="text-xs text-slate-400">{software.vendor}</p>
+                        <p className={`font-semibold text-sm ${
+                          isDarkMode ? 'text-white' : 'text-slate-900'
+                        }`}>{software.software}</p>
+                        <p className={`text-xs ${
+                          isDarkMode ? 'text-slate-400' : 'text-slate-600'
+                        }`}>{software.vendor}</p>
                       </div>
                       <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                         software.daysUntilRenewal <= 30 
-                          ? 'bg-rose-500/20 text-rose-300' 
+                          ? (isDarkMode ? 'bg-rose-500/20 text-rose-300' : 'bg-rose-100 text-rose-700')
                           : software.daysUntilRenewal <= 60
-                          ? 'bg-amber-500/20 text-amber-300'
-                          : 'bg-blue-500/20 text-blue-300'
+                          ? (isDarkMode ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-100 text-amber-700')
+                          : (isDarkMode ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700')
                       }`}>
                         {software.daysUntilRenewal} days
                       </span>
                     </div>
-                    <div className="mt-3 space-y-1 text-xs text-slate-300">
+                    <div className={`mt-3 space-y-1 text-xs ${
+                      isDarkMode ? 'text-slate-300' : 'text-slate-600'
+                    }`}>
                       <div className="flex justify-between">
                         <span>Renewal date:</span>
-                        <span className="font-semibold text-white">{new Date(software.renewalDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                        <span className={`font-semibold ${
+                          isDarkMode ? 'text-white' : 'text-slate-900'
+                        }`}>{new Date(software.renewalDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Annual cost:</span>
-                        <span className="font-semibold text-white">{formatCurrency(software.annualCost)}</span>
+                        <span className={`font-semibold ${
+                          isDarkMode ? 'text-white' : 'text-slate-900'
+                        }`}>{formatCurrency(software.annualCost)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Seats:</span>
-                        <span className="font-semibold text-white">{software.seats} ({software.used} used)</span>
+                        <span className={`font-semibold ${
+                          isDarkMode ? 'text-white' : 'text-slate-900'
+                        }`}>{software.seats} ({software.used} used)</span>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
               {softwareRenewalsOverdue.length > 0 && (
-                <div className="mt-4 rounded-2xl border-2 border-rose-500/30 bg-rose-950/50 p-4">
-                  <p className="flex items-center gap-2 text-sm font-bold text-rose-300">
+                <div className={`mt-4 rounded-2xl border-2 p-4 ${
+                  isDarkMode 
+                    ? 'border-rose-500/30 bg-rose-950/50' 
+                    : 'border-rose-300 bg-rose-50'
+                }`}>
+                  <p className={`flex items-center gap-2 text-sm font-bold ${
+                    isDarkMode ? 'text-rose-300' : 'text-rose-700'
+                  }`}>
                     <Bell className="h-4 w-4" />
                     {softwareRenewalsOverdue.length} OVERDUE renewal{softwareRenewalsOverdue.length !== 1 ? 's' : ''} requiring immediate attention
                   </p>
                   <div className="mt-3 space-y-2">
                     {softwareRenewalsOverdue.slice(0, 3).map((software) => (
-                      <div key={software.id} className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900 p-3 text-sm">
-                        <span className="font-semibold text-white">{software.software}</span>
-                        <span className="text-rose-400 font-semibold">{Math.abs(software.daysUntilRenewal)} days overdue</span>
+                      <div key={software.id} className={`flex items-center justify-between rounded-xl border p-3 text-sm ${
+                        isDarkMode 
+                          ? 'border-slate-800 bg-slate-900' 
+                          : 'border-rose-200 bg-white'
+                      }`}>
+                        <span className={`font-semibold ${
+                          isDarkMode ? 'text-white' : 'text-slate-900'
+                        }`}>{software.software}</span>
+                        <span className={`font-semibold ${
+                          isDarkMode ? 'text-rose-400' : 'text-rose-600'
+                        }`}>{Math.abs(software.daysUntilRenewal)} days overdue</span>
                       </div>
                     ))}
                   </div>
@@ -10368,7 +10716,7 @@ const App = () => {
 
             <section className="mb-8 grid gap-4 md:grid-cols-3">
               {hardwareSpotlights.map((item) => (
-                <DeviceSpotlightCard key={`hardware-${item.title}`} {...item} onStatClick={handleSpotlightFilter} />
+                <DeviceSpotlightCard key={`hardware-${item.title}`} {...item} onStatClick={handleSpotlightFilter} isDarkMode={isDarkMode} />
               ))}
             </section>
 
@@ -10504,20 +10852,20 @@ const App = () => {
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
-              <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/70">Repair desk</p>
+              <p className={`text-[11px] font-semibold uppercase tracking-[0.35rem] ${heroLabelClass}`}>Repair desk</p>
               <div className="mt-4 grid gap-6 lg:grid-cols-[1.8fr,1fr]">
                 <div className="space-y-4">
-                  <h2 className="text-4xl font-semibold leading-tight">Centralize depot status, parts ordering, and repair guides.</h2>
-                  <p className="text-sm text-white/80">
+                  <h2 className={`text-4xl font-semibold leading-tight ${heroHeadingClass}`}>Centralize depot status, parts ordering, and repair guides.</h2>
+                  <p className={`text-sm ${heroSubtextClass}`}>
                     See every laptop in maintenance, reserve loaners, and jump straight to Amazon parts carts or YouTube guides matched to your fleet models.
                   </p>
-                  <div className="flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-[0.25rem] text-white/80">
-                    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">Loaner coverage</span>
-                    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">Parts &amp; consumables</span>
-                    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1">How-to videos</span>
+                  <div className="flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-[0.25rem]">
+                    <span className={`rounded-full px-3 py-1 ${heroChipClass}`}>Loaner coverage</span>
+                    <span className={`rounded-full px-3 py-1 ${heroChipClass}`}>Parts &amp; consumables</span>
+                    <span className={`rounded-full px-3 py-1 ${heroChipClass}`}>How-to videos</span>
                   </div>
-                  <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/15 bg-white/5 p-3 text-sm text-white/80 backdrop-blur">
-                    <label htmlFor="repair-model-search" className="text-xs font-semibold uppercase tracking-[0.2rem] text-white/70">
+                  <div className={`flex flex-wrap items-center gap-3 rounded-2xl p-3 text-sm backdrop-blur ${heroPanelClass}`}>
+                    <label htmlFor="repair-model-search" className={`text-xs font-semibold uppercase tracking-[0.2rem] ${heroLabelClass}`}>
                       Search by model
                     </label>
                     <input
@@ -10526,33 +10874,41 @@ const App = () => {
                       value={repairModelQuery}
                       onChange={(event) => setRepairModelQuery(event.target.value)}
                       placeholder="e.g., Latitude 5440 or EliteBook 850 G1"
-                      className="flex-1 rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-sm font-semibold text-white placeholder:text-white/60 outline-none transition focus:border-emerald-200 focus:ring-2 focus:ring-emerald-300/40"
+                      className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold outline-none transition ${
+                        isDarkMode
+                          ? 'border-white/20 bg-white/10 text-white placeholder:text-white/60 focus:border-emerald-200 focus:ring-2 focus:ring-emerald-300/40'
+                          : 'border-slate-200 bg-white text-slate-800 placeholder:text-slate-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                      }`}
                     />
                     {repairModelQuery && (
                       <button
                         type="button"
                         onClick={() => setRepairModelQuery('')}
-                        className="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
+                        className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                          isDarkMode
+                            ? 'border border-white/20 bg-white/10 text-white hover:bg-white/20'
+                            : 'border border-slate-200 bg-white text-slate-700 hover:border-blue-200'
+                        }`}
                       >
                         Clear
                       </button>
                     )}
                   </div>
                 </div>
-                <div className="rounded-3xl border border-white/15 bg-white/5 p-4 shadow-inner backdrop-blur">
-                  <p className="text-xs uppercase tracking-[0.3rem] text-white/70">Quick counts</p>
+                <div className={`rounded-3xl p-4 shadow-inner backdrop-blur ${heroPanelClass}`}>
+                  <p className={`text-xs uppercase tracking-[0.3rem] ${heroLabelClass}`}>Quick counts</p>
                   <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-2xl bg-white/10 p-3 text-center">
-                      <p className="text-3xl font-semibold">{laptopServiceSummary.repairTotal || 0}</p>
-                      <p className="text-[11px] uppercase tracking-[0.2rem] text-white/60">In repair</p>
+                    <div className={`rounded-2xl p-3 text-center ${heroStatCardClass}`}>
+                      <p className={`text-3xl font-semibold ${heroHeadingClass}`}>{laptopServiceSummary.repairTotal || 0}</p>
+                      <p className={`text-[11px] uppercase tracking-[0.2rem] ${heroLabelClass}`}>In repair</p>
                     </div>
-                    <div className="rounded-2xl bg-white/10 p-3 text-center">
-                      <p className="text-3xl font-semibold">{laptopServiceSummary.loanerAvailableCount || 0}</p>
-                      <p className="text-[11px] uppercase tracking-[0.2rem] text-white/60">Loaners staged</p>
+                    <div className={`rounded-2xl p-3 text-center ${heroStatCardClass}`}>
+                      <p className={`text-3xl font-semibold ${heroHeadingClass}`}>{laptopServiceSummary.loanerAvailableCount || 0}</p>
+                      <p className={`text-[11px] uppercase tracking-[0.2rem] ${heroLabelClass}`}>Loaners staged</p>
                     </div>
-                    <div className="rounded-2xl bg-white/10 p-3 text-center">
-                      <p className="text-3xl font-semibold">{laptopServiceSummary.avgRepairAgeMonths || 0} mo</p>
-                      <p className="text-[11px] uppercase tracking-[0.2rem] text-white/60">Avg age</p>
+                    <div className={`rounded-2xl p-3 text-center ${heroStatCardClass}`}>
+                      <p className={`text-3xl font-semibold ${heroHeadingClass}`}>{laptopServiceSummary.avgRepairAgeMonths || 0} mo</p>
+                      <p className={`text-[11px] uppercase tracking-[0.2rem] ${heroLabelClass}`}>Avg age</p>
                     </div>
                   </div>
                 </div>
@@ -10566,6 +10922,7 @@ const App = () => {
                 onLoanerCheckin={handleLoanerCheckin}
                 onAddRepair={handleAddRepairTicket}
                 onEditRepair={handleEditRepairTicket}
+                isDarkMode={isDarkMode}
               />
             </section>
 
@@ -10590,30 +10947,34 @@ const App = () => {
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
-              <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-white/70">Employees</p>
-              <h2 className="mt-3 text-3xl font-semibold text-white">The faces powering UDS technology</h2>
-              <p className="mt-2 text-sm text-white/75">
+              <p className={`text-xs font-semibold uppercase tracking-[0.35rem] ${heroLabelClass}`}>Employees</p>
+              <h2 className={`mt-3 text-3xl font-semibold ${heroHeadingClass}`}>The faces powering UDS technology</h2>
+              <p className={`mt-2 text-sm ${heroSubtextClass}`}>
                 Browse featured team members, their departments, and contact info to keep deployments aligned with your workforce.
               </p>
               <div className="mt-6 grid gap-4 sm:grid-cols-3">
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-white/60">Featured teammates</p>
-                  <p className="mt-1 text-2xl font-semibold text-white">{employeeGallery.length}</p>
+                  <p className={`text-xs uppercase tracking-widest ${heroLabelClass}`}>Featured teammates</p>
+                  <p className={`mt-1 text-2xl font-semibold ${heroHeadingClass}`}>{employeeGallery.length}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-white/60">Remote workforce</p>
-                  <p className="mt-1 text-2xl font-semibold text-white">{sheetInsights.remoteShare}%</p>
+                  <p className={`text-xs uppercase tracking-widest ${heroLabelClass}`}>Remote workforce</p>
+                  <p className={`mt-1 text-2xl font-semibold ${heroHeadingClass}`}>{sheetInsights.remoteShare}%</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-white/60">Departments</p>
-                  <p className="mt-1 text-2xl font-semibold text-white">{employeeDepartmentCount}</p>
+                  <p className={`text-xs uppercase tracking-widest ${heroLabelClass}`}>Departments</p>
+                  <p className={`mt-1 text-2xl font-semibold ${heroHeadingClass}`}>{employeeDepartmentCount}</p>
                 </div>
               </div>
               <div className="mt-6 flex justify-end">
                 <button
                   type="button"
                   onClick={() => setEmployeeForm({ ...defaultEmployeeProfile })}
-                  className="rounded-2xl bg-white/10 px-5 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-white/20"
+                  className={`rounded-2xl px-5 py-2 text-sm font-semibold transition hover:-translate-y-0.5 ${
+                    isDarkMode
+                      ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/20 hover:bg-white/20'
+                      : 'bg-white text-slate-800 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50'
+                  }`}
                 >
                   Add employee
                 </button>
@@ -10919,7 +11280,7 @@ const App = () => {
                   ))}
                 </div>
               </CardShell>
-              <MaintenanceWorkflowBoard workOrders={maintenanceWorkOrders} />
+              <MaintenanceWorkflowBoard workOrders={maintenanceWorkOrders} isDarkMode={isDarkMode} />
             </section>
           </>
         )}
@@ -10941,25 +11302,25 @@ const App = () => {
                 <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
                 <div className="grid max-w-full gap-8 overflow-hidden lg:grid-cols-2">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/60">Vendor galaxy</p>
-                    <h2 className="mt-4 text-4xl font-semibold leading-tight">
+                    <p className={`text-[11px] font-semibold uppercase tracking-[0.35rem] ${heroLabelClass}`}>Vendor galaxy</p>
+                    <h2 className={`mt-4 text-4xl font-semibold leading-tight ${heroHeadingClass}`}>
                       Bold partnerships powering laptops, networks, and carrier logistics.
                     </h2>
-                    <p className="mt-3 text-sm text-white/80">
+                    <p className={`mt-3 text-sm ${heroSubtextClass}`}>
                       Showcase vendor accountability with live device counts, SLAs, and lightning-fast contacts from a single pane.
                     </p>
                     <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      <div className="rounded-2xl bg-white/10 p-4 text-center">
-                        <p className="text-xs uppercase tracking-widest text-white/70">Vendors engaged</p>
-                        <p className="mt-2 text-3xl font-semibold">{vendorProfiles.length}</p>
+                      <div className={`rounded-2xl p-4 text-center ${heroStatCardClass}`}>
+                        <p className={`text-xs uppercase tracking-widest ${heroLabelClass}`}>Vendors engaged</p>
+                        <p className={`mt-2 text-3xl font-semibold ${heroHeadingClass}`}>{vendorProfiles.length}</p>
                       </div>
-                      <div className="rounded-2xl bg-white/10 p-4 text-center">
-                        <p className="text-xs uppercase tracking-widest text-white/70">Devices covered</p>
-                        <p className="mt-2 text-3xl font-semibold">{vendorTotals.devices}</p>
+                      <div className={`rounded-2xl p-4 text-center ${heroStatCardClass}`}>
+                        <p className={`text-xs uppercase tracking-widest ${heroLabelClass}`}>Devices covered</p>
+                        <p className={`mt-2 text-3xl font-semibold ${heroHeadingClass}`}>{vendorTotals.devices}</p>
                       </div>
-                      <div className="rounded-2xl bg-white/10 p-4 text-center">
-                        <p className="text-xs uppercase tracking-widest text-white/70">Active today</p>
-                        <p className="mt-2 text-3xl font-semibold text-emerald-300">{vendorTotals.active}</p>
+                      <div className={`rounded-2xl p-4 text-center ${heroStatCardClass}`}>
+                        <p className={`text-xs uppercase tracking-widest ${heroLabelClass}`}>Active today</p>
+                        <p className={`mt-2 text-3xl font-semibold ${heroHeadingClass}`}>{vendorTotals.active}</p>
                       </div>
                     </div>
                   </div>
@@ -11028,6 +11389,115 @@ const App = () => {
               </div>
             </section>
 
+            <section id="printer-repair-desk" className="mb-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
+              <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Print service tickets</p>
+                    <p className="text-lg font-semibold text-slate-900">Printer &amp; copier maintenance</p>
+                    <p className="text-sm text-slate-600">Log requests here before dispatching Colony or Weaver.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenPrinterTicket()}
+                    className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Log request
+                  </button>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {printerRepairTickets.length ? (
+                    printerRepairTickets.map((ticket) => {
+                      const status = (ticket.status || '').toLowerCase();
+                      const statusTone =
+                        status.includes('complete')
+                          ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
+                          : status.includes('progress')
+                            ? 'bg-blue-50 text-blue-700 ring-blue-100'
+                            : status.includes('await')
+                              ? 'bg-amber-50 text-amber-700 ring-amber-100'
+                              : 'bg-slate-100 text-slate-700 ring-slate-200';
+                      return (
+                        <div
+                          key={ticket.id || ticket.printerLabel || ticket.assetId}
+                          className="flex flex-wrap items-start justify-between gap-3 py-4"
+                        >
+                          <div className="min-w-[240px] flex-1 space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-sm font-semibold text-slate-900">{ticket.printerLabel}</p>
+                              <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${ticket.vendorBadge}`}>
+                                {ticket.vendorName}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500">
+                              {ticket.brand || 'Model pending'}
+                              {ticket.location ? ` - ${ticket.location}` : ''}
+                              {ticket.eta ? ` - ETA ${ticket.eta}` : ''}
+                            </p>
+                            <p className="text-xs text-slate-600">{ticket.issue || 'Awaiting triage details'}</p>
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${statusTone}`}>{ticket.status || 'Queued'}</span>
+                            <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{ticket.severity || 'Normal'}</span>
+                            <div className="flex items-center gap-2">
+                              {ticket.eta && <span className="text-[11px] font-semibold text-slate-500">ETA {ticket.eta}</span>}
+                              <button
+                                type="button"
+                                onClick={() => handleEditRepairTicket(ticket)}
+                                className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700"
+                              >
+                                Update
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="py-6 text-sm text-slate-600">
+                      No printer/copier tickets yet. Log a maintenance request to notify the right vendor.
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Dispatch routing</p>
+                <p className="text-lg font-semibold text-slate-900">Who to notify</p>
+                <p className="text-sm text-slate-600">Match the request to the vendor before you submit.</p>
+                <div className="mt-4 space-y-3">
+                  {printerVendors.map((vendor) => (
+                    <div key={vendor.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-slate-900">{vendor.name}</p>
+                        <span className="text-xs font-semibold text-slate-500">{vendor.deviceCount} units</span>
+                      </div>
+                      <p className="text-xs text-slate-500">Brands: {vendor.brands.join(', ')}</p>
+                      {vendor.contact && (
+                        <a
+                          href={vendor.contact.href}
+                          target={vendor.contact.external ? '_blank' : '_self'}
+                          rel={vendor.contact.external ? 'noreferrer' : undefined}
+                          className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:underline"
+                        >
+                          {vendor.contact.label}
+                          {vendor.contact.external && <ExternalLink className="h-3.5 w-3.5" />}
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenPrinterTicket(vendor.devices?.[0])}
+                        className="mt-3 inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700"
+                      >
+                        Draft request
+                        <ArrowRightLeft className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
             <section className="mb-8 space-y-6">
               <NetworkPrinterBoard
                 printers={networkPrinters}
@@ -11039,11 +11509,6 @@ const App = () => {
                 onTest={handleTestPrinter}
                 onReport={handleReportPrinter}
                 enableSearch
-              />
-              <PrinterVendorSummary
-                vendors={printerVendors}
-                title="Service partner breakdown"
-                subtitle="Canon copiers sync to Colony; HP, Lexmark, and Epson route to Weaver."
               />
             </section>
 
@@ -11059,7 +11524,11 @@ const App = () => {
           <>
             <section id="software-hero" className="mb-8">
               <div
-                className="hero-shell relative overflow-hidden rounded-3xl border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 p-8 text-white shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ring-white/10"
+                className={`hero-shell relative overflow-hidden rounded-3xl p-8 shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ${
+                  isDarkMode
+                    ? 'border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
+                    : 'border border-slate-200 bg-gradient-to-br from-white via-blue-50 to-indigo-50 text-slate-900 shadow-[0_20px_60px_rgba(15,23,42,0.12)] ring-blue-100'
+                }`}
                 style={heroAccentStyle}
               >
                 <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
