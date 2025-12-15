@@ -869,7 +869,9 @@ const normalizeAssetStatus = (asset) => {
     return asset;
   }
   const rawOwner = (asset.assignedTo || '').trim();
-  const owner = rawOwner.toLowerCase() === 'unassigned' ? '' : rawOwner;
+  const isUnassignedPlaceholder = normalizeKey(rawOwner) === 'unassigned';
+  const owner = isUnassignedPlaceholder ? 'Unassigned' : rawOwner;
+  const ownerForStatus = isUnassignedPlaceholder ? '' : owner;
   const statusFromValue = normalizeStatusLabel(asset.status);
   const checkoutFlag = Boolean(asset.checkedOut);
   let status = statusFromValue;
@@ -883,14 +885,14 @@ const normalizeAssetStatus = (asset) => {
   }
 
   if (!status) {
-    status = checkoutFlag || owner ? 'Checked Out' : 'Available';
+    status = checkoutFlag || ownerForStatus ? 'Checked Out' : 'Available';
   }
 
-  if (status === 'Available' && (checkoutFlag || owner)) {
+  if (status === 'Available' && (checkoutFlag || ownerForStatus)) {
     status = 'Checked Out';
   }
 
-  if (status === 'Checked Out' && !owner) {
+  if (status === 'Checked Out' && !ownerForStatus) {
     status = 'Available';
   }
 
@@ -1485,7 +1487,7 @@ const mapNormalizedAssetRow = (row = {}, index = 0, employeeDirectory = {}) => {
   const assignedName = formatRosterName(
     row.assignedTo || row.owner || row.contact || row.employee || row.user || row.contactId,
   );
-  const hasAssignee = Boolean(assignedName && assignedName !== 'Unassigned');
+  const hasAssignee = Boolean(assignedName) || normalizeKey(assignedName) === 'unassigned';
   const person = employeeDirectory[assignedName] || null;
   const type = row.type || row.deviceType || 'Hardware';
   const assetIdentifier = row.sheetId || row.assetName || row.deviceName || row.serialNumber || `Asset-${index + 1}`;
@@ -1537,7 +1539,7 @@ const buildAssetsFromSheet = (assetRows = [], employeeRows = employeeSheetData) 
         return mapNormalizedAssetRow(row, index, employeeDirectory);
       }
       const assignedName = formatRosterName(row.ContactID);
-      const hasAssignee = Boolean(assignedName && assignedName !== 'Unassigned');
+      const hasAssignee = Boolean(assignedName) || normalizeKey(assignedName) === 'unassigned';
       const person = employeeDirectory[assignedName] || null;
       const type = row['Device Type'] || 'Hardware';
       const purchaseDate = normalizeSheetDate(row['Purchase Date'] || '');
