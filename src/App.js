@@ -2128,9 +2128,7 @@ const extractFirstName = (fullName = '') => {
   return normalizeNameCase(words[0] || '');
 };
 const buildSupervisorMailto = (supervisorEmail, supervisorName, employeeName, assets = []) => {
-  if (!supervisorEmail) return '';
-  const trimmedEmail = supervisorEmail.trim();
-  if (!trimmedEmail) return '';
+  const trimmedEmail = (supervisorEmail || '').trim();
   const prettySupervisorName = normalizeNameCase(supervisorName || '');
   const subject = encodeURIComponent(`Offboarding ${employeeName || 'team member'}`);
   const assetLines =
@@ -2150,7 +2148,8 @@ const buildSupervisorMailto = (supervisorEmail, supervisorName, employeeName, as
       '\n',
     )}\n\nThanks so much for your help with this! Let me know if you have any questions.\n\nBest,`,
   );
-  return `mailto:${trimmedEmail}?subject=${subject}&body=${body}`;
+  const recipient = trimmedEmail || '';
+  return `mailto:${recipient}?subject=${subject}&body=${body}`;
 };
 
 const hashString = (value = '') => {
