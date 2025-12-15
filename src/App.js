@@ -7894,14 +7894,16 @@ const App = () => {
             )
               .toString()
               .trim();
+            const employeeEmail = (row['E-Mail Address'] || row['Email'] || '').toString().trim();
             
-            if (!firstName && !lastName && !employeeId) return;
+            if (!firstName && !lastName && !employeeId && !employeeEmail) return;
             
             const name = `${formatPersonName(firstName)} ${formatPersonName(lastName)}`.trim();
             
-            // Store by both employee ID and normalized name
+            // Store by ID, normalized name, and employee email
             const nameKey = normalizeKey(name);
             const idKey = normalizeKey(employeeId);
+            const emailKey = normalizeKey(employeeEmail);
             
             const supervisorData = {
               supervisor,
@@ -7914,6 +7916,9 @@ const App = () => {
             if (idKey) {
               supervisorLookup[idKey] = supervisorData;
             }
+            if (emailKey) {
+              supervisorLookup[emailKey] = supervisorData;
+            }
           });
           
           // Update employee gallery with supervisor data
@@ -7921,10 +7926,11 @@ const App = () => {
             setEmployeeGallery((prev) => 
               prev.map((member) => {
                 const nameKey = normalizeKey(member.name || '');
-                const idKey = normalizeKey(member.id || '');
+                const idKey = normalizeKey(member.id || member.lookupKey || '');
+                const emailKey = normalizeKey(member.email || '');
                 
-                // Try matching by ID first, then by name
-                const supervisorData = supervisorLookup[idKey] || supervisorLookup[nameKey];
+                // Try matching by ID first, then name, then email
+                const supervisorData = supervisorLookup[idKey] || supervisorLookup[nameKey] || supervisorLookup[emailKey];
                 
                 if (supervisorData && (supervisorData.supervisor || supervisorData.supervisorEmail)) {
                   return {
