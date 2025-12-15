@@ -7056,7 +7056,7 @@ const App = () => {
     let cancelled = false;
     const loadOrgChart = async () => {
       try {
-        const fileName = encodeURIComponent('HUB and Org Chart 11-25.xlsx');
+        const fileName = encodeURIComponent('Org Chart and HUB 12-25.xlsx');
         // Try both folder casings to avoid 404s on case-sensitive hosts.
         const orgChartUrls = [`${PUBLIC_URL}/Tables/${fileName}`, `${PUBLIC_URL}/tables/${fileName}`];
         let response = null;
@@ -7852,8 +7852,8 @@ const App = () => {
     let cancelled = false;
     const loadSupervisorData = async () => {
       const orgChartSources = [
-        '/Tables/HUB and Org Chart 11-25.xlsx',
-        `${PUBLIC_URL}/tables/${encodeURIComponent('HUB and Org Chart 11-25.xlsx')}`,
+        '/Tables/Org Chart and HUB 12-25.xlsx',
+        `${PUBLIC_URL}/tables/${encodeURIComponent('Org Chart and HUB 12-25.xlsx')}`,
       ];
       for (const url of orgChartSources) {
         try {
@@ -8642,13 +8642,22 @@ const App = () => {
     return employeeLookupByName[normalized] || null;
   }, [employeeLookupByName, terminationEmployee]);
   const terminationSupervisorMailto = useMemo(
-    () =>
-      buildSupervisorMailto(
+    () => {
+      const mailto = buildSupervisorMailto(
         terminationProfile?.supervisorEmail,
         terminationProfile?.supervisor,
         terminationEmployee,
         terminationAssets,
-      ),
+      );
+      console.log('Termination supervisor mailto:', {
+        supervisorEmail: terminationProfile?.supervisorEmail,
+        supervisor: terminationProfile?.supervisor,
+        employee: terminationEmployee,
+        assets: terminationAssets?.length,
+        mailto,
+      });
+      return mailto;
+    },
     [terminationProfile, terminationEmployee, terminationAssets],
   );
   const handleEmployeeCardToggle = useCallback(
