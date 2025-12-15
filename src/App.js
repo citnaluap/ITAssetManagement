@@ -7875,11 +7875,25 @@ const App = () => {
           // Create supervisor lookup by employee ID and name
           const supervisorLookup = {};
           rows.forEach((row) => {
-            const firstName = (row['First Name'] || '').toString().trim();
-            const lastName = (row['Last Name'] || '').toString().trim();
+            const firstName = (row['First Name'] || row['First'] || '').toString().trim();
+            const lastName = (row['Last Name'] || row['Last'] || '').toString().trim();
             const employeeId = (row['Employee ID'] || '').toString().trim();
-            const supervisor = (row['Supervisor'] || '').toString().trim();
-            const supervisorEmail = (row["Supervisor's Email"] || '').toString().trim();
+            const supervisor =
+              (row['Supervisor'] ||
+                row['1st Level Supervisor '] ||
+                row['1st Level Supervisor'] ||
+                row['Manager'] ||
+                '').toString().trim();
+            const supervisorEmail = (
+              row["Supervisor's Email"] ||
+              row['Supervisor Email'] ||
+              row['Manager E-Mail Address'] ||
+              row['Manager Email Address'] ||
+              row['Manager Email'] ||
+              ''
+            )
+              .toString()
+              .trim();
             
             if (!firstName && !lastName && !employeeId) return;
             
