@@ -246,6 +246,7 @@ const STORAGE_KEYS = {
   employees: 'uds_employees',
   laptopRepairs: 'uds_laptop_repairs',
   clearedWarrantyAlerts: 'uds_cleared_warranty_alerts',
+  clearedMaintenanceAlerts: 'uds_cleared_maintenance_alerts',
 };
 const STORAGE_VERSION_KEY = 'uds_storage_version';
 const STORAGE_VERSION = '2025-11-20-zoom-refresh';
@@ -1577,7 +1578,11 @@ const buildMaintenanceFromAssets = (assets) => {
   const today = new Date();
 
   return assets
-    .filter((asset) => asset.warrantyExpiry)
+    .filter(
+      (asset) =>
+        asset.warrantyExpiry &&
+        normalizeKey(asset.assetName || asset.deviceName || '') !== 'printer016',
+    )
     .sort((a, b) => new Date(a.warrantyExpiry) - new Date(b.warrantyExpiry))
     .slice(0, 8)
     .map((asset, index) => {
@@ -1764,6 +1769,11 @@ const buildWarrantyAlertKey = (alert = {}) => {
   const assetKey = alert.assetId || alert.assetName || alert.model || 'unknown';
   const expiryKey = alert.warrantyExpiry || 'none';
   return `${assetKey}::${expiryKey}`;
+};
+const buildMaintenanceAlertKey = (alert = {}) => {
+  const assetKey = alert.assetId || alert.assetName || alert.model || 'unknown';
+  const dateKey = alert.date || alert.warrantyExpiry || alert.id || 'none';
+  return `${assetKey}::${dateKey}`;
 };
 
 const buildMaintenanceWorkOrders = (assets, repairTickets = []) => {
@@ -2618,7 +2628,15 @@ const SnapshotMetricsRow = ({ metrics = [], isDarkMode = false }) => (
   </div>
 );
 
-const OverviewAttentionPanel = ({ overdue = [], dueSoon = [], maintenance = [], software = [], reminderPreview = [], onOpenAlerts }) => {
+const OverviewAttentionPanel = ({
+  overdue = [],
+  dueSoon = [],
+  maintenance = [],
+  software = [],
+  reminderPreview = [],
+  onOpenAlerts,
+  onClearServiceReminder = () => {},
+}) => {
   const summary = [
     { label: 'Overdue', value: overdue.length, tone: 'bg-rose-50 text-rose-700' },
     { label: 'Due soon', value: dueSoon.length, tone: 'bg-amber-50 text-amber-700' },
@@ -2670,6 +2688,15 @@ const OverviewAttentionPanel = ({ overdue = [], dueSoon = [], maintenance = [], 
                 {reminder.overdue ? 'Overdue' : `Due in ${reminder.daysRemaining}d`}
               </span>
             </div>
+            {reminder.type === 'Service' && (
+              <button
+                type="button"
+                className="mt-2 text-xs font-semibold text-amber-700 underline underline-offset-4"
+                onClick={() => onClearServiceReminder(reminder)}
+              >
+                Clear
+              </button>
+            )}
           </div>
         ))}
       </div>
@@ -5689,6 +5716,8 @@ const AssetSpotlight = ({
   onOpenAutomate,
   ownerContact,
   onRepair,
+  onClearMaintenance = () => {},
+  onClearMaintenanceAll = () => {},
 }) => {
   const Icon = asset ? assetTypeIcons[asset.type] || Monitor : Monitor;
   const statusLabel = asset ? getAssetDisplayStatus(asset) : 'Available';
@@ -5885,21 +5914,41 @@ const AssetSpotlight = ({
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               {repairHistory.length > 0 && (
                 <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Repair History</p>
+                  <div className="mb-3 flex items-center justify-between">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Repair History</p>
+                    <button
+                      type="button"
+                      className="text-[11px] font-semibold text-amber-700 underline underline-offset-2"
+                      onClick={() => onClearMaintenanceAll(repairHistory)}
+                    >
+                      Clear all
+                    </button>
+                  </div>
                   <ul className="space-y-2">
                     {repairHistory.map((item) => (
                       <li key={item.id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
                         <div className="flex items-center justify-between gap-2 mb-1">
-                          <p className="text-sm font-semibold text-slate-900">{item.type}</p>
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                              item.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                            }`}
-                          >
-                            {item.status}
-                          </span>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">{item.type}</p>
+                            <p className="text-xs text-slate-500">{formatDate(item.date)}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                item.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                              }`}
+                            >
+                              {item.status}
+                            </span>
+                            <button
+                              type="button"
+                              className="text-[11px] font-semibold text-slate-500 underline underline-offset-2"
+                              onClick={() => onClearMaintenance(item)}
+                            >
+                              Clear
+                            </button>
+                          </div>
                         </div>
-                        <p className="text-xs text-slate-500">{formatDate(item.date)}</p>
                         {item.description && <p className="mt-1 text-xs text-slate-600">{item.description}</p>}
                       </li>
                     ))}
@@ -5944,6 +5993,8 @@ const AssetSpotlightModal = ({
   onOpenAutomate,
   ownerContact,
   onRepair,
+  onClearMaintenance,
+  onClearMaintenanceAll,
 }) => {
   if (!asset) return null;
 
@@ -5958,6 +6009,8 @@ const AssetSpotlightModal = ({
         onOpenAutomate={onOpenAutomate}
         ownerContact={ownerContact}
         onRepair={onRepair}
+        onClearMaintenance={onClearMaintenance}
+        onClearMaintenanceAll={onClearMaintenanceAll}
       />
     </ModalShell>
   );
@@ -6864,6 +6917,10 @@ const App = () => {
     STORAGE_KEYS.clearedWarrantyAlerts,
     [],
   );
+  const [clearedMaintenanceAlerts, setClearedMaintenanceAlerts] = usePersistentState(
+    STORAGE_KEYS.clearedMaintenanceAlerts,
+    [],
+  );
   const [activePage, setActivePage] = useState('Overview');
   const reminderPrefs = useMemo(() => ({ email: true, zoom: true }), []);
   const [softwareForm, setSoftwareForm] = useState(null);
@@ -6975,7 +7032,15 @@ const App = () => {
     });
   }, [setAssets]);
 
-  const maintenanceRecords = useMemo(() => buildMaintenanceFromAssets(assets), [assets]);
+  const maintenanceRecordsRaw = useMemo(() => buildMaintenanceFromAssets(assets), [assets]);
+  const clearedMaintenanceAlertSet = useMemo(() => new Set(clearedMaintenanceAlerts), [clearedMaintenanceAlerts]);
+  const maintenanceRecords = useMemo(
+    () =>
+      maintenanceRecordsRaw.filter(
+        (entry) => !clearedMaintenanceAlertSet.has(buildMaintenanceAlertKey(entry)),
+      ),
+    [clearedMaintenanceAlertSet, maintenanceRecordsRaw],
+  );
   const sheetInsights = useMemo(() => computeSheetInsights(assets), [assets]);
   const vendorProfiles = useMemo(() => buildVendorProfiles(assets), [assets]);
   const [networkPrinters, setNetworkPrinters] = useState(() =>
@@ -7137,9 +7202,10 @@ const App = () => {
         (item) =>
           // Drop cleared alerts and skip overdue warranty items on initial load.
           (item.type !== 'Warranty' || !clearedWarrantyAlertSet.has(buildWarrantyAlertKey(item))) &&
+          (item.type !== 'Service' || !clearedMaintenanceAlertSet.has(buildMaintenanceAlertKey(item))) &&
           !(item.type === 'Warranty' && item.overdue),
       ),
-    [clearedWarrantyAlertSet, rawLifecycleReminders],
+    [clearedMaintenanceAlertSet, clearedWarrantyAlertSet, rawLifecycleReminders],
   );
   const reminderPreview = useMemo(() => lifecycleReminders.slice(0, 6), [lifecycleReminders]);
   const warrantyReminders = useMemo(
@@ -9169,6 +9235,24 @@ const App = () => {
     },
     [setClearedWarrantyAlerts],
   );
+  const handleClearMaintenanceAlert = useCallback(
+    (alert) => {
+      if (!alert) return;
+      const key = buildMaintenanceAlertKey(alert);
+      setClearedMaintenanceAlerts((prev) => (prev.includes(key) ? prev : [...prev, key]));
+    },
+    [setClearedMaintenanceAlerts],
+  );
+  const handleClearAllMaintenanceAlerts = useCallback(
+    (alertsToClear = []) => {
+      setClearedMaintenanceAlerts((prev) => {
+        const next = new Set(prev);
+        alertsToClear.forEach((alert) => next.add(buildMaintenanceAlertKey(alert)));
+        return Array.from(next);
+      });
+    },
+    [setClearedMaintenanceAlerts],
+  );
   const parseStackInput = (value) => {
     if (Array.isArray(value)) {
       return value.map((item) => String(item).trim()).filter(Boolean);
@@ -10733,6 +10817,7 @@ const App = () => {
             software={softwareAtRisk}
             reminderPreview={reminderPreview}
             onOpenAlerts={() => setWarrantyModalOpen(true)}
+            onClearServiceReminder={handleClearMaintenanceAlert}
           />
           <OverviewActivityCard history={recentHistory} maintenance={maintenanceWorkOrders} lookupAsset={getAssetName} />
         </section>
@@ -11993,6 +12078,8 @@ const App = () => {
         onOpenAutomate={handleOpenAutomate}
         ownerContact={ownerContact}
         onRepair={handleOpenRepairTicketForAsset}
+        onClearMaintenance={handleClearMaintenanceAlert}
+        onClearMaintenanceAll={handleClearAllMaintenanceAlerts}
       />
     )}
       {assetForm && (
