@@ -2636,6 +2636,7 @@ const OverviewAttentionPanel = ({
   reminderPreview = [],
   onOpenAlerts,
   onClearServiceReminder = () => {},
+  onClearWarrantyReminder = () => {},
 }) => {
   const summary = [
     { label: 'Overdue', value: overdue.length, tone: 'bg-rose-50 text-rose-700' },
@@ -2693,6 +2694,15 @@ const OverviewAttentionPanel = ({
                 type="button"
                 className="mt-2 text-xs font-semibold text-amber-700 underline underline-offset-4"
                 onClick={() => onClearServiceReminder(reminder)}
+              >
+                Clear
+              </button>
+            )}
+            {reminder.type === 'Warranty' && (
+              <button
+                type="button"
+                className="mt-2 text-xs font-semibold text-slate-700 underline underline-offset-4"
+                onClick={() => onClearWarrantyReminder(reminder)}
               >
                 Clear
               </button>
@@ -3308,7 +3318,7 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll, isDarkMode = f
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
           {typeof onClearAll === 'function' && (
             <button
               type="button"
@@ -3335,8 +3345,8 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll, isDarkMode = f
               View all
             </button>
           )}
+          </div>
         </div>
-      </div>
 
       <div className="relative mt-5 grid gap-3 sm:grid-cols-3">
         <div
@@ -9253,6 +9263,12 @@ const App = () => {
     },
     [setClearedMaintenanceAlerts],
   );
+  const handleClearWarrantyReminder = useCallback(
+    (reminder) => {
+      handleClearWarrantyAlert(reminder);
+    },
+    [handleClearWarrantyAlert],
+  );
   const parseStackInput = (value) => {
     if (Array.isArray(value)) {
       return value.map((item) => String(item).trim()).filter(Boolean);
@@ -10818,6 +10834,7 @@ const App = () => {
             reminderPreview={reminderPreview}
             onOpenAlerts={() => setWarrantyModalOpen(true)}
             onClearServiceReminder={handleClearMaintenanceAlert}
+            onClearWarrantyReminder={handleClearWarrantyReminder}
           />
           <OverviewActivityCard history={recentHistory} maintenance={maintenanceWorkOrders} lookupAsset={getAssetName} />
         </section>
