@@ -261,6 +261,7 @@ const resolveApiBaseUrl = () => {
   return normalized.endsWith('/api') ? normalized : `${normalized}/api`;
 };
 const API_STORAGE_BASE = resolveApiBaseUrl();
+const remoteStorageState = { enabled: true, warned: false };
 const LOANER_PAGE_SIZE = 6;
 const FILTERS_STORAGE_KEY = 'uds_asset_filters';
 
@@ -402,6 +403,7 @@ const HELP_DESK_PORTAL_FALLBACK = deriveHelpDeskFallback();
 const HELP_DESK_PORTAL_URL = process.env.REACT_APP_HELPDESK_PORTAL_URL || HELP_DESK_PORTAL_FALLBACK;
 const ZOOM_WEBHOOK_URL = process.env.REACT_APP_ZOOM_WEBHOOK_URL || '';
 const ZOOM_WEBHOOK_TOKEN = process.env.REACT_APP_ZOOM_WEBHOOK_TOKEN || '';
+const ZOOM_ALERT_ENDPOINT = API_STORAGE_BASE ? `${API_STORAGE_BASE}/zoom-alert` : '';
 const MEDIA = {
   hero: `${PUBLIC_URL}/assets/hero.png`,
   logo: `${PUBLIC_URL}/assets/uds-logo.png`,
@@ -1847,13 +1849,22 @@ const ensureStorageVersion = () => {
 };
 
 const fetchRemoteStorage = async (key) => {
-  if (!API_STORAGE_BASE || typeof fetch === 'undefined') {
+  if (!API_STORAGE_BASE || typeof fetch === 'undefined' || !remoteStorageState.enabled) {
     return null;
   }
   try {
     const response = await fetch(`${API_STORAGE_BASE}/storage/${encodeURIComponent(key)}`, {
       credentials: 'include',
     });
+    const tokenPresent = response.headers?.get('x-blob-token-present');
+    if (tokenPresent === 'false' || response.status === 503) {
+      if (!remoteStorageState.warned) {
+        console.warn('[Sync] Remote storage disabled: blob token missing in environment');
+        remoteStorageState.warned = true;
+      }
+      remoteStorageState.enabled = false;
+      return null;
+    }
     if (!response.ok) {
       return null;
     }
@@ -1864,16 +1875,24 @@ const fetchRemoteStorage = async (key) => {
 };
 
 const persistRemoteStorage = async (key, value) => {
-  if (!API_STORAGE_BASE || typeof fetch === 'undefined') {
+  if (!API_STORAGE_BASE || typeof fetch === 'undefined' || !remoteStorageState.enabled) {
     return;
   }
   try {
-    await fetch(`${API_STORAGE_BASE}/storage/${encodeURIComponent(key)}`, {
+    const response = await fetch(`${API_STORAGE_BASE}/storage/${encodeURIComponent(key)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify(value),
     });
+    const tokenPresent = response.headers?.get('x-blob-token-present');
+    if (tokenPresent === 'false' || response.status === 503) {
+      if (!remoteStorageState.warned) {
+        console.warn('[Sync] Remote storage disabled: blob token missing in environment');
+        remoteStorageState.warned = true;
+      }
+      remoteStorageState.enabled = false;
+    }
   } catch {
     // Best-effort; ignore offline/API errors.
   }
@@ -2011,6 +2030,24 @@ const uploadEmployeePhoto = async (file) => {
 };
 
 const sendZoomAlert = async (title, message) => {
+  const payloadText = (message || title ? `${title || 'Asset alert'} - ${message || ''}` : 'Asset alert').trim();
+
+  if (ZOOM_ALERT_ENDPOINT && typeof fetch === 'function') {
+    try {
+      const response = await fetch(ZOOM_ALERT_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, message }),
+      });
+      if (response.ok) {
+        return;
+      }
+      console.warn('Zoom alert proxy failed with status', response.status);
+    } catch (error) {
+      console.warn('Zoom alert proxy failed', error);
+    }
+  }
+
   if (!ZOOM_WEBHOOK_URL || typeof fetch !== 'function') {
     return;
   }
@@ -2019,7 +2056,6 @@ const sendZoomAlert = async (title, message) => {
   if (ZOOM_WEBHOOK_TOKEN) {
     headers.Authorization = ZOOM_WEBHOOK_TOKEN;
   }
-  const payloadText = (message || title ? `${title || 'Asset alert'} - ${message || ''}` : 'Asset alert').trim();
   try {
     const response = await fetch(targetUrl, {
       method: 'POST',
@@ -6307,6 +6343,7 @@ const EMPTY_REPAIR_TICKET = {
   status: 'Awaiting intake',
   severity: 'Normal',
   eta: '',
+  deviceType: 'Laptop',
 };
 
 const RepairTicketModal = ({ ticket, onSubmit, onCancel, modelOptions = [], employeeNames = [], locationOptions = [] }) => {
@@ -6325,8 +6362,15 @@ const RepairTicketModal = ({ ticket, onSubmit, onCancel, modelOptions = [], empl
     onSubmit?.(form);
   };
 
+  const getModalTitle = () => {
+    const deviceType = form.deviceType || 'Laptop';
+    const isPrinter = deviceType.toLowerCase().includes('printer') || deviceType.toLowerCase().includes('copier');
+    const deviceLabel = isPrinter ? 'Printer and Copier' : deviceType;
+    return form.id ? `Edit ${deviceLabel.toLowerCase()} repair` : `Add ${deviceLabel.toLowerCase()} repair`;
+  };
+
   return (
-    <ModalShell title={form.id ? 'Edit laptop repair' : 'Add laptop repair'} onClose={onCancel}>
+    <ModalShell title={getModalTitle()} onClose={onCancel}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid gap-3 md:grid-cols-2">
           <label className="text-sm font-medium text-slate-700">
@@ -9554,6 +9598,7 @@ const App = () => {
         issue: printer ? `Service request for ${printer.deviceType || 'printer'}` : '',
         status: 'Awaiting intake',
         severity: 'Normal',
+        deviceType: 'Printer',
       });
       setActivePage('Vendors');
     },
