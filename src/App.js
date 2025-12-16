@@ -1911,13 +1911,20 @@ const usePersistentState = (key, initialValue) => {
           return Boolean(prev);
         })();
         if (!hasLocalData) {
+          console.log(`[Sync] ${key}: Using remote data (no local data)`);
           return remoteValue;
         }
         try {
           const localSnapshot = JSON.stringify(prev);
           const remoteSnapshot = JSON.stringify(remoteValue);
-          return localSnapshot === remoteSnapshot ? prev : remoteValue;
+          if (localSnapshot === remoteSnapshot) {
+            console.log(`[Sync] ${key}: Local and remote match`);
+            return prev;
+          }
+          console.log(`[Sync] ${key}: Using remote data (different from local)`);
+          return remoteValue;
         } catch {
+          console.log(`[Sync] ${key}: Using remote data (comparison failed)`);
           return remoteValue;
         }
       });
@@ -1939,6 +1946,7 @@ const usePersistentState = (key, initialValue) => {
     } catch {
       // Ignore quota errors so the dashboard still works offline.
     }
+    console.log(`[Sync] ${key}: Saving to blob storage...`);
     persistRemoteStorage(key, state);
   }, [key, state]);
 
