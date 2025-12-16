@@ -249,7 +249,8 @@ const STORAGE_KEYS = {
   clearedMaintenanceAlerts: 'uds_cleared_maintenance_alerts',
 };
 const STORAGE_VERSION_KEY = 'uds_storage_version';
-const STORAGE_VERSION = '2025-12-15-mobile-sync';
+const STORAGE_VERSION = '2025-12-15-v2';
+const APP_VERSION = '2025-12-15-v2';
 const resolveApiBaseUrl = () => {
   const envBase = process.env.REACT_APP_API_BASE_URL;
   const fromEnvOrOrigin =
@@ -6919,6 +6920,20 @@ const WarrantyAlertModal = ({ alerts = [], onClose, onClear, onClearAll }) => {
 };
 
 const App = () => {
+  // Force reload on version mismatch to clear cached JavaScript
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const storedVersion = window.localStorage.getItem('uds_app_version');
+    if (storedVersion && storedVersion !== APP_VERSION) {
+      window.localStorage.setItem('uds_app_version', APP_VERSION);
+      window.location.reload(true);
+      return;
+    }
+    if (!storedVersion) {
+      window.localStorage.setItem('uds_app_version', APP_VERSION);
+    }
+  }, []);
+
   const [assets, setAssets] = usePersistentState(STORAGE_KEYS.assets, BASE_ASSETS);
   const [history, setHistory] = usePersistentState(STORAGE_KEYS.history, BASE_HISTORY);
   const [softwareSuites, setSoftwareSuites] = usePersistentState(STORAGE_KEYS.licenses, BASE_LICENSES);
