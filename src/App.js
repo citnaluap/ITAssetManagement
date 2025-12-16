@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
+﻿import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
 import { BrowserMultiFormatReader } from '@zxing/browser';
@@ -7247,9 +7247,6 @@ const App = () => {
             .trim();
           if (managerName || managerEmail) {
             acc[key] = { supervisor: managerName, supervisorEmail: managerEmail };
-            if (managerEmail) {
-              console.log('Found supervisor email in org chart 1:', { name, managerEmail });
-            }
           }
           return acc;
         }, {});
@@ -8143,10 +8140,6 @@ const App = () => {
               supervisor,
               supervisorEmail,
             };
-
-            if (supervisorEmail) {
-              console.log('Found supervisor email in org chart 2:', { name, supervisorEmail });
-            }
 
             if (nameKey) {
               supervisorLookup[nameKey] = supervisorData;

@@ -26,6 +26,15 @@ const resolveBlobToken = () => {
 export default async function handler(req, res) {
   const token = resolveBlobToken();
   const tokenStatus = token ? 'present' : 'missing';
+  
+  // Log environment variables for debugging (without exposing the actual token)
+  console.log('[Blob Storage] Environment check:', {
+    NODE_ENV: process.env.NODE_ENV,
+    hasToken: !!token,
+    tokenLength: token ? token.length : 0,
+    availableEnvVars: Object.keys(process.env).filter(k => k.includes('BLOB') || k.includes('VERCEL')),
+  });
+  
   res.setHeader('x-blob-token-present', tokenStatus === 'present' ? 'true' : 'false');
   if (!token) {
     console.error('[Blob Storage] BLOB_READ_WRITE_TOKEN missing. Configure a read/write token in Vercel and redeploy.');
@@ -54,21 +63,25 @@ export default async function handler(req, res) {
   if (method === 'GET') {
     try {
       const existing = await get(blobPath, { token });
-      if (!existing?.downloadUrl) {
+      if (!existing || !existing.url) {
         return jsonResponse(res, { error: 'not found' }, 404);
       }
-      const data = await fetch(existing.downloadUrl).then((r) => r.json());
+      const data = await fetch(existing.url).then((r) => r.json());
       return jsonResponse(res, data, 200);
     } catch (error) {
       console.error(`[Blob Storage] GET error for ${key}:`, error?.stack || error);
+      // Blob not found errors should return 404
+      if (error?.message?.includes('not found') || error?.message?.includes('Could not find')) {
+        return jsonResponse(res, { error: 'not found' }, 404);
+      }
       const status = error?.status || error?.statusCode || 500;
       return jsonResponse(
         res,
         {
-          error: status === 404 ? 'not found' : 'failed to fetch',
-          details: error?.message || error,
+          error: 'failed to fetch',
+          details: error?.message || String(error),
         },
-        status === 404 ? 404 : 500,
+        status,
       );
     }
   }
