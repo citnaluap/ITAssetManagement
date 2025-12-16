@@ -7718,19 +7718,7 @@ const App = () => {
           return;
         }
 
-        const phoneLookup = phoneAssets.reduce((acc, phone) => {
-          const ownerKey = normalizeKey(phone.assignedTo || '');
-          const phoneKey = normalizePhone(phone.assetName || phone.deviceName || phone.serialNumber || '');
-          if (!phoneKey) return acc;
-          const composite = `${phoneKey}::${ownerKey}`;
-          acc[composite] = phone;
-          return acc;
-        }, {});
         const used = new Set();
-        const extractDigits = (value = '') => {
-          const digits = String(value || '').replace(/\D+/g, '');
-          return digits.length >= 7 ? digits : '';
-        };
         setAssets((prev) => {
           console.log(`Merging phones. Current assets: ${prev.length}`);
           const merged = [];
@@ -7787,7 +7775,7 @@ const App = () => {
       }
     };
     mergeNewPhones();
-  }, [setAssets, assets]);
+  }, [assets, setAssets]);
   useEffect(() => {
     let cancelled = false;
     const syncDatesFromWorkbook = async () => {
