@@ -1,6 +1,7 @@
-﻿import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
+import { BrowserMultiFormatReader } from '@zxing/browser';
 import * as XLSX from 'xlsx';
 import {
   Laptop,
@@ -237,6 +238,22 @@ const PAGE_ACCENTS = {
   Software: { from: '#ede9fe', to: '#c7d2fe' },
   default: { from: '#e2e8f0', to: '#e5e7eb' },
 };
+
+const BARCODE_DETECTOR_FORMATS = [
+  'aztec',
+  'code_128',
+  'code_39',
+  'code_93',
+  'codabar',
+  'data_matrix',
+  'ean_13',
+  'ean_8',
+  'itf',
+  'pdf417',
+  'qr_code',
+  'upc_a',
+  'upc_e',
+];
 
 const STORAGE_KEYS = {
   assets: 'uds_assets',
@@ -5463,7 +5480,7 @@ const QrToolingPanel = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Scan className="h-4 w-4 text-emerald-600" />
-          <p className="text-sm font-semibold text-slate-900">Scan QR</p>
+          <p className="text-sm font-semibold text-slate-900">Scan QR / barcode</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -7603,6 +7620,7 @@ const App = () => {
     : 'border border-slate-200 bg-white text-slate-800 shadow-sm';
   const videoRef = useRef(null);
   const fallbackCanvasRef = useRef(null);
+  const multiFormatReaderRef = useRef(null);
   const scanLoopRef = useRef(null);
   const streamRef = useRef(null);
   const lastScanTsRef = useRef(0);
@@ -9105,20 +9123,41 @@ const App = () => {
           await videoRef.current.play();
         }
         const hasNativeDetector = typeof window.BarcodeDetector !== 'undefined';
-        const detector = hasNativeDetector ? new window.BarcodeDetector({ formats: ['qr_code'] }) : null;
-        if (!hasNativeDetector) {
-          setScannerError('BarcodeDetector is not available in this browser. Using fallback decoder (slower).');
-          setScanMessage('Fallback scanner active. Keep the QR code centered and well-lit.');
+        let detector = null;
+        if (hasNativeDetector) {
+          let requestedFormats = [...BARCODE_DETECTOR_FORMATS];
+          if (typeof window.BarcodeDetector.getSupportedFormats === 'function') {
+            try {
+              const availableFormats = await window.BarcodeDetector.getSupportedFormats();
+              if (Array.isArray(availableFormats) && availableFormats.length > 0) {
+                const filtered = requestedFormats.filter((format) => availableFormats.includes(format));
+                if (filtered.length > 0) {
+                  requestedFormats = filtered;
+                }
+              }
+            } catch (err) {
+              console.warn('Failed to read BarcodeDetector supported formats', err);
+            }
+          }
+          detector = new window.BarcodeDetector({ formats: requestedFormats });
+          setScannerError('');
+          setScanMessage('Multipurpose scanner ready. Aim at any QR or barcode.');
+        } else {
+          setScannerError('BarcodeDetector is not available in this browser. Using multipurpose fallback decoder (slower).');
+          setScanMessage('Fallback scanner active. Keep the barcode centered and well-lit.');
           if (!fallbackCanvasRef.current) {
             fallbackCanvasRef.current = document.createElement('canvas');
           }
-        } else {
-          setScannerError('');
+          if (!multiFormatReaderRef.current) {
+            multiFormatReaderRef.current = new BrowserMultiFormatReader();
+          } else {
+            multiFormatReaderRef.current.reset();
+          }
         }
         const finishDetection = (value, message) => {
           if (!value) return;
           setScanResult(value);
-          setScanMessage(message || 'QR detected.');
+          setScanMessage(message || 'Barcode detected.');
           cancelled = true;
           setScannerActive(false);
           if (scanLoopRef.current) {
@@ -9127,6 +9166,9 @@ const App = () => {
           if (streamRef.current) {
             streamRef.current.getTracks().forEach((track) => track.stop());
             streamRef.current = null;
+          }
+          if (multiFormatReaderRef.current) {
+            multiFormatReaderRef.current.reset();
           }
         };
 
@@ -9138,7 +9180,7 @@ const App = () => {
             if (detector) {
               const barcodes = await detector.detect(videoRef.current);
               if (barcodes.length > 0) {
-                finishDetection(barcodes[0].rawValue || '', 'QR detected.');
+                finishDetection(barcodes[0].rawValue || '', 'Barcode detected.');
                 return;
               }
             } else {
@@ -9165,7 +9207,21 @@ const App = () => {
                   const ctx = canvas.getContext('2d');
                   ctx.drawImage(videoEl, 0, 0, targetWidth, targetHeight);
                   const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
-              const code = jsQR(imageData.data, targetWidth, targetHeight, { inversionAttempts: 'attemptBoth' });
+                  const reader = multiFormatReaderRef.current;
+                  if (reader) {
+                    try {
+                      const result = reader.decodeFromCanvas(canvas);
+                      if (result?.getText()) {
+                        finishDetection(result.getText(), 'Barcode detected via multipurpose fallback.');
+                        return;
+                      }
+                    } catch (readerError) {
+                      if (readerError?.name !== 'NotFoundException') {
+                        console.warn('Fallback barcode decode failed', readerError);
+                      }
+                    }
+                  }
+                  const code = jsQR(imageData.data, targetWidth, targetHeight, { inversionAttempts: 'attemptBoth' });
                   if (code?.data) {
                     finishDetection(code.data, 'QR detected via fallback scanner.');
                     return;
@@ -9194,6 +9250,9 @@ const App = () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
+      }
+      if (multiFormatReaderRef.current) {
+        multiFormatReaderRef.current.reset();
       }
     };
   }, [scannerActive]);
@@ -10276,7 +10335,7 @@ const App = () => {
       icon: CalendarClock,
     },
     {
-      label: 'Scan QR code',
+      label: 'Scan barcode',
       onClick: () => {
         setMenuOpen(false);
         handleStartScanner();
@@ -11124,7 +11183,7 @@ const App = () => {
                     <div>
                       <p className="font-semibold text-slate-900">Mobile-ready dashboard</p>
                       <p className="text-xs text-slate-500">
-                        Tap the action bar to add hardware, scan QR codes, or jump to warranty alerts.
+                        Tap the action bar to add hardware, scan QR codes or barcodes, or jump to warranty alerts.
                       </p>
                     </div>
                   </div>
