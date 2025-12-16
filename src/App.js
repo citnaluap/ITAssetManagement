@@ -7142,13 +7142,22 @@ const App = () => {
       try {
         const fileName = encodeURIComponent('Org Chart and HUB 12-25.xlsx');
         // Try both folder casings to avoid 404s on case-sensitive hosts.
-        const orgChartUrls = [`${PUBLIC_URL}/Tables/${fileName}`, `${PUBLIC_URL}/tables/${fileName}`];
+        const orgChartUrls = [
+          `${PUBLIC_URL}/tables/${fileName}`,
+          `${PUBLIC_URL}/Tables/${fileName}`,
+          `/tables/${fileName}`,
+          `/Tables/${fileName}`,
+        ];
         let response = null;
         for (const url of orgChartUrls) {
           const attempt = await fetch(url);
-          if (attempt.ok) {
+          if (isSpreadsheetResponse(attempt)) {
             response = attempt;
             break;
+          }
+          const contentType = (attempt.headers.get('content-type') || '').toLowerCase();
+          if (attempt.ok) {
+            console.warn('Org chart fetch returned non-spreadsheet content for', url, contentType);
           }
         }
         if (!response?.ok) return;
@@ -7488,6 +7497,16 @@ const App = () => {
   const [flashMessage, setFlashMessage] = useState('');
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [employeeFilters, setEmployeeFilters] = useState({ department: 'all', location: 'all', jobTitle: 'all' });
+  const isSpreadsheetResponse = (response) => {
+    const type = (response.headers.get('content-type') || '').toLowerCase();
+    if (!response.ok) return false;
+    if (type.includes('html')) return false;
+    return (
+      type.includes('spreadsheetml') ||
+      type.includes('application/vnd.ms-excel') ||
+      type.includes('application/octet-stream')
+    );
+  };
   const [employeePage, setEmployeePage] = useState(1);
   const [employeeForm, setEmployeeForm] = useState(null);
   const [expandedEmployeeId, setExpandedEmployeeId] = useState(null);
@@ -7573,14 +7592,28 @@ const App = () => {
         return;
       }
       try {
-        const assetSources = [EXCEL_EXPORTS.assets, '/Tables/Asset List 11-18-25.xlsx', '/Tables/Asset%20List%2011-18-25.xlsx'];
+        const assetSources = [
+          EXCEL_EXPORTS.assets,
+          `${PUBLIC_URL}/tables/Asset List 11-18-25.xlsx`,
+          `${PUBLIC_URL}/tables/Asset%20List%2011-18-25.xlsx`,
+          '/tables/Asset List 11-18-25.xlsx',
+          '/tables/Asset%20List%2011-18-25.xlsx',
+          `${PUBLIC_URL}/Tables/Asset List 11-18-25.xlsx`,
+          `${PUBLIC_URL}/Tables/Asset%20List%2011-18-25.xlsx`,
+          '/Tables/Asset List 11-18-25.xlsx',
+          '/Tables/Asset%20List%2011-18-25.xlsx',
+        ];
         let buffer = null;
         for (const url of assetSources) {
           try {
             const response = await fetch(url);
-            if (response.ok) {
+            const contentType = (response.headers.get('content-type') || '').toLowerCase();
+            if (isSpreadsheetResponse(response)) {
               buffer = await response.arrayBuffer();
               break;
+            }
+            if (response.ok) {
+              console.warn('Asset workbook fetch returned non-spreadsheet content for', url, contentType);
             }
           } catch (error) {
             console.warn('Asset workbook fetch failed for', url, error);
@@ -7619,20 +7652,28 @@ const App = () => {
       console.log('Starting phone merge from New Phones.xlsx...');
       try {
         const sources = [
+          `${PUBLIC_URL}/tables/New Phones.xlsx`,
+          `${PUBLIC_URL}/tables/New%20Phones.xlsx`,
+          '/tables/New Phones.xlsx',
+          '/tables/New%20Phones.xlsx',
           `${PUBLIC_URL}/Tables/New Phones.xlsx`,
           `${PUBLIC_URL}/Tables/New%20Phones.xlsx`,
-          '/Tables/New Phones.xlsx', 
-          '/Tables/New%20Phones.xlsx'
+          '/Tables/New Phones.xlsx',
+          '/Tables/New%20Phones.xlsx',
         ];
         let buffer = null;
         for (const url of sources) {
           try {
             console.log('Attempting to fetch:', url);
             const response = await fetch(url);
-            if (response.ok) {
+            const contentType = (response.headers.get('content-type') || '').toLowerCase();
+            if (isSpreadsheetResponse(response)) {
               buffer = await response.arrayBuffer();
               console.log('Successfully loaded New Phones.xlsx from:', url);
               break;
+            }
+            if (response.ok) {
+              console.warn('New Phones fetch returned non-spreadsheet content for', url, contentType);
             }
           } catch (error) {
             console.warn('New Phones fetch failed for', url, error);
@@ -7779,12 +7820,26 @@ const App = () => {
   useEffect(() => {
     let cancelled = false;
     const syncDatesFromWorkbook = async () => {
-      const assetSources = [EXCEL_EXPORTS.assets, '/Tables/Asset List 11-18-25.xlsx', '/Tables/Asset%20List%2011-18-25.xlsx'];
+      const assetSources = [
+        EXCEL_EXPORTS.assets,
+        `${PUBLIC_URL}/tables/Asset List 11-18-25.xlsx`,
+        `${PUBLIC_URL}/tables/Asset%20List%2011-18-25.xlsx`,
+        '/tables/Asset List 11-18-25.xlsx',
+        '/tables/Asset%20List%2011-18-25.xlsx',
+        `${PUBLIC_URL}/Tables/Asset List 11-18-25.xlsx`,
+        `${PUBLIC_URL}/Tables/Asset%20List%2011-18-25.xlsx`,
+        '/Tables/Asset List 11-18-25.xlsx',
+        '/Tables/Asset%20List%2011-18-25.xlsx',
+      ];
       let dateLookup = null;
       for (const url of assetSources) {
         try {
           const response = await fetch(url);
-          if (!response.ok) {
+          const contentType = (response.headers.get('content-type') || '').toLowerCase();
+          if (!isSpreadsheetResponse(response)) {
+            if (response.ok) {
+              console.warn('Asset date sync fetch returned non-spreadsheet content for', url, contentType);
+            }
             continue;
           }
           const buffer = await response.arrayBuffer();
@@ -7864,13 +7919,23 @@ const App = () => {
     const loadEmployeesFromWorkbook = async () => {
       const employeeSources = [
         EXCEL_EXPORTS.employees,
+        `${PUBLIC_URL}/tables/Employee Information Hub.xlsx`,
+        `${PUBLIC_URL}/tables/Employee%20Information%20Hub.xlsx`,
+        '/tables/Employee Information Hub.xlsx',
+        '/tables/Employee%20Information%20Hub.xlsx',
+        `${PUBLIC_URL}/Tables/Employee Information Hub.xlsx`,
+        `${PUBLIC_URL}/Tables/Employee%20Information%20Hub.xlsx`,
         '/Tables/Employee Information Hub.xlsx',
         '/Tables/Employee%20Information%20Hub.xlsx',
       ];
       for (const url of employeeSources) {
         try {
           const response = await fetch(url);
-          if (!response.ok) {
+          const contentType = (response.headers.get('content-type') || '').toLowerCase();
+          if (!isSpreadsheetResponse(response)) {
+            if (response.ok) {
+              console.warn('Employee workbook fetch returned non-spreadsheet content for', url, contentType);
+            }
             continue;
           }
           const buffer = await response.arrayBuffer();
@@ -7948,14 +8013,25 @@ const App = () => {
   useEffect(() => {
     let cancelled = false;
     const loadSupervisorData = async () => {
+      const fileName = encodeURIComponent('Org Chart and HUB 12-25.xlsx');
       const orgChartSources = [
+        `${PUBLIC_URL}/tables/${fileName}`,
+        `${PUBLIC_URL}/Tables/${fileName}`,
+        `/tables/${fileName}`,
+        '/tables/Org Chart and HUB 12-25.xlsx',
+        '/tables/Org%20Chart%20and%20HUB%2012-25.xlsx',
+        `/Tables/${fileName}`,
         '/Tables/Org Chart and HUB 12-25.xlsx',
-        `${PUBLIC_URL}/tables/${encodeURIComponent('Org Chart and HUB 12-25.xlsx')}`,
+        '/Tables/Org%20Chart%20and%20HUB%2012-25.xlsx',
       ];
       for (const url of orgChartSources) {
         try {
           const response = await fetch(url);
-          if (!response.ok) {
+          const contentType = (response.headers.get('content-type') || '').toLowerCase();
+          if (!isSpreadsheetResponse(response)) {
+            if (response.ok) {
+              console.warn('Org chart fetch returned non-spreadsheet content for', url, contentType);
+            }
             continue;
           }
           const buffer = await response.arrayBuffer();

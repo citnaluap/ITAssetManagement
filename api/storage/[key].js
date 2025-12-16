@@ -13,9 +13,15 @@ const jsonResponse = (res, data, status = 200) => {
 
 export default async function handler(req, res) {
   const token = process.env.BLOB_READ_WRITE_TOKEN;
-  if (!token) {
-    console.error('[Blob Storage] Missing BLOB_READ_WRITE_TOKEN environment variable');
-    return jsonResponse(res, { error: 'Missing BLOB_READ_WRITE_TOKEN' }, 500);
+  const tokenStatus = token ? (token.startsWith('vercel_blob_rw_') ? 'present' : 'invalid') : 'missing';
+  res.setHeader('x-blob-token-present', tokenStatus === 'present' ? 'true' : 'false');
+  if (tokenStatus !== 'present') {
+    console.error('[Blob Storage] Missing or malformed BLOB_READ_WRITE_TOKEN environment variable');
+    return jsonResponse(
+      res,
+      { error: 'BLOB token missing or malformed', tokenStatus },
+      500,
+    );
   }
 
   const {
@@ -44,7 +50,14 @@ export default async function handler(req, res) {
     } catch (error) {
       console.error(`[Blob Storage] GET error for ${key}:`, error.message || error);
       const status = error?.status || error?.statusCode || 500;
-      return jsonResponse(res, { error: 'not found' }, status === 404 ? 404 : 500);
+      return jsonResponse(
+        res,
+        {
+          error: status === 404 ? 'not found' : 'failed to fetch',
+          details: error?.message || error,
+        },
+        status === 404 ? 404 : 500,
+      );
     }
   }
 
@@ -76,7 +89,7 @@ export default async function handler(req, res) {
       return jsonResponse(res, { ok: true }, 200);
     } catch (error) {
       console.error(`[Blob Storage] PUT error for ${key}:`, error.message || error);
-      return jsonResponse(res, { error: 'failed to persist', details: error.message }, 500);
+      return jsonResponse(res, { error: 'failed to persist', details: error.message || error }, 500);
     }
   }
 
