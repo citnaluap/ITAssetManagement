@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
 import { BrowserMultiFormatReader } from '@zxing/browser';
@@ -10837,6 +10838,7 @@ const App = () => {
       }`}
     >
       <style>{`${LIGHT_MODE_STYLES}${DARK_MODE_STYLES}`}</style>
+      <SpeedInsights />
       <div className="ambient-layer">
         <div className="ambient-orb blue" style={{ width: '42vw', height: '42vw', top: '-12vh', left: '-8vw' }} />
         <div className="ambient-orb pink" style={{ width: '36vw', height: '36vw', bottom: '-10vh', right: '4vw' }} />
