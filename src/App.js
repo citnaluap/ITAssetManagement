@@ -249,7 +249,7 @@ const STORAGE_KEYS = {
   clearedMaintenanceAlerts: 'uds_cleared_maintenance_alerts',
 };
 const STORAGE_VERSION_KEY = 'uds_storage_version';
-const STORAGE_VERSION = '2025-11-20-zoom-refresh';
+const STORAGE_VERSION = '2025-12-15-mobile-sync';
 const resolveApiBaseUrl = () => {
   const envBase = process.env.REACT_APP_API_BASE_URL;
   const fromEnvOrOrigin =
