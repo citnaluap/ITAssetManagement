@@ -7669,12 +7669,12 @@ const App = () => {
         const normalizePhone = (value = '') => String(value).replace(/\D+/g, '');
         const phoneAssets = rows
           .map((row, index) => {
-            const mobileRaw = row['Mobile number'] || row['Mobile Number'] || row['Phone'] || row['Mobile'] || row['Cell'] || '';
+            const mobileRaw = row['Mobile number'] || row['Mobile Number'] || row['Phone'] || row['Mobile'] || row['Cell'] || row['Phone Number'] || '';
             const mobile = normalizePhone(mobileRaw);
             const username = formatRosterName(row.Username || row['Username'] || row['User'] || row['Name'] || row['Employee Name'] || row['Employee'] || '');
             const assignedTo = username || 'Unassigned';
-            const model = row['Equipment Model'] || row['Equipment'] || row['Model'] || row['Device Model'] || 'Phone';
-            const deviceId = normalizePhone(row['Device ID'] || row['IMEI'] || row['DeviceID'] || row['Serial Number'] || row['Serial'] || '');
+            const model = row['Equipment Model'] || row['Equipment'] || row['Model'] || row['Device Model'] || 'iPhone 16e';
+            const deviceId = normalizePhone(row['Device ID'] || row['IMEI'] || row['DeviceID'] || row['Serial Number'] || row['Serial'] || row['IMEI number'] || '');
             const purchaseDate = normalizeSheetDate(row['Upgrade date'] || row['Upgrade Date'] || row['Upgrade'] || row['Purchase Date'] || row['Date'] || '');
             const baseName = mobile || deviceId || `Phone-${index + 1}`;
             const payload = {
@@ -7682,7 +7682,7 @@ const App = () => {
               assetName: baseName,
               deviceName: baseName,
               type: 'Phone',
-              brand: model ? model.split(' ')[0] : 'Phone',
+              brand: model ? model.split(' ')[0] : 'Apple',
               model,
               serialNumber: deviceId || mobile,
               assignedTo,
@@ -7734,30 +7734,50 @@ const App = () => {
         setAssets((prev) => {
           console.log(`Merging phones. Current assets: ${prev.length}`);
           const merged = [];
+          const phonesByOwner = new Map();
+          
+          // Group new phones by owner
+          phoneAssets.forEach((phone) => {
+            const ownerKey = normalizeKey(phone.assignedTo || '');
+            if (!phonesByOwner.has(ownerKey)) {
+              phonesByOwner.set(ownerKey, []);
+            }
+            phonesByOwner.get(ownerKey).push(phone);
+          });
+          
           prev.forEach((asset) => {
             if (normalizeKey(asset.type || '') !== 'phone') {
               merged.push(asset);
               return;
             }
             const ownerKey = normalizeKey(asset.assignedTo || '');
-            const phoneKey =
-              extractDigits(asset.assetName) ||
-              extractDigits(asset.deviceName) ||
-              extractDigits(asset.sheetId) ||
-              extractDigits(asset.serialNumber) ||
-              extractDigits(asset.qrCode);
-            const composite = phoneKey ? `${phoneKey}::${ownerKey}` : '';
-            const match = composite ? phoneLookup[composite] : null;
-            if (match) {
-              used.add(match.id);
-              merged.push({ ...match, id: asset.id || match.id, _matchKeys: undefined, _phoneKeys: undefined });
+            const newPhonesForOwner = phonesByOwner.get(ownerKey) || [];
+            
+            if (newPhonesForOwner.length > 0) {
+              // Replace old phone with new phone for this owner
+              const newPhone = newPhonesForOwner[0];
+              used.add(newPhone.id);
+              console.log(`Replacing phone for ${asset.assignedTo}: ${asset.model} → ${newPhone.model}`);
+              merged.push({ 
+                ...newPhone, 
+                id: asset.id || newPhone.id, 
+                _matchKeys: undefined, 
+                _phoneKeys: undefined 
+              });
+              // Remove used phone from the list
+              phonesByOwner.set(ownerKey, newPhonesForOwner.slice(1));
+            } else {
+              // Keep old phone if no replacement found
+              merged.push(asset);
             }
           });
+          
+          // Add any remaining new phones that weren't matched to an existing owner
           phoneAssets.forEach((phone) => {
             if (used.has(phone.id)) return;
             merged.push({ ...phone, _matchKeys: undefined, _phoneKeys: undefined });
           });
-          console.log(`Merge complete. New total: ${merged.length} (added ${merged.length - prev.length} phones)`);
+          console.log(`Merge complete. New total: ${merged.length} (phones updated)`);
           return merged;
         });
       } catch (error) {
