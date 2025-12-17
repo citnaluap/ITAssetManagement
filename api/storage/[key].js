@@ -1,4 +1,4 @@
-import { put, get } from '@vercel/blob';
+import { put, head } from '@vercel/blob';
 
 const corsHeaders = {
   'access-control-allow-origin': '*',
@@ -62,7 +62,7 @@ export default async function handler(req, res) {
 
   if (method === 'GET') {
     try {
-      const existing = await get(blobPath, { token });
+      const existing = await head(blobPath, { token });
       if (!existing || !existing.url) {
         return jsonResponse(res, { error: 'not found' }, 404);
       }
