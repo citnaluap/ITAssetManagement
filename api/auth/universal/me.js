@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 const parseCookies = (req) => {
   const header = req.headers.cookie || '';
@@ -10,7 +10,7 @@ const parseCookies = (req) => {
   }, {});
 };
 
-module.exports = (req, res) => {
+export default function handler(req, res) {
   if (req.method !== 'GET') {
     res.statusCode = 405;
     res.setHeader('Allow', 'GET');

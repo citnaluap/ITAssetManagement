@@ -1,4 +1,5 @@
-const crypto = require('crypto');
+import crypto from 'crypto';
+import { Client } from '@duosecurity/duo_universal';
 
 const parseCookies = (req) => {
   const header = req.headers.cookie || '';
@@ -26,7 +27,7 @@ const setCookie = (res, name, value, options = {}) => {
   }
 };
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.statusCode = 405;
     res.setHeader('Allow', 'GET');
@@ -89,8 +90,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const duoClient = require('@duosecurity/duo_universal');
-    const client = new duoClient.Client({
+    const client = new Client({
       clientId,
       clientSecret,
       apiHost,
