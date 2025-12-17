@@ -138,8 +138,8 @@ const DARK_MODE_STYLES = `
   /* Neon Border & Title Color Variants - Dark Mode */
   html.theme-dark .rounded-3xl:nth-child(6n+1),
   html.theme-dark .glass-card:nth-child(6n+1) {
-    border: 3px solid #0ff !important;
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.6), 0 4px 20px rgba(0, 255, 255, 0.4), inset 0 0 20px rgba(0, 255, 255, 0.1) !important;
+    border: 2px solid #38bdf8 !important;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.3), 0 4px 12px rgba(56, 189, 248, 0.2) !important;
   }
   html.theme-dark .rounded-3xl:nth-child(6n+1) .text-sm.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n+1) .text-sm.font-semibold,
@@ -153,14 +153,14 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n+1) .text-base.font-semibold,
   html.theme-dark .glass-card:nth-child(6n+1) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n+1) .text-lg.font-semibold {
-    color: #0ff !important;
-    text-shadow: 0 0 20px rgba(0, 255, 255, 0.8), 0 0 40px rgba(0, 255, 255, 0.4) !important;
+    color: #7dd3fc !important;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.4), 0 2px 4px rgba(56, 189, 248, 0.2) !important;
   }
   
   html.theme-dark .rounded-3xl:nth-child(6n+2),
   html.theme-dark .glass-card:nth-child(6n+2) {
-    border: 3px solid #0f0 !important;
-    box-shadow: 0 0 30px rgba(0, 255, 0, 0.6), 0 4px 20px rgba(0, 255, 0, 0.4), inset 0 0 20px rgba(0, 255, 0, 0.1) !important;
+    border: 2px solid #4ade80 !important;
+    box-shadow: 0 0 15px rgba(74, 222, 128, 0.3), 0 4px 12px rgba(74, 222, 128, 0.2) !important;
   }
   html.theme-dark .rounded-3xl:nth-child(6n+2) .text-sm.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n+2) .text-sm.font-semibold,
@@ -174,14 +174,14 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n+2) .text-base.font-semibold,
   html.theme-dark .glass-card:nth-child(6n+2) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n+2) .text-lg.font-semibold {
-    color: #0f0 !important;
-    text-shadow: 0 0 20px rgba(0, 255, 0, 0.8), 0 0 40px rgba(0, 255, 0, 0.4) !important;
+    color: #86efac !important;
+    text-shadow: 0 0 10px rgba(74, 222, 128, 0.4), 0 2px 4px rgba(74, 222, 128, 0.2) !important;
   }
   
   html.theme-dark .rounded-3xl:nth-child(6n+3),
   html.theme-dark .glass-card:nth-child(6n+3) {
-    border: 3px solid #f0f !important;
-    box-shadow: 0 0 30px rgba(255, 0, 255, 0.6), 0 4px 20px rgba(255, 0, 255, 0.4), inset 0 0 20px rgba(255, 0, 255, 0.1) !important;
+    border: 2px solid #c084fc !important;
+    box-shadow: 0 0 15px rgba(192, 132, 252, 0.3), 0 4px 12px rgba(192, 132, 252, 0.2) !important;
   }
   html.theme-dark .rounded-3xl:nth-child(6n+3) .text-sm.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n+3) .text-sm.font-semibold,
@@ -195,14 +195,14 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n+3) .text-base.font-semibold,
   html.theme-dark .glass-card:nth-child(6n+3) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n+3) .text-lg.font-semibold {
-    color: #f0f !important;
-    text-shadow: 0 0 20px rgba(255, 0, 255, 0.8), 0 0 40px rgba(255, 0, 255, 0.4) !important;
+    color: #d8b4fe !important;
+    text-shadow: 0 0 10px rgba(192, 132, 252, 0.4), 0 2px 4px rgba(192, 132, 252, 0.2) !important;
   }
   
   html.theme-dark .rounded-3xl:nth-child(6n+4),
   html.theme-dark .glass-card:nth-child(6n+4) {
-    border: 3px solid #ff1493 !important;
-    box-shadow: 0 0 30px rgba(255, 20, 147, 0.6), 0 4px 20px rgba(255, 20, 147, 0.4), inset 0 0 20px rgba(255, 20, 147, 0.1) !important;
+    border: 2px solid #f472b6 !important;
+    box-shadow: 0 0 15px rgba(244, 114, 182, 0.3), 0 4px 12px rgba(244, 114, 182, 0.2) !important;
   }
   html.theme-dark .rounded-3xl:nth-child(6n+4) .text-sm.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n+4) .text-sm.font-semibold,
@@ -216,14 +216,14 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n+4) .text-base.font-semibold,
   html.theme-dark .glass-card:nth-child(6n+4) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n+4) .text-lg.font-semibold {
-    color: #ff1493 !important;
-    text-shadow: 0 0 20px rgba(255, 20, 147, 0.8), 0 0 40px rgba(255, 20, 147, 0.4) !important;
+    color: #f9a8d4 !important;
+    text-shadow: 0 0 10px rgba(244, 114, 182, 0.4), 0 2px 4px rgba(244, 114, 182, 0.2) !important;
   }
   
   html.theme-dark .rounded-3xl:nth-child(6n+5),
   html.theme-dark .glass-card:nth-child(6n+5) {
-    border: 3px solid #f00 !important;
-    box-shadow: 0 0 30px rgba(255, 0, 0, 0.6), 0 4px 20px rgba(255, 0, 0, 0.4), inset 0 0 20px rgba(255, 0, 0, 0.1) !important;
+    border: 2px solid #fb7185 !important;
+    box-shadow: 0 0 15px rgba(251, 113, 133, 0.3), 0 4px 12px rgba(251, 113, 133, 0.2) !important;
   }
   html.theme-dark .rounded-3xl:nth-child(6n+5) .text-sm.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n+5) .text-sm.font-semibold,
@@ -237,14 +237,14 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n+5) .text-base.font-semibold,
   html.theme-dark .glass-card:nth-child(6n+5) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n+5) .text-lg.font-semibold {
-    color: #f00 !important;
-    text-shadow: 0 0 20px rgba(255, 0, 0, 0.8), 0 0 40px rgba(255, 0, 0, 0.4) !important;
+    color: #fda4af !important;
+    text-shadow: 0 0 10px rgba(251, 113, 133, 0.4), 0 2px 4px rgba(251, 113, 133, 0.2) !important;
   }
   
   html.theme-dark .rounded-3xl:nth-child(6n),
   html.theme-dark .glass-card:nth-child(6n) {
-    border: 3px solid #ff6600 !important;
-    box-shadow: 0 0 30px rgba(255, 102, 0, 0.6), 0 4px 20px rgba(255, 102, 0, 0.4), inset 0 0 20px rgba(255, 102, 0, 0.1) !important;
+    border: 2px solid #fb923c !important;
+    box-shadow: 0 0 15px rgba(251, 146, 60, 0.3), 0 4px 12px rgba(251, 146, 60, 0.2) !important;
   }
   html.theme-dark .rounded-3xl:nth-child(6n) .text-sm.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n) .text-sm.font-semibold,
@@ -258,8 +258,8 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n) .text-base.font-semibold,
   html.theme-dark .glass-card:nth-child(6n) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n) .text-lg.font-semibold {
-    color: #ff6600 !important;
-    text-shadow: 0 0 20px rgba(255, 102, 0, 0.8), 0 0 40px rgba(255, 102, 0, 0.4) !important;
+    color: #fdba74 !important;
+    text-shadow: 0 0 10px rgba(251, 146, 60, 0.4), 0 2px 4px rgba(251, 146, 60, 0.2) !important;
   }
   
   /* Enhanced Card Titles - Dark Mode */
@@ -455,8 +455,8 @@ const LIGHT_MODE_STYLES = `
   /* Neon Border & Title Color Variants - Light Mode */
   html.theme-light .rounded-3xl:nth-child(6n+1),
   html.theme-light .glass-card:nth-child(6n+1) {
-    border: 3px solid #00d4ff !important;
-    box-shadow: 0 0 25px rgba(0, 212, 255, 0.5), 0 4px 20px rgba(0, 212, 255, 0.3), inset 0 0 15px rgba(0, 212, 255, 0.08) !important;
+    border: 2px solid #0ea5e9 !important;
+    box-shadow: 0 0 12px rgba(14, 165, 233, 0.25), 0 4px 12px rgba(14, 165, 233, 0.15) !important;
   }
   html.theme-light .rounded-3xl:nth-child(6n+1) .text-sm.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n+1) .text-sm.font-semibold,
@@ -470,14 +470,14 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .glass-card:nth-child(6n+1) .text-base.font-semibold,
   html.theme-light .glass-card:nth-child(6n+1) .text-lg.font-bold,
   html.theme-light .glass-card:nth-child(6n+1) .text-lg.font-semibold {
-    color: #0099cc !important;
-    text-shadow: 0 0 15px rgba(0, 212, 255, 0.6), 0 2px 8px rgba(0, 153, 204, 0.3) !important;
+    color: #0369a1 !important;
+    text-shadow: 0 0 8px rgba(14, 165, 233, 0.3), 0 2px 4px rgba(3, 105, 161, 0.2) !important;
   }
   
   html.theme-light .rounded-3xl:nth-child(6n+2),
   html.theme-light .glass-card:nth-child(6n+2) {
-    border: 3px solid #00ff00 !important;
-    box-shadow: 0 0 25px rgba(0, 255, 0, 0.5), 0 4px 20px rgba(0, 255, 0, 0.3), inset 0 0 15px rgba(0, 255, 0, 0.08) !important;
+    border: 2px solid #10b981 !important;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.25), 0 4px 12px rgba(16, 185, 129, 0.15) !important;
   }
   html.theme-light .rounded-3xl:nth-child(6n+2) .text-sm.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n+2) .text-sm.font-semibold,
@@ -491,14 +491,14 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .glass-card:nth-child(6n+2) .text-base.font-semibold,
   html.theme-light .glass-card:nth-child(6n+2) .text-lg.font-bold,
   html.theme-light .glass-card:nth-child(6n+2) .text-lg.font-semibold {
-    color: #00aa00 !important;
-    text-shadow: 0 0 15px rgba(0, 255, 0, 0.6), 0 2px 8px rgba(0, 170, 0, 0.3) !important;
+    color: #047857 !important;
+    text-shadow: 0 0 8px rgba(16, 185, 129, 0.3), 0 2px 4px rgba(4, 120, 87, 0.2) !important;
   }
   
   html.theme-light .rounded-3xl:nth-child(6n+3),
   html.theme-light .glass-card:nth-child(6n+3) {
-    border: 3px solid #cc00ff !important;
-    box-shadow: 0 0 25px rgba(204, 0, 255, 0.5), 0 4px 20px rgba(204, 0, 255, 0.3), inset 0 0 15px rgba(204, 0, 255, 0.08) !important;
+    border: 2px solid #8b5cf6 !important;
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.25), 0 4px 12px rgba(139, 92, 246, 0.15) !important;
   }
   html.theme-light .rounded-3xl:nth-child(6n+3) .text-sm.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n+3) .text-sm.font-semibold,
@@ -512,14 +512,14 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .glass-card:nth-child(6n+3) .text-base.font-semibold,
   html.theme-light .glass-card:nth-child(6n+3) .text-lg.font-bold,
   html.theme-light .glass-card:nth-child(6n+3) .text-lg.font-semibold {
-    color: #9900cc !important;
-    text-shadow: 0 0 15px rgba(204, 0, 255, 0.6), 0 2px 8px rgba(153, 0, 204, 0.3) !important;
+    color: #6d28d9 !important;
+    text-shadow: 0 0 8px rgba(139, 92, 246, 0.3), 0 2px 4px rgba(109, 40, 217, 0.2) !important;
   }
   
   html.theme-light .rounded-3xl:nth-child(6n+4),
   html.theme-light .glass-card:nth-child(6n+4) {
-    border: 3px solid #ff1493 !important;
-    box-shadow: 0 0 25px rgba(255, 20, 147, 0.5), 0 4px 20px rgba(255, 20, 147, 0.3), inset 0 0 15px rgba(255, 20, 147, 0.08) !important;
+    border: 2px solid #ec4899 !important;
+    box-shadow: 0 0 12px rgba(236, 72, 153, 0.25), 0 4px 12px rgba(236, 72, 153, 0.15) !important;
   }
   html.theme-light .rounded-3xl:nth-child(6n+4) .text-sm.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n+4) .text-sm.font-semibold,
@@ -533,14 +533,14 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .glass-card:nth-child(6n+4) .text-base.font-semibold,
   html.theme-light .glass-card:nth-child(6n+4) .text-lg.font-bold,
   html.theme-light .glass-card:nth-child(6n+4) .text-lg.font-semibold {
-    color: #cc0066 !important;
-    text-shadow: 0 0 15px rgba(255, 20, 147, 0.6), 0 2px 8px rgba(204, 0, 102, 0.3) !important;
+    color: #be185d !important;
+    text-shadow: 0 0 8px rgba(236, 72, 153, 0.3), 0 2px 4px rgba(190, 24, 93, 0.2) !important;
   }
   
   html.theme-light .rounded-3xl:nth-child(6n+5),
   html.theme-light .glass-card:nth-child(6n+5) {
-    border: 3px solid #ff0000 !important;
-    box-shadow: 0 0 25px rgba(255, 0, 0, 0.5), 0 4px 20px rgba(255, 0, 0, 0.3), inset 0 0 15px rgba(255, 0, 0, 0.08) !important;
+    border: 2px solid #ef4444 !important;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.25), 0 4px 12px rgba(239, 68, 68, 0.15) !important;
   }
   html.theme-light .rounded-3xl:nth-child(6n+5) .text-sm.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n+5) .text-sm.font-semibold,
@@ -554,14 +554,14 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .glass-card:nth-child(6n+5) .text-base.font-semibold,
   html.theme-light .glass-card:nth-child(6n+5) .text-lg.font-bold,
   html.theme-light .glass-card:nth-child(6n+5) .text-lg.font-semibold {
-    color: #cc0000 !important;
-    text-shadow: 0 0 15px rgba(255, 0, 0, 0.6), 0 2px 8px rgba(204, 0, 0, 0.3) !important;
+    color: #b91c1c !important;
+    text-shadow: 0 0 8px rgba(239, 68, 68, 0.3), 0 2px 4px rgba(185, 28, 28, 0.2) !important;
   }
   
   html.theme-light .rounded-3xl:nth-child(6n),
   html.theme-light .glass-card:nth-child(6n) {
-    border: 3px solid #ff6600 !important;
-    box-shadow: 0 0 25px rgba(255, 102, 0, 0.5), 0 4px 20px rgba(255, 102, 0, 0.3), inset 0 0 15px rgba(255, 102, 0, 0.08) !important;
+    border: 2px solid #f97316 !important;
+    box-shadow: 0 0 12px rgba(249, 115, 22, 0.25), 0 4px 12px rgba(249, 115, 22, 0.15) !important;
   }
   html.theme-light .rounded-3xl:nth-child(6n) .text-sm.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n) .text-sm.font-semibold,
@@ -575,8 +575,8 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .glass-card:nth-child(6n) .text-base.font-semibold,
   html.theme-light .glass-card:nth-child(6n) .text-lg.font-bold,
   html.theme-light .glass-card:nth-child(6n) .text-lg.font-semibold {
-    color: #cc5500 !important;
-    text-shadow: 0 0 15px rgba(255, 102, 0, 0.6), 0 2px 8px rgba(204, 85, 0, 0.3) !important;
+    color: #c2410c !important;
+    text-shadow: 0 0 8px rgba(249, 115, 22, 0.3), 0 2px 4px rgba(194, 65, 12, 0.2) !important;
   }
   
   /* Enhanced Card Titles - Light Mode */
