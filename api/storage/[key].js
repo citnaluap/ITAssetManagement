@@ -1,4 +1,4 @@
-import { put, head, del } from '@vercel/blob';
+import { put, head, del, list } from '@vercel/blob';
 
 const corsHeaders = {
   'access-control-allow-origin': '*',
@@ -106,16 +106,15 @@ export default async function handler(req, res) {
               req.on('error', reject);
             });
       
-      // Delete existing blob if it exists to allow overwrite
+      // Delete ALL existing blobs matching this key pattern (in case created with addRandomSuffix)
       try {
-        const existing = await head(blobPath, { token });
-        if (existing) {
-          await del(existing.url, { token });
-          console.log(`[Blob Storage] Deleted existing blob for ${key}`);
+        const { blobs } = await list({ prefix: `storage/${encodeURIComponent(key)}`, token });
+        if (blobs && blobs.length > 0) {
+          await Promise.all(blobs.map(blob => del(blob.url, { token })));
+          console.log(`[Blob Storage] Deleted ${blobs.length} existing blob(s) for ${key}`);
         }
       } catch (error) {
-        // Blob doesn't exist yet, that's fine
-        console.log(`[Blob Storage] No existing blob to delete for ${key}`);
+        console.log(`[Blob Storage] No existing blobs to delete for ${key}:`, error.message);
       }
       
       await put(blobPath, JSON.stringify(body), {
