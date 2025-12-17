@@ -108,6 +108,7 @@ export default async function handler(req, res) {
       await put(blobPath, JSON.stringify(body), {
         access: 'public',
         contentType: 'application/json',
+        addRandomSuffix: true,
         token,
       });
       console.log(`[Blob Storage] Successfully saved ${key}`);
