@@ -136,59 +136,53 @@ const DARK_MODE_STYLES = `
   }
   
   /* Enhanced Card Titles - Dark Mode */
-  html.theme-dark h1,
-  html.theme-dark h2,
-  html.theme-dark h3,
-  html.theme-dark h4 {
-    color: #e0f2fe !important;
-    font-weight: 700 !important;
-    letter-spacing: -0.02em !important;
-    text-shadow: 0 2px 8px rgba(59, 130, 246, 0.3), 0 0 20px rgba(96, 165, 250, 0.15) !important;
-  }
-  html.theme-dark h1 {
-    font-size: 2rem !important;
+  html.theme-dark .text-2xl.font-bold {
+    font-size: 2.25rem !important;
     background: linear-gradient(135deg, #60a5fa 0%, #38bdf8 100%) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
-    text-shadow: none !important;
-    filter: drop-shadow(0 2px 12px rgba(96, 165, 250, 0.4)) !important;
+    filter: drop-shadow(0 2px 12px rgba(96, 165, 250, 0.5)) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
   }
-  html.theme-dark h2 {
-    font-size: 1.75rem !important;
-    background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    text-shadow: none !important;
-    filter: drop-shadow(0 2px 10px rgba(59, 130, 246, 0.35)) !important;
-  }
-  html.theme-dark h3 {
+  html.theme-dark .text-xl.font-bold,
+  html.theme-dark .text-xl.font-semibold {
     font-size: 1.5rem !important;
-    color: #93c5fd !important;
-  }
-  html.theme-dark h4 {
-    font-size: 1.25rem !important;
-    color: #bfdbfe !important;
-  }
-  html.theme-dark .text-xl,
-  html.theme-dark .text-2xl,
-  html.theme-dark .text-3xl,
-  html.theme-dark .font-bold,
-  html.theme-dark .font-semibold {
-    text-shadow: 0 1px 4px rgba(59, 130, 246, 0.2) !important;
-  }
-  html.theme-dark .bg-white h1,
-  html.theme-dark .bg-white h2,
-  html.theme-dark .bg-white h3,
-  html.theme-dark .bg-slate-50 h1,
-  html.theme-dark .bg-slate-50 h2,
-  html.theme-dark .bg-slate-50 h3,
-  html.theme-dark .bg-slate-100 h1,
-  html.theme-dark .bg-slate-100 h2,
-  html.theme-dark .bg-slate-100 h3 {
+    color: #60a5fa !important;
+    text-shadow: 0 2px 10px rgba(96, 165, 250, 0.4), 0 0 20px rgba(96, 165, 250, 0.2) !important;
     font-weight: 700 !important;
-    letter-spacing: -0.025em !important;
+    letter-spacing: -0.02em !important;
+  }
+  html.theme-dark .text-lg.font-bold,
+  html.theme-dark .text-lg.font-semibold {
+    font-size: 1.375rem !important;
+    color: #93c5fd !important;
+    text-shadow: 0 2px 8px rgba(147, 197, 253, 0.35) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.015em !important;
+  }
+  html.theme-dark .text-base.font-bold,
+  html.theme-dark .text-base.font-semibold {
+    font-size: 1.125rem !important;
+    color: #bfdbfe !important;
+    text-shadow: 0 1px 6px rgba(191, 219, 254, 0.3) !important;
+    font-weight: 700 !important;
+  }
+  html.theme-dark .text-sm.font-bold,
+  html.theme-dark .text-sm.font-semibold {
+    font-size: 1rem !important;
+    color: #dbeafe !important;
+    text-shadow: 0 1px 4px rgba(219, 234, 254, 0.25) !important;
+    font-weight: 700 !important;
+  }
+  html.theme-dark .text-sm.font-bold.text-slate-900,
+  html.theme-dark .text-sm.font-semibold.text-slate-900,
+  html.theme-dark .text-base.font-semibold.text-slate-900,
+  html.theme-dark .text-lg.font-semibold.text-slate-900,
+  html.theme-dark .text-lg.font-bold.text-slate-900 {
+    color: #e0f2fe !important;
+    text-shadow: 0 2px 8px rgba(96, 165, 250, 0.3) !important;
   }
 `;
 
@@ -332,61 +326,53 @@ const LIGHT_MODE_STYLES = `
   }
   
   /* Enhanced Card Titles - Light Mode */
-  html.theme-light h1,
-  html.theme-light h2,
-  html.theme-light h3,
-  html.theme-light h4 {
-    color: #0f172a !important;
-    font-weight: 700 !important;
-    letter-spacing: -0.02em !important;
-    text-shadow: 0 2px 4px rgba(59, 130, 246, 0.08) !important;
-  }
-  html.theme-light h1 {
-    font-size: 2rem !important;
-    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #2563eb 100%) !important;
+  html.theme-light .text-2xl.font-bold {
+    font-size: 2.25rem !important;
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
-    text-shadow: none !important;
-    filter: drop-shadow(0 2px 6px rgba(37, 99, 235, 0.25)) !important;
+    filter: drop-shadow(0 2px 8px rgba(37, 99, 235, 0.3)) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
   }
-  html.theme-light h2 {
-    font-size: 1.75rem !important;
-    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    text-shadow: none !important;
-    filter: drop-shadow(0 2px 5px rgba(59, 130, 246, 0.2)) !important;
-  }
-  html.theme-light h3 {
+  html.theme-light .text-xl.font-bold,
+  html.theme-light .text-xl.font-semibold {
     font-size: 1.5rem !important;
     color: #1e40af !important;
-    text-shadow: 0 1px 3px rgba(30, 64, 175, 0.12) !important;
-  }
-  html.theme-light h4 {
-    font-size: 1.25rem !important;
-    color: #1e3a8a !important;
-    text-shadow: 0 1px 2px rgba(30, 58, 138, 0.1) !important;
-  }
-  html.theme-light .text-xl,
-  html.theme-light .text-2xl,
-  html.theme-light .text-3xl,
-  html.theme-light .font-bold,
-  html.theme-light .font-semibold {
-    text-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
-  }
-  html.theme-light .bg-white h1,
-  html.theme-light .bg-white h2,
-  html.theme-light .bg-white h3,
-  html.theme-light .bg-slate-50 h1,
-  html.theme-light .bg-slate-50 h2,
-  html.theme-light .bg-slate-50 h3,
-  html.theme-light .bg-slate-100 h1,
-  html.theme-light .bg-slate-100 h2,
-  html.theme-light .bg-slate-100 h3 {
+    text-shadow: 0 2px 6px rgba(30, 64, 175, 0.2) !important;
     font-weight: 700 !important;
-    letter-spacing: -0.025em !important;
+    letter-spacing: -0.02em !important;
+  }
+  html.theme-light .text-lg.font-bold,
+  html.theme-light .text-lg.font-semibold {
+    font-size: 1.375rem !important;
+    color: #1e3a8a !important;
+    text-shadow: 0 2px 5px rgba(30, 58, 138, 0.15) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.015em !important;
+  }
+  html.theme-light .text-base.font-bold,
+  html.theme-light .text-base.font-semibold {
+    font-size: 1.125rem !important;
+    color: #1e3a8a !important;
+    text-shadow: 0 1px 4px rgba(30, 58, 138, 0.12) !important;
+    font-weight: 700 !important;
+  }
+  html.theme-light .text-sm.font-bold,
+  html.theme-light .text-sm.font-semibold {
+    font-size: 1rem !important;
+    color: #1e40af !important;
+    text-shadow: 0 1px 3px rgba(30, 64, 175, 0.1) !important;
+    font-weight: 700 !important;
+  }
+  html.theme-light .text-sm.font-bold.text-slate-900,
+  html.theme-light .text-sm.font-semibold.text-slate-900,
+  html.theme-light .text-base.font-semibold.text-slate-900,
+  html.theme-light .text-lg.font-semibold.text-slate-900,
+  html.theme-light .text-lg.font-bold.text-slate-900 {
+    color: #1e3a8a !important;
+    text-shadow: 0 2px 5px rgba(30, 58, 138, 0.15) !important;
   }
   html.theme-light .bg-white,
   html.theme-light .bg-slate-50,
