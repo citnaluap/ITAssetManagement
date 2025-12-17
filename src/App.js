@@ -134,6 +134,62 @@ const DARK_MODE_STYLES = `
       0 0 0 1px rgba(92, 224, 255, 0.18) !important;
     border: 2px solid rgba(37, 99, 235, 0.4) !important;
   }
+  
+  /* Enhanced Card Titles - Dark Mode */
+  html.theme-dark h1,
+  html.theme-dark h2,
+  html.theme-dark h3,
+  html.theme-dark h4 {
+    color: #e0f2fe !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em !important;
+    text-shadow: 0 2px 8px rgba(59, 130, 246, 0.3), 0 0 20px rgba(96, 165, 250, 0.15) !important;
+  }
+  html.theme-dark h1 {
+    font-size: 2rem !important;
+    background: linear-gradient(135deg, #60a5fa 0%, #38bdf8 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    text-shadow: none !important;
+    filter: drop-shadow(0 2px 12px rgba(96, 165, 250, 0.4)) !important;
+  }
+  html.theme-dark h2 {
+    font-size: 1.75rem !important;
+    background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    text-shadow: none !important;
+    filter: drop-shadow(0 2px 10px rgba(59, 130, 246, 0.35)) !important;
+  }
+  html.theme-dark h3 {
+    font-size: 1.5rem !important;
+    color: #93c5fd !important;
+  }
+  html.theme-dark h4 {
+    font-size: 1.25rem !important;
+    color: #bfdbfe !important;
+  }
+  html.theme-dark .text-xl,
+  html.theme-dark .text-2xl,
+  html.theme-dark .text-3xl,
+  html.theme-dark .font-bold,
+  html.theme-dark .font-semibold {
+    text-shadow: 0 1px 4px rgba(59, 130, 246, 0.2) !important;
+  }
+  html.theme-dark .bg-white h1,
+  html.theme-dark .bg-white h2,
+  html.theme-dark .bg-white h3,
+  html.theme-dark .bg-slate-50 h1,
+  html.theme-dark .bg-slate-50 h2,
+  html.theme-dark .bg-slate-50 h3,
+  html.theme-dark .bg-slate-100 h1,
+  html.theme-dark .bg-slate-100 h2,
+  html.theme-dark .bg-slate-100 h3 {
+    font-weight: 700 !important;
+    letter-spacing: -0.025em !important;
+  }
 `;
 
 const LIGHT_MODE_STYLES = `
@@ -273,6 +329,64 @@ const LIGHT_MODE_STYLES = `
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(245, 249, 255, 0.96)) !important;
     border: 2px solid rgba(59, 130, 246, 0.4) !important;
     box-shadow: 0 18px 56px rgba(15, 23, 42, 0.14), 0 4px 16px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1) !important;
+  }
+  
+  /* Enhanced Card Titles - Light Mode */
+  html.theme-light h1,
+  html.theme-light h2,
+  html.theme-light h3,
+  html.theme-light h4 {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em !important;
+    text-shadow: 0 2px 4px rgba(59, 130, 246, 0.08) !important;
+  }
+  html.theme-light h1 {
+    font-size: 2rem !important;
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #2563eb 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    text-shadow: none !important;
+    filter: drop-shadow(0 2px 6px rgba(37, 99, 235, 0.25)) !important;
+  }
+  html.theme-light h2 {
+    font-size: 1.75rem !important;
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    text-shadow: none !important;
+    filter: drop-shadow(0 2px 5px rgba(59, 130, 246, 0.2)) !important;
+  }
+  html.theme-light h3 {
+    font-size: 1.5rem !important;
+    color: #1e40af !important;
+    text-shadow: 0 1px 3px rgba(30, 64, 175, 0.12) !important;
+  }
+  html.theme-light h4 {
+    font-size: 1.25rem !important;
+    color: #1e3a8a !important;
+    text-shadow: 0 1px 2px rgba(30, 58, 138, 0.1) !important;
+  }
+  html.theme-light .text-xl,
+  html.theme-light .text-2xl,
+  html.theme-light .text-3xl,
+  html.theme-light .font-bold,
+  html.theme-light .font-semibold {
+    text-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+  }
+  html.theme-light .bg-white h1,
+  html.theme-light .bg-white h2,
+  html.theme-light .bg-white h3,
+  html.theme-light .bg-slate-50 h1,
+  html.theme-light .bg-slate-50 h2,
+  html.theme-light .bg-slate-50 h3,
+  html.theme-light .bg-slate-100 h1,
+  html.theme-light .bg-slate-100 h2,
+  html.theme-light .bg-slate-100 h3 {
+    font-weight: 700 !important;
+    letter-spacing: -0.025em !important;
   }
   html.theme-light .bg-white,
   html.theme-light .bg-slate-50,
