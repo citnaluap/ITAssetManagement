@@ -1,4 +1,4 @@
-import { put, head } from '@vercel/blob';
+import { put, head, del } from '@vercel/blob';
 
 const corsHeaders = {
   'access-control-allow-origin': '*',
@@ -105,10 +105,22 @@ export default async function handler(req, res) {
               });
               req.on('error', reject);
             });
+      
+      // Delete existing blob if it exists to allow overwrite
+      try {
+        const existing = await head(blobPath, { token });
+        if (existing) {
+          await del(existing.url, { token });
+          console.log(`[Blob Storage] Deleted existing blob for ${key}`);
+        }
+      } catch (error) {
+        // Blob doesn't exist yet, that's fine
+        console.log(`[Blob Storage] No existing blob to delete for ${key}`);
+      }
+      
       await put(blobPath, JSON.stringify(body), {
         access: 'public',
         contentType: 'application/json',
-        addRandomSuffix: true,
         token,
       });
       console.log(`[Blob Storage] Successfully saved ${key}`);
