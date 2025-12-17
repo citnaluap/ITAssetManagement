@@ -135,6 +135,133 @@ const DARK_MODE_STYLES = `
     border: 2px solid rgba(37, 99, 235, 0.4) !important;
   }
   
+  /* Neon Border & Title Color Variants - Dark Mode */
+  html.theme-dark .rounded-3xl:nth-child(6n+1),
+  html.theme-dark .glass-card:nth-child(6n+1) {
+    border: 3px solid #0ff !important;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.6), 0 4px 20px rgba(0, 255, 255, 0.4), inset 0 0 20px rgba(0, 255, 255, 0.1) !important;
+  }
+  html.theme-dark .rounded-3xl:nth-child(6n+1) .text-sm.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n+1) .text-sm.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n+1) .text-base.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n+1) .text-base.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n+1) .text-lg.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n+1) .text-lg.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+1) .text-sm.font-bold,
+  html.theme-dark .glass-card:nth-child(6n+1) .text-sm.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+1) .text-base.font-bold,
+  html.theme-dark .glass-card:nth-child(6n+1) .text-base.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+1) .text-lg.font-bold,
+  html.theme-dark .glass-card:nth-child(6n+1) .text-lg.font-semibold {
+    color: #0ff !important;
+    text-shadow: 0 0 20px rgba(0, 255, 255, 0.8), 0 0 40px rgba(0, 255, 255, 0.4) !important;
+  }
+  
+  html.theme-dark .rounded-3xl:nth-child(6n+2),
+  html.theme-dark .glass-card:nth-child(6n+2) {
+    border: 3px solid #0f0 !important;
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.6), 0 4px 20px rgba(0, 255, 0, 0.4), inset 0 0 20px rgba(0, 255, 0, 0.1) !important;
+  }
+  html.theme-dark .rounded-3xl:nth-child(6n+2) .text-sm.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n+2) .text-sm.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n+2) .text-base.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n+2) .text-base.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n+2) .text-lg.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n+2) .text-lg.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+2) .text-sm.font-bold,
+  html.theme-dark .glass-card:nth-child(6n+2) .text-sm.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+2) .text-base.font-bold,
+  html.theme-dark .glass-card:nth-child(6n+2) .text-base.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+2) .text-lg.font-bold,
+  html.theme-dark .glass-card:nth-child(6n+2) .text-lg.font-semibold {
+    color: #0f0 !important;
+    text-shadow: 0 0 20px rgba(0, 255, 0, 0.8), 0 0 40px rgba(0, 255, 0, 0.4) !important;
+  }
+  
+  html.theme-dark .rounded-3xl:nth-child(6n+3),
+  html.theme-dark .glass-card:nth-child(6n+3) {
+    border: 3px solid #f0f !important;
+    box-shadow: 0 0 30px rgba(255, 0, 255, 0.6), 0 4px 20px rgba(255, 0, 255, 0.4), inset 0 0 20px rgba(255, 0, 255, 0.1) !important;
+  }
+  html.theme-dark .rounded-3xl:nth-child(6n+3) .text-sm.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n+3) .text-sm.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n+3) .text-base.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n+3) .text-base.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n+3) .text-lg.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n+3) .text-lg.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+3) .text-sm.font-bold,
+  html.theme-dark .glass-card:nth-child(6n+3) .text-sm.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+3) .text-base.font-bold,
+  html.theme-dark .glass-card:nth-child(6n+3) .text-base.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+3) .text-lg.font-bold,
+  html.theme-dark .glass-card:nth-child(6n+3) .text-lg.font-semibold {
+    color: #f0f !important;
+    text-shadow: 0 0 20px rgba(255, 0, 255, 0.8), 0 0 40px rgba(255, 0, 255, 0.4) !important;
+  }
+  
+  html.theme-dark .rounded-3xl:nth-child(6n+4),
+  html.theme-dark .glass-card:nth-child(6n+4) {
+    border: 3px solid #ff1493 !important;
+    box-shadow: 0 0 30px rgba(255, 20, 147, 0.6), 0 4px 20px rgba(255, 20, 147, 0.4), inset 0 0 20px rgba(255, 20, 147, 0.1) !important;
+  }
+  html.theme-dark .rounded-3xl:nth-child(6n+4) .text-sm.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n+4) .text-sm.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n+4) .text-base.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n+4) .text-base.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n+4) .text-lg.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n+4) .text-lg.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+4) .text-sm.font-bold,
+  html.theme-dark .glass-card:nth-child(6n+4) .text-sm.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+4) .text-base.font-bold,
+  html.theme-dark .glass-card:nth-child(6n+4) .text-base.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+4) .text-lg.font-bold,
+  html.theme-dark .glass-card:nth-child(6n+4) .text-lg.font-semibold {
+    color: #ff1493 !important;
+    text-shadow: 0 0 20px rgba(255, 20, 147, 0.8), 0 0 40px rgba(255, 20, 147, 0.4) !important;
+  }
+  
+  html.theme-dark .rounded-3xl:nth-child(6n+5),
+  html.theme-dark .glass-card:nth-child(6n+5) {
+    border: 3px solid #f00 !important;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.6), 0 4px 20px rgba(255, 0, 0, 0.4), inset 0 0 20px rgba(255, 0, 0, 0.1) !important;
+  }
+  html.theme-dark .rounded-3xl:nth-child(6n+5) .text-sm.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n+5) .text-sm.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n+5) .text-base.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n+5) .text-base.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n+5) .text-lg.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n+5) .text-lg.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+5) .text-sm.font-bold,
+  html.theme-dark .glass-card:nth-child(6n+5) .text-sm.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+5) .text-base.font-bold,
+  html.theme-dark .glass-card:nth-child(6n+5) .text-base.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+5) .text-lg.font-bold,
+  html.theme-dark .glass-card:nth-child(6n+5) .text-lg.font-semibold {
+    color: #f00 !important;
+    text-shadow: 0 0 20px rgba(255, 0, 0, 0.8), 0 0 40px rgba(255, 0, 0, 0.4) !important;
+  }
+  
+  html.theme-dark .rounded-3xl:nth-child(6n),
+  html.theme-dark .glass-card:nth-child(6n) {
+    border: 3px solid #ff6600 !important;
+    box-shadow: 0 0 30px rgba(255, 102, 0, 0.6), 0 4px 20px rgba(255, 102, 0, 0.4), inset 0 0 20px rgba(255, 102, 0, 0.1) !important;
+  }
+  html.theme-dark .rounded-3xl:nth-child(6n) .text-sm.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n) .text-sm.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n) .text-base.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n) .text-base.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n) .text-lg.font-bold,
+  html.theme-dark .rounded-3xl:nth-child(6n) .text-lg.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n) .text-sm.font-bold,
+  html.theme-dark .glass-card:nth-child(6n) .text-sm.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n) .text-base.font-bold,
+  html.theme-dark .glass-card:nth-child(6n) .text-base.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n) .text-lg.font-bold,
+  html.theme-dark .glass-card:nth-child(6n) .text-lg.font-semibold {
+    color: #ff6600 !important;
+    text-shadow: 0 0 20px rgba(255, 102, 0, 0.8), 0 0 40px rgba(255, 102, 0, 0.4) !important;
+  }
+  
   /* Enhanced Card Titles - Dark Mode */
   html.theme-dark .text-2xl.font-bold {
     font-size: 2.25rem !important;
@@ -323,6 +450,133 @@ const LIGHT_MODE_STYLES = `
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(245, 249, 255, 0.96)) !important;
     border: 2px solid rgba(59, 130, 246, 0.4) !important;
     box-shadow: 0 18px 56px rgba(15, 23, 42, 0.14), 0 4px 16px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1) !important;
+  }
+  
+  /* Neon Border & Title Color Variants - Light Mode */
+  html.theme-light .rounded-3xl:nth-child(6n+1),
+  html.theme-light .glass-card:nth-child(6n+1) {
+    border: 3px solid #00d4ff !important;
+    box-shadow: 0 0 25px rgba(0, 212, 255, 0.5), 0 4px 20px rgba(0, 212, 255, 0.3), inset 0 0 15px rgba(0, 212, 255, 0.08) !important;
+  }
+  html.theme-light .rounded-3xl:nth-child(6n+1) .text-sm.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n+1) .text-sm.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n+1) .text-base.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n+1) .text-base.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n+1) .text-lg.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n+1) .text-lg.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+1) .text-sm.font-bold,
+  html.theme-light .glass-card:nth-child(6n+1) .text-sm.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+1) .text-base.font-bold,
+  html.theme-light .glass-card:nth-child(6n+1) .text-base.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+1) .text-lg.font-bold,
+  html.theme-light .glass-card:nth-child(6n+1) .text-lg.font-semibold {
+    color: #0099cc !important;
+    text-shadow: 0 0 15px rgba(0, 212, 255, 0.6), 0 2px 8px rgba(0, 153, 204, 0.3) !important;
+  }
+  
+  html.theme-light .rounded-3xl:nth-child(6n+2),
+  html.theme-light .glass-card:nth-child(6n+2) {
+    border: 3px solid #00ff00 !important;
+    box-shadow: 0 0 25px rgba(0, 255, 0, 0.5), 0 4px 20px rgba(0, 255, 0, 0.3), inset 0 0 15px rgba(0, 255, 0, 0.08) !important;
+  }
+  html.theme-light .rounded-3xl:nth-child(6n+2) .text-sm.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n+2) .text-sm.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n+2) .text-base.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n+2) .text-base.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n+2) .text-lg.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n+2) .text-lg.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+2) .text-sm.font-bold,
+  html.theme-light .glass-card:nth-child(6n+2) .text-sm.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+2) .text-base.font-bold,
+  html.theme-light .glass-card:nth-child(6n+2) .text-base.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+2) .text-lg.font-bold,
+  html.theme-light .glass-card:nth-child(6n+2) .text-lg.font-semibold {
+    color: #00aa00 !important;
+    text-shadow: 0 0 15px rgba(0, 255, 0, 0.6), 0 2px 8px rgba(0, 170, 0, 0.3) !important;
+  }
+  
+  html.theme-light .rounded-3xl:nth-child(6n+3),
+  html.theme-light .glass-card:nth-child(6n+3) {
+    border: 3px solid #cc00ff !important;
+    box-shadow: 0 0 25px rgba(204, 0, 255, 0.5), 0 4px 20px rgba(204, 0, 255, 0.3), inset 0 0 15px rgba(204, 0, 255, 0.08) !important;
+  }
+  html.theme-light .rounded-3xl:nth-child(6n+3) .text-sm.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n+3) .text-sm.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n+3) .text-base.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n+3) .text-base.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n+3) .text-lg.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n+3) .text-lg.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+3) .text-sm.font-bold,
+  html.theme-light .glass-card:nth-child(6n+3) .text-sm.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+3) .text-base.font-bold,
+  html.theme-light .glass-card:nth-child(6n+3) .text-base.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+3) .text-lg.font-bold,
+  html.theme-light .glass-card:nth-child(6n+3) .text-lg.font-semibold {
+    color: #9900cc !important;
+    text-shadow: 0 0 15px rgba(204, 0, 255, 0.6), 0 2px 8px rgba(153, 0, 204, 0.3) !important;
+  }
+  
+  html.theme-light .rounded-3xl:nth-child(6n+4),
+  html.theme-light .glass-card:nth-child(6n+4) {
+    border: 3px solid #ff1493 !important;
+    box-shadow: 0 0 25px rgba(255, 20, 147, 0.5), 0 4px 20px rgba(255, 20, 147, 0.3), inset 0 0 15px rgba(255, 20, 147, 0.08) !important;
+  }
+  html.theme-light .rounded-3xl:nth-child(6n+4) .text-sm.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n+4) .text-sm.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n+4) .text-base.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n+4) .text-base.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n+4) .text-lg.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n+4) .text-lg.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+4) .text-sm.font-bold,
+  html.theme-light .glass-card:nth-child(6n+4) .text-sm.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+4) .text-base.font-bold,
+  html.theme-light .glass-card:nth-child(6n+4) .text-base.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+4) .text-lg.font-bold,
+  html.theme-light .glass-card:nth-child(6n+4) .text-lg.font-semibold {
+    color: #cc0066 !important;
+    text-shadow: 0 0 15px rgba(255, 20, 147, 0.6), 0 2px 8px rgba(204, 0, 102, 0.3) !important;
+  }
+  
+  html.theme-light .rounded-3xl:nth-child(6n+5),
+  html.theme-light .glass-card:nth-child(6n+5) {
+    border: 3px solid #ff0000 !important;
+    box-shadow: 0 0 25px rgba(255, 0, 0, 0.5), 0 4px 20px rgba(255, 0, 0, 0.3), inset 0 0 15px rgba(255, 0, 0, 0.08) !important;
+  }
+  html.theme-light .rounded-3xl:nth-child(6n+5) .text-sm.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n+5) .text-sm.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n+5) .text-base.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n+5) .text-base.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n+5) .text-lg.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n+5) .text-lg.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+5) .text-sm.font-bold,
+  html.theme-light .glass-card:nth-child(6n+5) .text-sm.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+5) .text-base.font-bold,
+  html.theme-light .glass-card:nth-child(6n+5) .text-base.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+5) .text-lg.font-bold,
+  html.theme-light .glass-card:nth-child(6n+5) .text-lg.font-semibold {
+    color: #cc0000 !important;
+    text-shadow: 0 0 15px rgba(255, 0, 0, 0.6), 0 2px 8px rgba(204, 0, 0, 0.3) !important;
+  }
+  
+  html.theme-light .rounded-3xl:nth-child(6n),
+  html.theme-light .glass-card:nth-child(6n) {
+    border: 3px solid #ff6600 !important;
+    box-shadow: 0 0 25px rgba(255, 102, 0, 0.5), 0 4px 20px rgba(255, 102, 0, 0.3), inset 0 0 15px rgba(255, 102, 0, 0.08) !important;
+  }
+  html.theme-light .rounded-3xl:nth-child(6n) .text-sm.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n) .text-sm.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n) .text-base.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n) .text-base.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n) .text-lg.font-bold,
+  html.theme-light .rounded-3xl:nth-child(6n) .text-lg.font-semibold,
+  html.theme-light .glass-card:nth-child(6n) .text-sm.font-bold,
+  html.theme-light .glass-card:nth-child(6n) .text-sm.font-semibold,
+  html.theme-light .glass-card:nth-child(6n) .text-base.font-bold,
+  html.theme-light .glass-card:nth-child(6n) .text-base.font-semibold,
+  html.theme-light .glass-card:nth-child(6n) .text-lg.font-bold,
+  html.theme-light .glass-card:nth-child(6n) .text-lg.font-semibold {
+    color: #cc5500 !important;
+    text-shadow: 0 0 15px rgba(255, 102, 0, 0.6), 0 2px 8px rgba(204, 85, 0, 0.3) !important;
   }
   
   /* Enhanced Card Titles - Light Mode */
