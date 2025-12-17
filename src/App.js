@@ -40,6 +40,17 @@ import {
   Menu,
   Mail,
   DollarSign,
+  AlertTriangle,
+  ArrowRight,
+  BookOpen,
+  Bot,
+  CheckCircle2,
+  Headset,
+  Lightbulb,
+  PenLine,
+  Plug,
+  Send,
+  WifiOff,
 } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line } from 'recharts';
 import employeeSheetData from './data/employees.json';
@@ -60,7 +71,9 @@ const DARK_MODE_STYLES = `
   html.theme-dark .bg-white\\/70,
   html.theme-dark .bg-white\\/80,
   html.theme-dark .bg-white\\/90 {
-    background-color: #101827 !important;
+    background: linear-gradient(135deg, #101827 0%, #1a2332 100%) !important;
+    border: 2px solid #2563eb !important;
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1) !important;
   }
   html.theme-dark .bg-slate-50,
   html.theme-dark .bg-slate-50\\/60,
@@ -70,9 +83,16 @@ const DARK_MODE_STYLES = `
   html.theme-dark .bg-slate-100,
   html.theme-dark .bg-slate-100\\/70,
   html.theme-dark .bg-slate-200 {
-    background-color: #0f1831 !important;
+    background: linear-gradient(135deg, #0f1831 0%, #1e293b 100%) !important;
+    border: 2px solid #0ea5e9 !important;
+    box-shadow: 0 4px 16px rgba(14, 165, 233, 0.2), 0 0 0 1px rgba(14, 165, 233, 0.1) !important;
   }
-  html.theme-dark .bg-blue-50 { background-color: rgba(59,130,246,0.18) !important; color: #cfe1ff; }
+  html.theme-dark .bg-blue-50 { 
+    background: linear-gradient(135deg, rgba(59,130,246,0.25) 0%, rgba(37,99,235,0.18) 100%) !important; 
+    color: #cfe1ff; 
+    border: 2px solid #3b82f6 !important;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25) !important;
+  }
   html.theme-dark .border-slate-50,
   html.theme-dark .border-slate-100,
   html.theme-dark .border-slate-200 {
@@ -110,8 +130,9 @@ const DARK_MODE_STYLES = `
     background: linear-gradient(145deg, rgba(12, 16, 32, 0.96), rgba(11, 18, 36, 0.9)) !important;
     box-shadow:
       0 28px 70px rgba(0, 0, 0, 0.6),
+      0 8px 32px rgba(37, 99, 235, 0.2),
       0 0 0 1px rgba(92, 224, 255, 0.18) !important;
-    border: 1px solid rgba(111, 134, 255, 0.25) !important;
+    border: 2px solid rgba(37, 99, 235, 0.4) !important;
   }
 `;
 
@@ -139,34 +160,76 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .bg-slate-50,
   html.theme-light .bg-slate-100 {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 250, 255, 0.98) 55%, rgba(238, 243, 255, 0.96) 100%) !important;
-    box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08), 0 4px 16px rgba(59, 130, 246, 0.12), 0 0 0 1px rgba(59, 130, 246, 0.08) !important;
+    border: 2px solid #3b82f6 !important;
   }
   html.theme-light .bg-slate-200 {
     background: linear-gradient(135deg, #f7f9fc 0%, #eef3ff 100%) !important;
+    border: 2px solid #8b5cf6 !important;
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.15), 0 0 0 1px rgba(139, 92, 246, 0.1) !important;
   }
-  html.theme-light .bg-blue-50 { background: linear-gradient(135deg, rgba(219, 234, 254, 0.92) 0%, rgba(239, 246, 255, 0.96) 100%) !important; }
-  html.theme-light .bg-rose-50 { background: linear-gradient(135deg, rgba(255, 241, 242, 0.92) 0%, rgba(255, 247, 248, 0.96) 100%) !important; }
-  html.theme-light .bg-amber-50 { background: linear-gradient(135deg, rgba(255, 251, 235, 0.92) 0%, rgba(255, 253, 240, 0.96) 100%) !important; }
-  html.theme-light .bg-emerald-50 { background: linear-gradient(135deg, rgba(236, 253, 245, 0.92) 0%, rgba(240, 253, 249, 0.96) 100%) !important; }
-  html.theme-light .bg-indigo-50 { background: linear-gradient(135deg, rgba(238, 242, 255, 0.92) 0%, rgba(245, 247, 255, 0.96) 100%) !important; }
-  html.theme-light .bg-sky-50 { background: linear-gradient(135deg, rgba(240, 249, 255, 0.92) 0%, rgba(244, 251, 255, 0.96) 100%) !important; }
-  html.theme-light .bg-teal-50 { background: linear-gradient(135deg, rgba(240, 253, 250, 0.92) 0%, rgba(243, 253, 251, 0.96) 100%) !important; }
-  html.theme-light .bg-yellow-50 { background: linear-gradient(135deg, rgba(254, 252, 232, 0.92) 0%, rgba(255, 253, 240, 0.96) 100%) !important; }
-  html.theme-light .bg-orange-50 { background: linear-gradient(135deg, rgba(255, 247, 237, 0.92) 0%, rgba(255, 249, 240, 0.96) 100%) !important; }
+  html.theme-light .bg-blue-50 { 
+    background: linear-gradient(135deg, rgba(219, 234, 254, 0.92) 0%, rgba(239, 246, 255, 0.96) 100%) !important; 
+    border: 2px solid #60a5fa !important;
+    box-shadow: 0 4px 16px rgba(96, 165, 250, 0.2) !important;
+  }
+  html.theme-light .bg-rose-50 { 
+    background: linear-gradient(135deg, rgba(255, 241, 242, 0.92) 0%, rgba(255, 247, 248, 0.96) 100%) !important; 
+    border: 2px solid #fb7185 !important;
+    box-shadow: 0 4px 16px rgba(251, 113, 133, 0.2) !important;
+  }
+  html.theme-light .bg-amber-50 { 
+    background: linear-gradient(135deg, rgba(255, 251, 235, 0.92) 0%, rgba(255, 253, 240, 0.96) 100%) !important; 
+    border: 2px solid #fbbf24 !important;
+    box-shadow: 0 4px 16px rgba(251, 191, 36, 0.2) !important;
+  }
+  html.theme-light .bg-emerald-50 { 
+    background: linear-gradient(135deg, rgba(236, 253, 245, 0.92) 0%, rgba(240, 253, 249, 0.96) 100%) !important; 
+    border: 2px solid #10b981 !important;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2) !important;
+  }
+  html.theme-light .bg-indigo-50 { 
+    background: linear-gradient(135deg, rgba(238, 242, 255, 0.92) 0%, rgba(245, 247, 255, 0.96) 100%) !important; 
+    border: 2px solid #6366f1 !important;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2) !important;
+  }
+  html.theme-light .bg-sky-50 { 
+    background: linear-gradient(135deg, rgba(240, 249, 255, 0.92) 0%, rgba(244, 251, 255, 0.96) 100%) !important; 
+    border: 2px solid #0ea5e9 !important;
+    box-shadow: 0 4px 16px rgba(14, 165, 233, 0.2) !important;
+  }
+  html.theme-light .bg-teal-50 { 
+    background: linear-gradient(135deg, rgba(240, 253, 250, 0.92) 0%, rgba(243, 253, 251, 0.96) 100%) !important; 
+    border: 2px solid #14b8a6 !important;
+    box-shadow: 0 4px 16px rgba(20, 184, 166, 0.2) !important;
+  }
+  html.theme-light .bg-yellow-50 { 
+    background: linear-gradient(135deg, rgba(254, 252, 232, 0.92) 0%, rgba(255, 253, 240, 0.96) 100%) !important; 
+    border: 2px solid #eab308 !important;
+    box-shadow: 0 4px 16px rgba(234, 179, 8, 0.2) !important;
+  }
+  html.theme-light .bg-orange-50 { 
+    background: linear-gradient(135deg, rgba(255, 247, 237, 0.92) 0%, rgba(255, 249, 240, 0.96) 100%) !important; 
+    border: 2px solid #f97316 !important;
+    box-shadow: 0 4px 16px rgba(249, 115, 22, 0.2) !important;
+  }
   html.theme-light section:nth-of-type(3n+1) .rounded-3xl,
   html.theme-light section:nth-of-type(3n+1) .glass-card {
     background: linear-gradient(135deg, rgba(235, 244, 255, 0.98) 0%, rgba(221, 236, 255, 0.96) 100%) !important;
-    border-color: rgba(193, 216, 255, 0.9) !important;
+    border: 2px solid #60a5fa !important;
+    box-shadow: 0 8px 32px rgba(96, 165, 250, 0.2), 0 0 0 1px rgba(96, 165, 250, 0.1) !important;
   }
   html.theme-light section:nth-of-type(3n+2) .rounded-3xl,
   html.theme-light section:nth-of-type(3n+2) .glass-card {
     background: linear-gradient(135deg, rgba(255, 246, 240, 0.98) 0%, rgba(255, 236, 229, 0.96) 100%) !important;
-    border-color: rgba(255, 211, 197, 0.9) !important;
+    border: 2px solid #fb923c !important;
+    box-shadow: 0 8px 32px rgba(251, 146, 60, 0.2), 0 0 0 1px rgba(251, 146, 60, 0.1) !important;
   }
   html.theme-light section:nth-of-type(3n) .rounded-3xl,
   html.theme-light section:nth-of-type(3n) .glass-card {
     background: linear-gradient(135deg, rgba(241, 252, 247, 0.98) 0%, rgba(228, 249, 241, 0.96) 100%) !important;
-    border-color: rgba(191, 230, 214, 0.9) !important;
+    border: 2px solid #34d399 !important;
+    box-shadow: 0 8px 32px rgba(52, 211, 153, 0.2), 0 0 0 1px rgba(52, 211, 153, 0.1) !important;
   }
   html.theme-light .border-slate-50,
   html.theme-light .border-slate-100,
@@ -208,8 +271,8 @@ const LIGHT_MODE_STYLES = `
   }
   html.theme-light .glass-card {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(245, 249, 255, 0.96)) !important;
-    border: 1px solid rgba(211, 218, 230, 0.9) !important;
-    box-shadow: 0 18px 56px rgba(15, 23, 42, 0.14) !important;
+    border: 2px solid rgba(59, 130, 246, 0.4) !important;
+    box-shadow: 0 18px 56px rgba(15, 23, 42, 0.14), 0 4px 16px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1) !important;
   }
   html.theme-light .bg-white,
   html.theme-light .bg-slate-50,
@@ -264,9 +327,133 @@ const STORAGE_KEYS = {
   laptopRepairs: 'uds_laptop_repairs',
   clearedWarrantyAlerts: 'uds_cleared_warranty_alerts',
   clearedMaintenanceAlerts: 'uds_cleared_maintenance_alerts',
+  helpdeskRequests: 'uds-helpdesk-requests',
+  helpdeskChat: 'uds-helpdesk-chat',
 };
 const STORAGE_VERSION_KEY = 'uds_storage_version';
 const STORAGE_VERSION = '2025-11-20-zoom-refresh';
+
+// HelpDesk Portal Constants
+const HELP_DESK_EMAIL = 'ITHelpDesk@udservices.org';
+const STATUS_FILTERS = ['All', 'Pending', 'In Review', 'Closed'];
+const BOT_GREETING = "Hi! I'm the UDS Tech Guide. Tell me what you need-password help, VPN issues, or hardware requests.";
+
+const getDefaultChatMessages = () => [
+  {
+    role: 'bot',
+    text: BOT_GREETING,
+  },
+];
+
+const knowledgeBase = [
+  { id: 'kb-1', title: 'Reset your UDS password', summary: 'Use the self-service reset portal and add a backup method.', tags: ['account', 'password'], minutes: 3 },
+  { id: 'kb-2', title: 'Connect to VPN offsite', summary: 'How to launch GlobalProtect, pick the UDS gateway, and verify MFA.', tags: ['remote', 'vpn'], minutes: 4 },
+  { id: 'kb-3', title: 'Request new hardware', summary: 'Choose laptop, dock, monitors, and accessories with lead times.', tags: ['hardware', 'request'], minutes: 5 },
+  { id: 'kb-4', title: 'Report a phishing email', summary: 'Forward to IT, then block and delete. What screenshots help most.', tags: ['security'], minutes: 2 },
+  { id: 'kb-5', title: 'Teams and Zoom audio fixes', summary: 'Check input/output devices, restart drivers, and run call health.', tags: ['audio', 'meetings'], minutes: 4 },
+];
+
+const serviceCatalog = [
+  { id: 'svc-1', title: 'Hardware request', desc: 'Laptop, dock, monitors, adapters, or a wheelchair-mounted tray.', icon: Laptop, tone: 'primary' },
+  { id: 'svc-2', title: 'Software/access', desc: 'New app access, license upgrades, VPN, shared drives, or MFA help.', icon: ShieldCheck, tone: 'neutral' },
+  { id: 'svc-3', title: 'Report an issue', desc: 'Broken device, error pop-up, slow Wi‑Fi, or something just stopped.', icon: AlertTriangle, tone: 'warning' },
+  { id: 'svc-4', title: 'Schedule time', desc: 'Book a setup or training slot with IT for you or your team.', icon: CalendarClock, tone: 'info' },
+];
+
+const systemStatus = [
+  { name: 'Email & MFA', state: 'Operational', color: '#16a34a' },
+  { name: 'VPN / Remote Access', state: 'Degraded', color: '#f59e0b' },
+  { name: 'File Shares', state: 'Operational', color: '#16a34a' },
+  { name: 'Printing', state: 'Investigating', color: '#f97316' },
+];
+
+const starterMessages = [
+  'Reset my Windows password',
+  'VPN keeps disconnecting at home',
+  'I need a laptop and dock for a new hire',
+  'Teams can\'t find my microphone',
+];
+
+const initialRequests = [
+  { id: 'REQ-4221', type: 'Request', name: 'Jessie Rivera', topic: 'New laptop for onboarding', status: 'Pending', timestamp: 'Today 9:12a' },
+  { id: 'REQ-4219', type: 'Issue', name: 'Pat Miles', topic: 'VPN drops every 20 minutes', status: 'In Review', timestamp: 'Yesterday' },
+  { id: 'REQ-4215', type: 'Request', name: 'Claire V.', topic: 'Add to Finance shared drive', status: 'Closed', timestamp: 'Mon' },
+];
+
+const quickHelp = [
+  { title: 'Password or MFA', body: 'Locked out or code not working? Try the reset portal and add a backup method.', icon: ShieldCheck },
+  { title: 'Internet / Wi‑Fi', body: 'If Wi‑Fi is slow, restart the device, forget/rejoin UDS-Secure, then test speed.', icon: WifiOff },
+  { title: 'VPN remote access', body: 'Open GlobalProtect, select the UDS gateway, and confirm Duo on your phone.', icon: Plug },
+  { title: 'Printer jams / toner', body: 'Share the printer ID and location. Include a photo of any error code.', icon: Server },
+];
+
+const buildHelpDeskEmailBody = ({ name, email, department, urgency, topic, details }) => {
+  const rows = [
+    `Name: ${name || 'N/A'}`,
+    `Email: ${email || 'N/A'}`,
+    `Department/Location: ${department || 'N/A'}`,
+    `Urgency: ${urgency || 'Normal'}`,
+    `Topic: ${topic || 'N/A'}`,
+    '',
+    `Details:`,
+    details || 'N/A',
+  ];
+  return rows.join('\n');
+};
+
+const sendHelpDeskEmail = (payload, options = {}) => {
+  if (typeof window === 'undefined') return;
+  let subject = options.subject;
+  if (!subject) {
+    if (payload.details && payload.details.trim()) {
+      const summary = payload.details.trim().split('\n')[0];
+      subject = summary.length > 60 ? `${summary.substring(0, 57)}...` : summary;
+    } else if (payload.topic) {
+      subject = payload.topic;
+    } else {
+      subject = `IT Help Request from ${payload.name || 'UDS employee'}`;
+    }
+  }
+  const body = options.body || buildHelpDeskEmailBody(payload);
+  const href = `mailto:${HELP_DESK_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = href;
+};
+
+const copyTicketToClipboard = async (text) => {
+  if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) return false;
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    console.warn('Clipboard access failed', error);
+    return false;
+  }
+};
+
+const loadStoredRequests = () => {
+  if (typeof window === 'undefined') return initialRequests;
+  try {
+    const cached = window.localStorage.getItem(STORAGE_KEYS.helpdeskRequests);
+    const parsed = cached ? JSON.parse(cached) : [];
+    return Array.isArray(parsed) && parsed.length ? [...parsed, ...initialRequests] : initialRequests;
+  } catch (error) {
+    console.warn('Unable to read stored requests', error);
+    return initialRequests;
+  }
+};
+
+const loadStoredChatMessages = () => {
+  const fallback = getDefaultChatMessages();
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const cached = window.localStorage.getItem(STORAGE_KEYS.helpdeskChat);
+    const parsed = cached ? JSON.parse(cached) : [];
+    return Array.isArray(parsed) && parsed.length ? parsed : fallback;
+  } catch (error) {
+    console.warn('Unable to read stored chat messages', error);
+    return fallback;
+  }
+};
 const resolveApiBaseUrl = () => {
   const envBase = process.env.REACT_APP_API_BASE_URL;
   const fromEnvOrOrigin =
@@ -6987,6 +7174,24 @@ const WarrantyAlertModal = ({ alerts = [], onClose, onClear, onClearAll }) => {
   );
 };
 
+// HelpDesk Portal Helper Functions
+const buildAiReply = (text) => {
+  const input = text.toLowerCase();
+  if (input.includes('password')) {
+    return 'Got it. For password resets: open the UDS self-service reset page, choose "I forgot my password", and approve the Duo prompt. If you cannot receive Duo, reply with "no mfa" and I will route to IT with urgency.';
+  }
+  if (input.includes('vpn')) {
+    return 'Let\'s steady the VPN. Confirm you\'re on UDS-Secure or wired, then open GlobalProtect and select the "UDS-Gateway". If disconnects continue, include the exact time and I will open a ticket with logs.';
+  }
+  if (input.includes('laptop') || input.includes('hardware')) {
+    return 'I can start a laptop request. Share who it\'s for, needed-by date, and whether you need a dock/monitors. I will summarize and send to IT to stage hardware.';
+  }
+  if (input.includes('printer')) {
+    return 'For printing issues: share the printer ID and location, and a photo of the error panel if possible. I\'ll package this for the Help Desk.';
+  }
+  return 'I\'ll help route this. Please add details like device type, urgency, and where you\'re working (onsite/remote). I can also draft a ticket for IT.';
+};
+
 const App = () => {
   const [assets, setAssets] = usePersistentState(STORAGE_KEYS.assets, BASE_ASSETS);
   const [history, setHistory] = usePersistentState(STORAGE_KEYS.history, BASE_HISTORY);
@@ -7011,6 +7216,26 @@ const App = () => {
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState('');
   const sentWarrantyAlertRef = useRef(new Set());
+  
+  // HelpDesk Portal State
+  const [helpdeskRequests, setHelpdeskRequests] = useState(() => loadStoredRequests());
+  const [helpdeskSearch, setHelpdeskSearch] = useState('');
+  const [helpdeskStatusFilter, setHelpdeskStatusFilter] = useState('All');
+  const [helpdeskFormAlert, setHelpdeskFormAlert] = useState(null);
+  const [helpdeskIsSubmitting, setHelpdeskIsSubmitting] = useState(false);
+  const [helpdeskForm, setHelpdeskForm] = useState({
+    name: '',
+    email: '',
+    department: '',
+    topic: '',
+    urgency: 'Normal',
+    details: '',
+  });
+  const [helpdeskChatMessages, setHelpdeskChatMessages] = useState(() => loadStoredChatMessages());
+  const [helpdeskChatInput, setHelpdeskChatInput] = useState('');
+  const [helpdeskBotTyping, setHelpdeskBotTyping] = useState(false);
+  const helpdeskTypingTimeoutRef = useRef(null);
+  
   const apiBaseUrl = resolveApiBaseUrl();
   const buildApiUrl = useCallback(
     (path) => {
@@ -10174,15 +10399,176 @@ const App = () => {
   };
 
   const handleOpenHelpDeskPortal = useCallback(() => {
-    if (typeof window === 'undefined') {
+    setActivePage('HelpDesk');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  // HelpDesk Portal Handlers
+  const filteredArticles = useMemo(() => {
+    const term = helpdeskSearch.trim().toLowerCase();
+    if (!term) return knowledgeBase;
+    return knowledgeBase.filter(
+      (a) =>
+        a.title.toLowerCase().includes(term) ||
+        a.summary.toLowerCase().includes(term) ||
+        a.tags.some((tag) => tag.toLowerCase().includes(term)),
+    );
+  }, [helpdeskSearch]);
+
+  const filteredRequests = useMemo(() => {
+    if (helpdeskStatusFilter === 'All') return helpdeskRequests;
+    return helpdeskRequests.filter((request) => request.status === helpdeskStatusFilter);
+  }, [helpdeskRequests, helpdeskStatusFilter]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const userCreatedRequests = helpdeskRequests.filter((request) => request.fromUser);
+      window.localStorage.setItem(STORAGE_KEYS.helpdeskRequests, JSON.stringify(userCreatedRequests));
+    } catch (error) {
+      console.warn('Unable to persist requests', error);
+    }
+  }, [helpdeskRequests]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const lastMessages = helpdeskChatMessages.slice(-20);
+      window.localStorage.setItem(STORAGE_KEYS.helpdeskChat, JSON.stringify(lastMessages));
+    } catch (error) {
+      console.warn('Unable to persist chat messages', error);
+    }
+  }, [helpdeskChatMessages]);
+
+  useEffect(() => {
+    if (!helpdeskFormAlert || helpdeskFormAlert.type === 'error' || helpdeskFormAlert.detailText) return;
+    const timeout = setTimeout(() => setHelpdeskFormAlert(null), 6000);
+    return () => clearTimeout(timeout);
+  }, [helpdeskFormAlert]);
+
+  useEffect(
+    () => () => {
+      if (helpdeskTypingTimeoutRef.current) {
+        clearTimeout(helpdeskTypingTimeoutRef.current);
+      }
+    },
+    [],
+  );
+
+  const handleHelpdeskFormSubmit = async (event) => {
+    event.preventDefault();
+    const trimmedForm = {
+      name: helpdeskForm.name.trim(),
+      email: helpdeskForm.email.trim(),
+      department: helpdeskForm.department.trim(),
+      topic: helpdeskForm.topic.trim(),
+      urgency: helpdeskForm.urgency,
+      details: helpdeskForm.details.trim(),
+    };
+    const missingFields = [];
+    if (!trimmedForm.name) missingFields.push('name');
+    if (!trimmedForm.email) missingFields.push('email');
+    if (!trimmedForm.topic) missingFields.push('topic');
+    if (!trimmedForm.details) missingFields.push('details');
+    if (missingFields.length) {
+      setHelpdeskFormAlert({ type: 'error', message: `Please complete the required fields: ${missingFields.join(', ')}.` });
       return;
     }
-    const target = HELP_DESK_PORTAL_URL;
-    const absolute = /^https?:\/\//i.test(target)
-      ? target
-      : `${window.location.origin}${target.startsWith('/') ? '' : '/'}${target}`;
-    window.open(absolute, '_blank', 'noopener,noreferrer');
-  }, []);
+    const emailInvalid = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedForm.email);
+    if (emailInvalid) {
+      setHelpdeskFormAlert({ type: 'error', message: 'Please enter a valid email address so we can follow up.' });
+      return;
+    }
+    setHelpdeskIsSubmitting(true);
+    setHelpdeskFormAlert(null);
+    try {
+      const now = new Date();
+      const entry = {
+        id: `REQ-${Math.floor(Math.random() * 9000 + 1000)}`,
+        type: trimmedForm.topic.toLowerCase().includes('issue') ? 'Issue' : 'Request',
+        name: trimmedForm.name,
+        topic: trimmedForm.topic,
+        status: 'Pending',
+        timestamp: now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+        fromUser: true,
+      };
+      setHelpdeskRequests((prev) => [entry, ...prev]);
+      setHelpdeskForm((prev) => ({
+        ...prev,
+        name: trimmedForm.name,
+        email: trimmedForm.email,
+        department: trimmedForm.department,
+        topic: '',
+        details: '',
+      }));
+      const payload = {
+        name: trimmedForm.name,
+        email: trimmedForm.email,
+        department: trimmedForm.department,
+        urgency: trimmedForm.urgency,
+        topic: trimmedForm.topic,
+        details: trimmedForm.details,
+      };
+      const emailBody = buildHelpDeskEmailBody(payload);
+      sendHelpDeskEmail(payload, { body: emailBody });
+      const copied = await copyTicketToClipboard(emailBody);
+      setHelpdeskFormAlert({
+        type: 'success',
+        message: copied
+          ? 'Request logged! We opened your email client and copied the ticket text in case you need it elsewhere.'
+          : 'Request logged! Your email client should open automatically. Copy the ticket details below if it does not.',
+        detailText: copied ? undefined : emailBody,
+      });
+    } catch (error) {
+      console.error('Unable to submit help desk request', error);
+      setHelpdeskFormAlert({
+        type: 'error',
+        message: 'Something went wrong drafting the ticket. Please try again or email ITHelpDesk@udservices.org directly.',
+      });
+    } finally {
+      setHelpdeskIsSubmitting(false);
+    }
+  };
+
+  const scrollToRequestForm = () => {
+    if (typeof document === 'undefined') return;
+    document.getElementById('helpdesk-request-form')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const resetHelpdeskChat = () => {
+    if (helpdeskTypingTimeoutRef.current) {
+      clearTimeout(helpdeskTypingTimeoutRef.current);
+      helpdeskTypingTimeoutRef.current = null;
+    }
+    setHelpdeskChatMessages(getDefaultChatMessages());
+    setHelpdeskBotTyping(false);
+    setHelpdeskChatInput('');
+  };
+
+  const handleHelpdeskAlertCopy = async () => {
+    if (!helpdeskFormAlert?.detailText) return;
+    const copied = await copyTicketToClipboard(helpdeskFormAlert.detailText);
+    if (copied) {
+      setHelpdeskFormAlert((prev) => (prev ? { ...prev, message: 'Ticket body copied. Paste it anywhere you need it.' } : prev));
+    }
+  };
+
+  const sendHelpdeskChat = (text) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setHelpdeskChatMessages((prev) => [...prev, { role: 'user', text: trimmed }]);
+    setHelpdeskChatInput('');
+    setHelpdeskBotTyping(true);
+    if (helpdeskTypingTimeoutRef.current) {
+      clearTimeout(helpdeskTypingTimeoutRef.current);
+    }
+    const replyDelay = Math.min(900, 250 + trimmed.length * 8);
+    helpdeskTypingTimeoutRef.current = setTimeout(() => {
+      setHelpdeskBotTyping(false);
+      setHelpdeskChatMessages((prev) => [...prev, { role: 'bot', text: buildAiReply(trimmed) }]);
+      helpdeskTypingTimeoutRef.current = null;
+    }, replyDelay);
+  };
 
   const vendorQuickActions = useMemo(
     () => [
@@ -12039,6 +12425,1003 @@ const App = () => {
                 <VendorCard key={vendor.id} vendor={vendor} />
               ))}
             </section>
+          </div>
+        )}
+
+        {activePage === 'HelpDesk' && (
+          <div className="mx-auto max-w-7xl px-4 py-8">
+            <style>{`
+              .helpdesk-app {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              }
+              ${isDarkMode ? `
+              .helpdesk-app {
+                color: #e7edff;
+              }
+              .helpdesk-app .card {
+                background: linear-gradient(135deg, #101827 0%, #1a2332 100%);
+                border: 2px solid;
+                border-color: #2563eb;
+                box-shadow: 0 4px 20px rgba(37, 99, 235, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1);
+              }
+              .helpdesk-app .card.service-card {
+                border-color: #8b5cf6;
+                box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2), 0 0 0 1px rgba(167, 139, 250, 0.15);
+              }
+              .helpdesk-app .card.service-card:hover {
+                border-color: #a78bfa;
+                box-shadow: 0 8px 24px rgba(139, 92, 246, 0.35), 0 0 0 1px rgba(167, 139, 250, 0.25);
+                transform: translateY(-3px);
+              }
+              .helpdesk-app .service-icon {
+                background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(59, 130, 246, 0.25) 100%);
+                color: #a78bfa;
+                box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+              }
+              .helpdesk-app .card.article-card {
+                background: linear-gradient(135deg, #0f1831 0%, #1e293b 100%);
+                border-color: #0ea5e9;
+              }
+              .helpdesk-app .card.article-card:hover {
+                background: linear-gradient(135deg, #1e293b 0%, #0f1831 100%);
+                border-color: #38bdf8;
+                box-shadow: 0 8px 24px rgba(14, 165, 233, 0.3);
+              }
+              .helpdesk-app .card.article-card h4 {
+                color: #e7edff;
+              }
+              .helpdesk-app .card.article-card p {
+                color: #a5b4cf;
+              }
+              .helpdesk-app .badge {
+                background: #1e293b;
+                color: #cbd5e1;
+              }
+              .helpdesk-app .chip {
+                background: #1e293b;
+                color: #cbd5e1;
+              }
+              .helpdesk-app .chip.mono {
+                background: #0f172a;
+                color: #94a3b8;
+              }
+              .helpdesk-app .pill {
+                background: rgba(59, 130, 246, 0.2);
+                color: #93c5fd;
+              }
+              .helpdesk-app .label {
+                color: #cbd5e1;
+              }
+              .helpdesk-app .input,
+              .helpdesk-app .textarea,
+              .helpdesk-app .select {
+                background: #0f1831;
+                border-color: #203459;
+                color: #e7edff;
+              }
+              .helpdesk-app .input::placeholder,
+              .helpdesk-app .textarea::placeholder {
+                color: #64748b;
+              }
+              .helpdesk-app .input:focus,
+              .helpdesk-app .textarea:focus,
+              .helpdesk-app .select:focus {
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+              }
+              .helpdesk-app .btn-ghost {
+                background: transparent;
+                color: #60a5fa;
+                border-color: #203459;
+              }
+              .helpdesk-app .btn-ghost:hover {
+                border-color: #3b82f6;
+                background: rgba(59, 130, 246, 0.1);
+              }
+              .helpdesk-app .chat-panel {
+                background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%) !important;
+                border: 2px solid #10b981 !important;
+                box-shadow: 0 8px 32px rgba(16, 185, 129, 0.25), 0 0 0 1px rgba(52, 211, 153, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+                position: relative;
+              }
+              .helpdesk-app .chat-panel::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                border-radius: 20px;
+                padding: 2px;
+                background: linear-gradient(135deg, #10b981, #3b82f6, #8b5cf6);
+                -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                -webkit-mask-composite: xor;
+                mask-composite: exclude;
+                opacity: 0.3;
+                pointer-events: none;
+              }
+              .helpdesk-app .chat-bubble.bot {
+                background: #1e293b;
+                color: #e7edff;
+              }
+              .helpdesk-app .chat-typing {
+                background: #1e293b;
+              }
+              .helpdesk-app .typing-dot {
+                background: #64748b;
+              }
+              .helpdesk-app .form-alert.success {
+                background: rgba(16, 185, 129, 0.15);
+                color: #6ee7b7;
+                border-color: rgba(16, 185, 129, 0.3);
+              }
+              .helpdesk-app .form-alert.error {
+                background: rgba(239, 68, 68, 0.15);
+                color: #fca5a5;
+                border-color: rgba(239, 68, 68, 0.3);
+              }
+              .helpdesk-app .code-block {
+                background: rgba(0, 0, 0, 0.3);
+                color: #cbd5e1;
+              }
+              .helpdesk-app .empty-state {
+                background: #0f1831;
+                color: #a5b4cf;
+              }
+              .helpdesk-app .filter-chip:hover {
+                background: rgba(59, 130, 246, 0.2);
+              }
+              .helpdesk-app .filter-chip.active {
+                background: #1e40af;
+                color: white;
+              }
+              .helpdesk-app .section-title {
+                color: #64748b;
+              }
+              ` : `
+              .helpdesk-app {
+                color: #0e1117;
+              }
+              `}
+              .helpdesk-app .chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 4px 10px;
+                border-radius: 12px;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.03em;
+              }
+              ${!isDarkMode ? `
+              .helpdesk-app .chip {
+                background: #e5e7eb;
+                color: #1f2937;
+              }
+              .helpdesk-app .chip.mono {
+                background: #f3f4f6;
+                color: #475569;
+              }
+              .helpdesk-app .pill {
+                background: #eff6ff;
+                color: #1e40af;
+              }
+              .helpdesk-app .card {
+                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                border: 2px solid;
+                border-color: #3b82f6;
+                box-shadow: 0 4px 16px rgba(59, 130, 246, 0.12), 0 0 0 1px rgba(59, 130, 246, 0.08);
+              }
+              .helpdesk-app .card.service-card {
+                border-color: #8b5cf6;
+                background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%);
+                box-shadow: 0 4px 16px rgba(139, 92, 246, 0.15), 0 0 0 1px rgba(139, 92, 246, 0.1);
+              }
+              .helpdesk-app .card.service-card:hover {
+                border-color: #a78bfa;
+                box-shadow: 0 8px 24px rgba(139, 92, 246, 0.25), 0 0 0 1px rgba(139, 92, 246, 0.15);
+                transform: translateY(-3px);
+              }
+              .helpdesk-app .service-icon {
+                background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+                color: #7c3aed;
+                box-shadow: 0 0 16px rgba(124, 58, 237, 0.2);
+              }
+              .helpdesk-app .card.article-card {
+                background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+                border-color: #0ea5e9;
+              }
+              .helpdesk-app .card.article-card:hover {
+                background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+                border-color: #0284c7;
+                box-shadow: 0 8px 24px rgba(14, 165, 233, 0.2);
+              }
+              .helpdesk-app .chat-panel {
+                background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #ecfdf5 100%) !important;
+                border: 2px solid #10b981 !important;
+                box-shadow: 0 8px 32px rgba(16, 185, 129, 0.2), 0 0 0 1px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+                position: relative;
+              }
+              .helpdesk-app .chat-panel::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                border-radius: 20px;
+                padding: 2px;
+                background: linear-gradient(135deg, #10b981, #3b82f6, #8b5cf6);
+                -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                -webkit-mask-composite: xor;
+                mask-composite: exclude;
+                opacity: 0.2;
+                pointer-events: none;
+              }
+              .helpdesk-app .card.article-card h4 {
+                color: #0e1117;
+              }
+              .helpdesk-app .card.article-card p {
+                color: #55607a;
+              }
+              .helpdesk-app .badge {
+                background: #f1f5f9;
+                color: #475569;
+              }
+              .helpdesk-app .label {
+                color: #334155;
+              }
+              .helpdesk-app .input,
+              .helpdesk-app .textarea,
+              .helpdesk-app .select {
+                background: white;
+                border: 1px solid #e5e7eb;
+                color: #0e1117;
+              }
+              .helpdesk-app .input::placeholder,
+              .helpdesk-app .textarea::placeholder {
+                color: #9ca3af;
+              }
+              .helpdesk-app .input:focus,
+              .helpdesk-app .textarea:focus,
+              .helpdesk-app .select:focus {
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+              }
+              .helpdesk-app .btn-ghost {
+                background: transparent;
+                color: #1e40af;
+                border: 1px solid #e5e7eb;
+              }
+              .helpdesk-app .btn-ghost:hover {
+                border-color: #bfdbfe;
+                background: #eff6ff;
+              }
+              .helpdesk-app .chat-bubble.bot {
+                background: #f1f5f9;
+                color: #0e1117;
+              }
+              .helpdesk-app .chat-typing {
+                background: #f1f5f9;
+              }
+              .helpdesk-app .typing-dot {
+                background: #94a3b8;
+              }
+              .helpdesk-app .form-alert.success {
+                background: #d1fae5;
+                color: #065f46;
+                border: 1px solid #a7f3d0;
+              }
+              .helpdesk-app .form-alert.error {
+                background: #fee2e2;
+                color: #991b1b;
+                border: 1px solid #fecaca;
+              }
+              .helpdesk-app .code-block {
+                background: rgba(0, 0, 0, 0.05);
+                color: #0e1117;
+              }
+              .helpdesk-app .empty-state {
+                background: #fafafa;
+                color: #55607a;
+              }
+              .helpdesk-app .filter-chip:hover {
+                background: #dbeafe;
+              }
+              .helpdesk-app .section-title {
+                color: #94a3b8;
+              }
+              ` : ''}
+              .helpdesk-app .chip.mono {
+                font-family: "SF Mono", Monaco, monospace;
+              }
+              .helpdesk-app .pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 12px;
+                border-radius: 16px;
+                font-size: 13px;
+                font-weight: 600;
+              }
+              .helpdesk-app .status-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+              }
+              .helpdesk-app .card {
+                border-radius: 20px;
+                padding: 20px;
+              }
+              .helpdesk-app .card.service-card {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 16px;
+                cursor: pointer;
+                transition: all 0.2s;
+              }
+              .helpdesk-app .card.service-card:hover {
+                transform: translateY(-2px);
+              }
+              .helpdesk-app .service-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                border-radius: 12px;
+              }
+              .helpdesk-app .card.article-card {
+                border-style: dashed;
+                cursor: pointer;
+                transition: all 0.2s;
+              }
+              .helpdesk-app .card.article-card:hover {
+                border-style: solid;
+              }
+              .helpdesk-app .card.article-card h4 {
+                margin: 8px 0 4px;
+                font-size: 14px;
+                font-weight: 700;
+              }
+              .helpdesk-app .card.article-card p {
+                margin: 0;
+                font-size: 13px;
+              }
+              .helpdesk-app .badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 4px 8px;
+                border-radius: 8px;
+                font-size: 11px;
+                font-weight: 600;
+              }
+              .helpdesk-app .card.request-row {
+                display: grid;
+                grid-template-columns: 1fr auto auto;
+                gap: 16px;
+                align-items: center;
+                padding: 16px;
+                border-color: #e5e7eb;
+              }
+              .helpdesk-app .list-inline {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+              }
+              .helpdesk-app .btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 18px;
+                border-radius: 12px;
+                font-size: 14px;
+                font-weight: 600;
+                border: none;
+                cursor: pointer;
+                transition: all 0.2s;
+              }
+              .helpdesk-app .btn-primary {
+                background: #1e40af;
+                color: white;
+              }
+              .helpdesk-app .btn-primary:hover {
+                background: #1e3a8a;
+                box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+              }
+              .helpdesk-app .btn-small {
+                padding: 6px 12px;
+                font-size: 12px;
+              }
+              .helpdesk-app .hero {
+                position: relative;
+                padding: 48px;
+                border-radius: 24px;
+                background: ${isDarkMode ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)' : 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%)'};
+                color: white;
+                overflow: hidden;
+                margin-bottom: 32px;
+              }
+              .helpdesk-app .hero::before {
+                content: "";
+                position: absolute;
+                top: -50%;
+                right: -20%;
+                width: 600px;
+                height: 600px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.1);
+                pointer-events: none;
+              }
+              .helpdesk-app .cta-row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+                margin-top: 20px;
+              }
+              .helpdesk-app .cta-strip {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                gap: 16px;
+                margin-top: 24px;
+              }
+              .helpdesk-app .cta-tile {
+                padding: 20px;
+                border-radius: 16px;
+                background: rgba(255, 255, 255, 0.15);
+                backdrop-filter: blur(10px);
+              }
+              .helpdesk-app .grid {
+                display: grid;
+                gap: 16px;
+              }
+              .helpdesk-app .label {
+                display: block;
+                font-size: 13px;
+                font-weight: 600;
+                margin-bottom: 8px;
+              }
+              .helpdesk-app .input,
+              .helpdesk-app .textarea,
+              .helpdesk-app .select {
+                width: 100%;
+                padding: 10px 14px;
+                border-radius: 10px;
+                font-size: 14px;
+                font-family: inherit;
+                transition: all 0.2s;
+              }
+              .helpdesk-app .input:focus,
+              .helpdesk-app .textarea:focus,
+              .helpdesk-app .select:focus {
+                outline: none;
+              }
+              .helpdesk-app .textarea {
+                min-height: 100px;
+                resize: vertical;
+              }
+              .helpdesk-app .form-alert {
+                padding: 16px;
+                border-radius: 12px;
+                margin-bottom: 16px;
+                font-size: 14px;
+              }
+              .helpdesk-app .form-alert-message {
+                font-weight: 600;
+                margin-bottom: 8px;
+              }
+              .helpdesk-app .alert-close {
+                background: none;
+                border: none;
+                color: inherit;
+                text-decoration: underline;
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: 600;
+                margin-top: 4px;
+              }
+              .helpdesk-app .form-alert-details {
+                margin-top: 12px;
+              }
+              .helpdesk-app .code-block {
+                padding: 12px;
+                border-radius: 8px;
+                font-family: monospace;
+                font-size: 12px;
+                white-space: pre-wrap;
+                margin-top: 8px;
+              }
+              .helpdesk-app .chat-panel {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                height: 600px;
+              }
+              .helpdesk-app .chat-messages {
+                flex: 1;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                padding: 8px;
+              }
+              .helpdesk-app .chat-bubble {
+                max-width: 75%;
+                padding: 12px 16px;
+                border-radius: 16px;
+                font-size: 14px;
+                line-height: 1.5;
+              }
+              .helpdesk-app .chat-bubble.user {
+                background: #1e40af;
+                color: white;
+                margin-left: auto;
+                border-bottom-right-radius: 4px;
+              }
+              .helpdesk-app .chat-typing {
+                display: flex;
+                gap: 4px;
+                padding: 12px 16px;
+                border-radius: 16px;
+                width: fit-content;
+              }
+              .helpdesk-app .typing-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                animation: typing 1.4s infinite;
+              }
+              .helpdesk-app .typing-dot:nth-child(2) {
+                animation-delay: 0.2s;
+              }
+              .helpdesk-app .typing-dot:nth-child(3) {
+                animation-delay: 0.4s;
+              }
+              @keyframes typing {
+                0%, 60%, 100% {
+                  transform: translateY(0);
+                  opacity: 0.7;
+                }
+                30% {
+                  transform: translateY(-6px);
+                  opacity: 1;
+                }
+              }
+              .helpdesk-app .requests-list {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                margin-top: 12px;
+              }
+              .helpdesk-app .empty-state {
+                text-align: center;
+                padding: 32px;
+                border-radius: 16px;
+                margin-top: 12px;
+              }
+              .helpdesk-app .filter-row {
+                margin: 12px 0;
+              }
+              .helpdesk-app .filter-chip {
+                cursor: pointer;
+                transition: all 0.2s;
+              }
+            `}</style>
+            
+            <div className="helpdesk-app">
+              <header className="hero">
+                <div style={{ position: 'relative', zIndex: 1, display: 'grid', gap: 12 }}>
+                  <span className="pill">
+                    <Sparkles size={16} />
+                    UDS Tech Help Center
+                  </span>
+                  <h1 style={{ margin: 0, fontSize: 32, lineHeight: 1.1, color: 'white' }}>Answers, tickets, and live IT support for every UDS employee.</h1>
+                  <p style={{ margin: 0, maxWidth: 720, color: 'rgba(255,255,255,0.9)' }}>
+                    Start with self-help, ask the AI guide, or send a request to IT. For urgent outages, call immediately—everything else can be logged here.
+                  </p>
+                  <div className="cta-row">
+                    <button className="btn btn-primary" type="button" onClick={scrollToRequestForm} style={{ background: isDarkMode ? '#3b82f6' : 'white', color: isDarkMode ? 'white' : '#1e40af' }}>
+                      <Send size={18} />
+                      Submit a request
+                    </button>
+                    <a className="btn btn-ghost" href={`mailto:${HELP_DESK_EMAIL}?subject=${encodeURIComponent('Open Help Desk Ticket')}`} style={{ background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)' }}>
+                      <Mail size={18} />
+                      Email IT
+                    </a>
+                    <a className="btn btn-ghost" href="tel:+17175553000" style={{ background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)' }}>
+                      <PhoneCall size={18} />
+                      Call for urgent issues
+                    </a>
+                  </div>
+                  <div className="cta-strip">
+                    <div className="cta-tile">
+                      <div className="list-inline">
+                        <span className="chip" style={{ background: 'rgba(255,255,255,0.3)', color: 'white' }}>Service status</span>
+                      </div>
+                      {systemStatus.map((item) => (
+                        <div key={item.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 600, marginTop: 8 }}>
+                          <span>{item.name}</span>
+                          <span className="pill" style={{ background: 'white', color: '#1e40af' }}>
+                            <span className="status-dot" style={{ background: item.color }} />
+                            {item.state}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="cta-tile">
+                      <div className="list-inline">
+                        <span className="chip" style={{ background: 'rgba(255,255,255,0.3)', color: 'white' }}>Response targets</span>
+                      </div>
+                      <p style={{ margin: '12px 0 0', fontWeight: 700 }}>Critical incidents: immediate</p>
+                      <p style={{ margin: '4px 0 0', opacity: 0.9 }}>New tickets acknowledged within 1 business day.</p>
+                    </div>
+                    <div className="cta-tile">
+                      <div className="list-inline">
+                        <span className="chip" style={{ background: 'rgba(255,255,255,0.3)', color: 'white' }}>Need the IT dashboard?</span>
+                      </div>
+                      <p style={{ margin: '12px 0 0', opacity: 0.9 }}>Inventory and admin tools stay in the Asset Management app for IT staff.</p>
+                      <button className="btn btn-ghost" onClick={() => setActivePage('Overview')} style={{ marginTop: 12, background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)' }}>
+                        <Laptop size={16} />
+                        Open IT dashboard
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </header>
+
+              <main className="grid" style={{ marginTop: 24, gap: 18 }}>
+                <section className="grid" style={{ gridTemplateColumns: '1.35fr 1fr', gap: 16 }}>
+                  <div className="card">
+                    <div className="section-title">Self help</div>
+                    <div style={{ marginTop: 8, display: 'grid', gap: 10 }}>
+                      <label className="label">
+                        Search tips or issues
+                        <input
+                          className="input"
+                          placeholder='Try "VPN disconnects" or "reset password"'
+                          value={helpdeskSearch}
+                          onChange={(event) => setHelpdeskSearch(event.target.value)}
+                        />
+                      </label>
+                      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+                        {filteredArticles.map((article) => (
+                          <div key={article.id} className="card article-card">
+                            <div className="list-inline" style={{ marginBottom: 6 }}>
+                              {article.tags.map((tag) => (
+                                <span key={tag} className="chip">{tag}</span>
+                              ))}
+                            </div>
+                            <h4>{article.title}</h4>
+                            <p>{article.summary}</p>
+                            <div className="list-inline" style={{ marginTop: 8 }}>
+                              <span className="badge">
+                                <BookOpen size={14} />
+                                {article.minutes} min read
+                              </span>
+                              <span className="badge" style={{ background: isDarkMode ? 'rgba(14, 165, 233, 0.2)' : '#e0f2fe', color: isDarkMode ? '#7dd3fc' : '#075985' }}>
+                                <Sparkles size={14} />
+                                Self help
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                        {filteredArticles.length === 0 && <p style={{ color: isDarkMode ? '#a5b4cf' : '#55607a' }}>No matches—ask the AI guide or submit a ticket.</p>}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="card" style={{ display: 'grid', gap: 10 }}>
+                    <div className="section-title">Quick fixes</div>
+                    <div className="grid" style={{ gap: 10 }}>
+                      {quickHelp.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <div key={item.title} className="card" style={{ background: isDarkMode ? '#0f1831' : '#f8fafc', borderStyle: 'dashed' }}>
+                            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                              <div className="service-icon">
+                                <Icon size={18} />
+                              </div>
+                              <div>
+                                <h4 style={{ margin: '0 0 4px', fontSize: 14, color: isDarkMode ? '#e7edff' : '#0e1117' }}>{item.title}</h4>
+                                <p style={{ margin: 0, color: isDarkMode ? '#a5b4cf' : '#55607a', fontSize: 13 }}>{item.body}</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </section>
+
+                <section className="grid" style={{ gridTemplateColumns: '1fr 0.9fr', gap: 16 }}>
+                  <div className="card">
+                    <div className="section-title">Start a request</div>
+                    <h2 style={{ margin: '6px 0 8px', fontSize: 20, color: isDarkMode ? '#e7edff' : '#0e1117' }}>Tell IT what you need</h2>
+                    <p style={{ margin: '0 0 12px', color: isDarkMode ? '#a5b4cf' : '#55607a', fontSize: 14 }}>Use this form for non-urgent requests. We will acknowledge within 1 business day.</p>
+                    {helpdeskFormAlert && (
+                      <div className={`form-alert ${helpdeskFormAlert.type}`} role="alert" aria-live="assertive">
+                        <div className="form-alert-message">{helpdeskFormAlert.message}</div>
+                        <button className="alert-close" type="button" onClick={() => setHelpdeskFormAlert(null)}>
+                          Dismiss
+                        </button>
+                        {helpdeskFormAlert.detailText && (
+                          <div className="form-alert-details">
+                            <button className="btn btn-ghost btn-small" type="button" onClick={handleHelpdeskAlertCopy}>
+                              Copy ticket text
+                            </button>
+                            <pre className="code-block">{helpdeskFormAlert.detailText}</pre>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <form id="helpdesk-request-form" onSubmit={handleHelpdeskFormSubmit} className="grid" style={{ gap: 12 }}>
+                      <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        <label className="label">
+                          Name
+                          <input className="input" value={helpdeskForm.name} onChange={(e) => setHelpdeskForm((p) => ({ ...p, name: e.target.value }))} required />
+                        </label>
+                        <label className="label">
+                          Email
+                          <input className="input" type="email" value={helpdeskForm.email} onChange={(e) => setHelpdeskForm((p) => ({ ...p, email: e.target.value }))} required />
+                        </label>
+                      </div>
+                      <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        <label className="label">
+                          Department / Location
+                          <input className="input" value={helpdeskForm.department} onChange={(e) => setHelpdeskForm((p) => ({ ...p, department: e.target.value }))} placeholder="Finance, Lancaster" />
+                        </label>
+                        <label className="label">
+                          Urgency
+                          <select className="select" value={helpdeskForm.urgency} onChange={(e) => setHelpdeskForm((p) => ({ ...p, urgency: e.target.value }))}>
+                            <option>Normal</option>
+                            <option>High</option>
+                            <option>Urgent (service down)</option>
+                          </select>
+                        </label>
+                      </div>
+                      <label className="label">
+                        What do you need?
+                        <input
+                          className="input"
+                          value={helpdeskForm.topic}
+                          onChange={(e) => setHelpdeskForm((p) => ({ ...p, topic: e.target.value }))}
+                          placeholder="Example: VPN keeps disconnecting"
+                          required
+                        />
+                      </label>
+                      <label className="label">
+                        Details
+                        <textarea
+                          className="textarea"
+                          value={helpdeskForm.details}
+                          onChange={(e) => setHelpdeskForm((p) => ({ ...p, details: e.target.value }))}
+                          placeholder="Include device, urgency, steps tried, and screenshots if any."
+                          required
+                        />
+                      </label>
+                      <div className="cta-row">
+                        <button className="btn btn-primary" type="submit" disabled={helpdeskIsSubmitting}>
+                          <Send size={18} />
+                          {helpdeskIsSubmitting ? 'Submitting...' : 'Submit to IT'}
+                        </button>
+                        <a className="btn btn-ghost" href={`mailto:${HELP_DESK_EMAIL}?subject=${encodeURIComponent('IT Help Request')}`}>
+                          <Mail size={18} />
+                          Email instead
+                        </a>
+                      </div>
+                    </form>
+                  </div>
+
+                  <div className="card chat-panel">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                        <span className="service-icon">
+                          <Bot size={18} />
+                        </span>
+                        <div>
+                          <div className="section-title" style={{ letterSpacing: '0.2em' }}>
+                            AI Tech Guide
+                          </div>
+                          <p style={{ margin: 0, color: isDarkMode ? '#a5b4cf' : '#55607a', fontSize: 14 }}>Ask about issues, hardware, or policies. I'll draft a ticket if needed.</p>
+                        </div>
+                      </div>
+                      <div className="list-inline">
+                        <span className="chip">Beta</span>
+                        <button className="btn btn-ghost btn-small" type="button" onClick={resetHelpdeskChat}>
+                          Reset chat
+                        </button>
+                      </div>
+                    </div>
+                    <div className="chat-messages">
+                      {helpdeskChatMessages.map((msg, idx) => (
+                        <div key={`${msg.role}-${idx}-${msg.text.slice(0, 8)}`} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                          <div className={`chat-bubble ${msg.role}`}>
+                            {msg.role === 'bot' && (
+                              <div className="list-inline" style={{ marginBottom: 6 }}>
+                                <span className="chip" style={{ background: '#e0f2fe', color: '#075985' }}>
+                                  <Bot size={14} />
+                                  UDS Tech Assist
+                                </span>
+                              </div>
+                            )}
+                            <div style={{ whiteSpace: 'pre-line' }}>{msg.text}</div>
+                          </div>
+                        </div>
+                      ))}
+                      {helpdeskBotTyping && (
+                        <div className="chat-typing">
+                          <span className="typing-dot" />
+                          <span className="typing-dot" />
+                          <span className="typing-dot" />
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ display: 'grid', gap: 8 }}>
+                      <div className="list-inline">
+                        {starterMessages.map((prompt) => (
+                          <button key={prompt} className="btn btn-ghost" type="button" onClick={() => sendHelpdeskChat(prompt)} style={{ fontSize: 12, padding: '6px 10px' }}>
+                            <Sparkles size={14} />
+                            {prompt}
+                          </button>
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <input
+                          className="input"
+                          placeholder="Type your question..."
+                          value={helpdeskChatInput}
+                          onChange={(e) => setHelpdeskChatInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              sendHelpdeskChat(helpdeskChatInput);
+                            }
+                          }}
+                        />
+                        <button className="btn btn-primary" type="button" onClick={() => sendHelpdeskChat(helpdeskChatInput)}>
+                          <Send size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div className="card">
+                    <div className="section-title">Service catalog</div>
+                    <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
+                      {serviceCatalog.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <div key={item.id} className="card service-card">
+                            <span className="service-icon">
+                              <Icon size={20} />
+                            </span>
+                            <div style={{ flex: 1 }}>
+                              <div className="list-inline" style={{ marginBottom: 4 }}>
+                                <span className="chip">{item.tone === 'warning' ? 'Priority' : 'Self-service first'}</span>
+                              </div>
+                              <h3 style={{ margin: '4px 0', fontSize: 16, color: isDarkMode ? '#e7edff' : '#0e1117' }}>{item.title}</h3>
+                              <p style={{ margin: 0, color: isDarkMode ? '#a5b4cf' : '#55607a', fontSize: 13 }}>{item.desc}</p>
+                            </div>
+                            <ArrowRight size={18} color={isDarkMode ? '#a5b4cf' : '#0e1117'} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="card">
+                    <div className="section-title">Your recent requests</div>
+                    <p style={{ margin: '6px 0 12px', color: isDarkMode ? '#a5b4cf' : '#55607a', fontSize: 14 }}>We email updates as statuses change. Saved locally so you can pick up on this device.</p>
+                    <div className="list-inline filter-row" role="group" aria-label="Filter requests by status">
+                      {STATUS_FILTERS.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          className={`chip filter-chip${helpdeskStatusFilter === option ? ' active' : ''}`}
+                          onClick={() => setHelpdeskStatusFilter(option)}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                    {filteredRequests.length > 0 ? (
+                      <div className="requests-list">
+                        {filteredRequests.map((req) => {
+                          const tone =
+                            req.status === 'Closed' ? '#16a34a' : req.status === 'In Review' ? '#2563eb' : '#f59e0b';
+                          return (
+                            <div key={req.id} className="card request-row">
+                              <div>
+                                <div className="list-inline">
+                                  <span className="chip">{req.type}</span>
+                                  <span className="chip mono">{req.id}</span>
+                                </div>
+                                <p style={{ margin: '6px 0 0', fontWeight: 700, color: isDarkMode ? '#e7edff' : '#0e1117' }}>{req.topic}</p>
+                                <p style={{ margin: '4px 0 0', color: isDarkMode ? '#a5b4cf' : '#55607a' }}>{req.name}</p>
+                              </div>
+                              <div style={{ display: 'grid', gap: 6 }}>
+                                <span className="pill" style={{ background: isDarkMode ? '#1e293b' : '#f8fafc' }}>
+                                  <span className="status-dot" style={{ background: tone }} />
+                                  {req.status}
+                                </span>
+                                <span style={{ color: isDarkMode ? '#a5b4cf' : '#55607a', fontSize: 12 }}>{req.timestamp}</span>
+                              </div>
+                              <button className="btn btn-ghost" type="button">
+                                View
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="empty-state">
+                        <p style={{ margin: 0, color: isDarkMode ? '#a5b4cf' : '#55607a' }}>
+                          No requests in this filter. Submit a ticket and it will appear here for quick reference.
+                        </p>
+                        <button className="btn btn-ghost btn-small" type="button" onClick={scrollToRequestForm} style={{ marginTop: 12 }}>
+                          Start a request
+                        </button>
+                      </div>
+                    )}
+                    <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginTop: 12 }}>
+                      <div className="card" style={{ background: isDarkMode ? '#1e293b' : '#0f172a', color: 'white' }}>
+                        <div className="list-inline">
+                          <span className="chip" style={{ background: 'rgba(255,255,255,0.2)', color: 'white' }}>
+                            <CheckCircle2 size={14} />
+                            SLA
+                          </span>
+                        </div>
+                        <p style={{ margin: '8px 0 0', fontSize: 14 }}>Standard requests</p>
+                        <p style={{ margin: 0, opacity: 0.8, fontSize: 13 }}>Acknowledged in 1 business day.</p>
+                      </div>
+                      <div className="card" style={{ background: isDarkMode ? 'rgba(14, 165, 233, 0.15)' : '#ecfeff', borderColor: isDarkMode ? 'rgba(14, 165, 233, 0.3)' : '#a5f3fc' }}>
+                        <div className="list-inline">
+                          <span className="chip" style={{ background: isDarkMode ? 'rgba(14, 165, 233, 0.25)' : '#cffafe', color: isDarkMode ? '#7dd3fc' : '#075985' }}>
+                            <Lightbulb size={14} />
+                            Tips
+                          </span>
+                        </div>
+                        <p style={{ margin: '8px 0 0', fontSize: 14, color: isDarkMode ? '#e7edff' : '#0e1117' }}>Add screenshots</p>
+                        <p style={{ margin: 0, color: isDarkMode ? '#a5b4cf' : '#0e1117', fontSize: 13 }}>Include error text or steps for faster triage.</p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="card">
+                  <div className="section-title">What to expect</div>
+                  <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginTop: 10 }}>
+                    <div className="card" style={{ background: isDarkMode ? '#0f1831' : '#f8fafc' }}>
+                      <div className="list-inline">
+                        <span className="chip">
+                          <Headset size={14} />
+                          Support
+                        </span>
+                      </div>
+                      <p style={{ margin: '8px 0 4px', fontWeight: 700, color: isDarkMode ? '#e7edff' : '#0e1117' }}>Live help</p>
+                      <p style={{ margin: 0, color: isDarkMode ? '#a5b4cf' : '#55607a', fontSize: 13 }}>Urgent or down? Call the Help Desk so we can jump in.</p>
+                    </div>
+                    <div className="card" style={{ background: isDarkMode ? 'rgba(251, 191, 36, 0.15)' : '#fdf6b2', borderColor: isDarkMode ? 'rgba(251, 191, 36, 0.3)' : '#fde68a' }}>
+                      <div className="list-inline">
+                        <span className="chip" style={{ background: isDarkMode ? 'rgba(251, 191, 36, 0.25)' : '#fef3c7', color: isDarkMode ? '#fcd34d' : '#92400e' }}>
+                          <PenLine size={14} />
+                          Tickets
+                        </span>
+                      </div>
+                      <p style={{ margin: '8px 0 4px', fontWeight: 700, color: isDarkMode ? '#e7edff' : '#0e1117' }}>Clear details</p>
+                      <p style={{ margin: 0, color: isDarkMode ? '#fde68a' : '#7c2d12', fontSize: 13 }}>Include device, urgency, and steps tried to avoid delays.</p>
+                    </div>
+                    <div className="card" style={{ background: isDarkMode ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf3', borderColor: isDarkMode ? 'rgba(16, 185, 129, 0.3)' : '#bbf7d0' }}>
+                      <div className="list-inline">
+                        <span className="chip" style={{ background: isDarkMode ? 'rgba(16, 185, 129, 0.25)' : '#d1fae5', color: isDarkMode ? '#6ee7b7' : '#065f46' }}>
+                          <ShieldCheck size={14} />
+                          Security
+                        </span>
+                      </div>
+                      <p style={{ margin: '8px 0 4px', fontWeight: 700, color: isDarkMode ? '#e7edff' : '#0e1117' }}>Phishing?</p>
+                      <p style={{ margin: 0, color: isDarkMode ? '#a7f3d0' : '#166534', fontSize: 13 }}>Forward to {HELP_DESK_EMAIL} then delete. Do not click links.</p>
+                    </div>
+                  </div>
+                </section>
+              </main>
+            </div>
           </div>
         )}
 
