@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
+﻿import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
 import { BrowserMultiFormatReader } from '@zxing/browser';
@@ -3729,6 +3730,21 @@ const VendorCard = ({ vendor }) => {
   );
 };
 
+const formatRelativeTime = (timestamp) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return '';
+  const diffMs = Date.now() - date.getTime();
+  if (diffMs < 0) return 'just now';
+  const minutes = Math.round(diffMs / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return `${days}d ago`;
+};
+
 const NetworkPrinterBoard = ({
   printers = [],
   title = 'Network Printers and Copiers',
@@ -3954,20 +3970,37 @@ const NetworkPrinterBoard = ({
                         Issue
                       </button>
                     )}
-                    {onDelete && (
-                      <button
-                        type="button"
-                        onClick={() => onDelete(printer)}
-                        className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-rose-200 hover:text-rose-600"
-                        title="Delete machine"
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  {onDelete && (
+                    <button
+                      type="button"
+                      onClick={() => onDelete(printer)}
+                      className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-rose-200 hover:text-rose-600"
+                      title="Delete machine"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+                {(printer.isTesting || printer.lastTestedAt) && (
+                  <p
+                    className={`mt-1 text-right text-[11px] font-semibold ${
+                      printer.isTesting
+                        ? 'text-blue-600'
+                        : printer.lastTestStatus === 'success'
+                          ? 'text-emerald-600'
+                          : 'text-rose-600'
+                    }`}
+                  >
+                    {printer.isTesting
+                      ? 'Running test...'
+                      : printer.lastTestStatus === 'success'
+                        ? `Tested ${formatRelativeTime(printer.lastTestedAt)}`
+                        : `Failed ${formatRelativeTime(printer.lastTestedAt)}`}
+                  </p>
+                )}
+              </td>
+            </tr>
+          ))}
           </tbody>
         </table>
       </div>
@@ -4954,6 +4987,86 @@ Reply to this email with your updates. Photos are welcome. Thank you!`,
   </div>
 );
 
+const EmployeeFilters = ({
+  search = '',
+  filters = { department: 'all', location: 'all', jobTitle: 'all' },
+  departments = [],
+  locations = [],
+  jobTitles = [],
+  onSearchChange = () => {},
+  onFilterChange = () => {},
+  onReset = () => {},
+}) => (
+  <div className="rounded-3xl border border-slate-100 bg-white shadow-sm px-6 py-5">
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="flex-1 min-w-[220px]">
+        <label className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">Search</label>
+        <input
+          value={search}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder="Search by name, department, or device"
+          className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        />
+      </div>
+      <div className="flex-1 min-w-[180px]">
+        <label className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">Department</label>
+        <select
+          value={filters.department}
+          onChange={(event) => onFilterChange('department', event.target.value)}
+          className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        >
+          <option value="all">All departments</option>
+          {departments.map((dept) => (
+            <option key={`dept-${dept}`} value={dept}>
+              {dept}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="flex-1 min-w-[180px]">
+        <label className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">Location</label>
+        <select
+          value={filters.location}
+          onChange={(event) => onFilterChange('location', event.target.value)}
+          className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        >
+          <option value="all">All locations</option>
+          {locations.map((loc) => (
+            <option key={`loc-${loc}`} value={loc}>
+              {loc}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="flex-1 min-w-[180px]">
+        <label className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">Role</label>
+        <select
+          value={filters.jobTitle}
+          onChange={(event) => onFilterChange('jobTitle', event.target.value)}
+          className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        >
+          <option value="all">All roles</option>
+          {jobTitles.map((title) => (
+            <option key={`role-${title}`} value={title}>
+              {title}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="min-w-[120px]">
+        <label className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">Reset</label>
+        <button
+          type="button"
+          onClick={onReset}
+          className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+        >
+          Clear filters
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
 const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair, onEditRepair, isDarkMode = false }) => {
   const {
     repairs = [],
@@ -5524,49 +5637,7 @@ const LaptopRefreshReport = ({ data, selectedDate, onDateChange, onExport }) => 
   );
 };
 
-const LicenseRiskReport = ({ data = [], onExport }) => {
-  const risks = data.filter((item) => item.status !== 'Healthy');
-  return (
-    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Software risk</p>
-          <p className="text-xl font-semibold text-slate-900">License pressure</p>
-          <p className="text-xs text-slate-500">{risks.length} suite(s) require attention</p>
-        </div>
-        <button
-          type="button"
-          onClick={onExport}
-          className="rounded-2xl border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:border-blue-200 hover:text-blue-600"
-        >
-          Export
-        </button>
-      </div>
-      {risks.length === 0 ? (
-        <p className="mt-4 text-sm text-slate-500">All suites have healthy buffers.</p>
-      ) : (
-        <ul className="mt-4 space-y-3">
-          {risks.slice(0, 5).map((suite) => (
-            <li key={suite.id} className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-900">{suite.software}</p>
-                <span
-                  className={`tone-chip ${suite.status === 'Overused' ? 'tone-alert' : 'tone-warning'} px-2 py-0.5 text-[11px] font-semibold`}
-                >
-                  {suite.status}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                {suite.used} / {suite.seats} seats - {suite.delta} buffer
-              </p>
-              <p className="text-xs text-slate-400">Owner: {suite.owner}</p>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
+// LicenseRiskReport removed per request: "Software Risk" card no longer shown on Reports page.
 
 // eslint-disable-next-line no-unused-vars
 const LoanerCoverageReport = ({ data, onExport }) => {
@@ -6804,19 +6875,82 @@ const AssetSpotlightModal = ({
   );
 };
 
-const ModalShell = ({ title, onClose, children }) => (
-  <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/70 px-4 py-8">
-    <div className="w-full max-w-3xl rounded-3xl bg-white shadow-2xl">
-      <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-        <p className="text-lg font-semibold text-slate-900">{title}</p>
-        <button onClick={onClose} className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+const ModalShell = ({ title, onClose, children }) => {
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    const node = dialogRef.current;
+    if (!node) return;
+    requestAnimationFrame(() => {
+      node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }, []);
+
+  const modalContent = (
+    <div
+      className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/70 px-4 py-8"
+      onClick={(event) => {
+        if (event.target === event.currentTarget && typeof onClose === 'function') {
+          onClose();
+        }
+      }}
+    >
+      <div ref={dialogRef} className="w-full max-w-3xl rounded-3xl bg-white shadow-2xl" role="dialog" aria-modal="true">
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+          <p className="text-lg font-semibold text-slate-900">{title}</p>
+          <button onClick={onClose} className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="max-h-[70vh] overflow-y-auto px-6 py-4">{children}</div>
+      </div>
+    </div>
+  );
+
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  return createPortal(modalContent, document.body);
+};
+
+const PhotoLightbox = ({ photo, onClose }) => {
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    const node = dialogRef.current;
+    if (!node) return;
+    requestAnimationFrame(() => {
+      node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }, []);
+
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  const content = (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4" onClick={onClose}>
+      <div ref={dialogRef} className="relative max-w-3xl rounded-3xl bg-white p-4 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-3 top-3 rounded-full p-2 text-slate-500 hover:bg-slate-100"
+          aria-label="Close photo"
+        >
           <X className="h-5 w-5" />
         </button>
+        <img src={photo?.src} alt={photo?.name || 'Employee photo'} className="max-h-[75vh] w-full rounded-2xl object-contain" />
+        <div className="mt-3 text-center">
+          {photo?.name && <p className="text-sm font-semibold text-slate-900">{photo.name}</p>}
+          {photo?.title && <p className="text-xs text-slate-500">{photo.title}</p>}
+        </div>
       </div>
-      <div className="max-h-[70vh] overflow-y-auto px-6 py-4">{children}</div>
     </div>
-  </div>
-);
+  );
+
+  return createPortal(content, document.body);
+};
 
 const AssetFormModal = ({
   asset,
@@ -7872,9 +8006,18 @@ const App = () => {
   );
   const sheetInsights = useMemo(() => computeSheetInsights(assets), [assets]);
   const vendorProfiles = useMemo(() => buildVendorProfiles(assets), [assets]);
-  const [networkPrinters, setNetworkPrinters] = useState(() =>
-    NETWORK_PRINTERS.map((printer, index) => ({ id: printer.id ?? index + 1, ...printer })),
-  );
+const [networkPrinters, setNetworkPrinters] = useState(() =>
+  NETWORK_PRINTERS.map((printer, index) => ({ id: printer.id ?? index + 1, ...printer })),
+);
+const patchNetworkPrinter = useCallback(
+  (printerId, patch) => {
+    if (!printerId) return;
+    setNetworkPrinters((prev) =>
+      prev.map((printer) => (printer.id === printerId ? { ...printer, ...patch } : printer)),
+    );
+  },
+  [setNetworkPrinters],
+);
   const printerVendors = useMemo(
     () =>
       Object.values(PRINTER_VENDOR_DIRECTORY).map((vendor) => {
@@ -10366,13 +10509,49 @@ const App = () => {
     [setNetworkPrinters],
   );
 
-  const handleTestPrinter = useCallback(
-    (printer) => {
-      if (!printer) return;
-      setFlashMessage(`Test page queued for ${printer.deviceType} at ${printer.location || 'Unknown'}.`);
-    },
-    [],
-  );
+const handleTestPrinter = useCallback(
+  async (printer) => {
+    if (!printer?.id) return;
+    const printerId = printer.id;
+    patchNetworkPrinter(printerId, { isTesting: true, lastTestError: '' });
+    try {
+      const response = await fetch('/api/printer-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: printer.id,
+          deviceType: printer.deviceType,
+          location: printer.location,
+          ip: printer.ip,
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Unable to queue test page');
+      }
+      patchNetworkPrinter(printerId, {
+        isTesting: false,
+        lastTestedAt: payload.testedAt || new Date().toISOString(),
+        lastTestStatus: 'success',
+        lastTestMessage: payload.message || '',
+        lastTestError: '',
+      });
+      setFlashMessage(
+        payload.message || `Test page queued for ${printer.deviceType} at ${printer.location || 'Unknown'}.`,
+      );
+    } catch (error) {
+      console.error('[PrinterTest] error', error);
+      patchNetworkPrinter(printerId, {
+        isTesting: false,
+        lastTestedAt: new Date().toISOString(),
+        lastTestStatus: 'error',
+        lastTestError: error.message || 'Unable to queue test page',
+      });
+      setFlashMessage(`Failed to queue test page for ${printer.deviceType} at ${printer.location || 'Unknown'}.`);
+    }
+  },
+  [patchNetworkPrinter, setFlashMessage],
+);
 
   const handleOpenPrinterTicket = useCallback(
     (printer) => {
@@ -12656,16 +12835,6 @@ const App = () => {
                   })
                 }
               />
-              <div className="space-y-4">
-                <LicenseRiskReport
-                  data={licenseCompliance}
-                  onExport={() =>
-                    handleRunReport('License risk', {
-                      suites: licenseCompliance,
-                    })
-                  }
-                />
-              </div>
             </section>
 
             <section className="mb-8 space-y-6">
@@ -14233,35 +14402,7 @@ const App = () => {
           locationOptions={locationSuggestionOptions}
         />
       )}
-      {photoLightbox && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4"
-          onClick={() => setPhotoLightbox(null)}
-        >
-          <div
-            className="relative max-w-3xl rounded-3xl bg-white p-4 shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={() => setPhotoLightbox(null)}
-              className="absolute right-3 top-3 rounded-full p-2 text-slate-500 hover:bg-slate-100"
-              aria-label="Close photo"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <img
-              src={photoLightbox.src}
-              alt={photoLightbox.name}
-              className="max-h-[75vh] w-full rounded-2xl object-contain"
-            />
-            <div className="mt-3 text-center">
-              <p className="text-sm font-semibold text-slate-900">{photoLightbox.name}</p>
-              {photoLightbox.title && <p className="text-xs text-slate-500">{photoLightbox.title}</p>}
-            </div>
-          </div>
-        </div>
-      )}
+      {photoLightbox && <PhotoLightbox photo={photoLightbox} onClose={() => setPhotoLightbox(null)} />}
       {printerForm && <PrinterFormModal printer={printerForm} onSubmit={handleSavePrinter} onCancel={() => setPrinterForm(null)} />}
       {flashMessage && (
         <div className="fixed bottom-6 right-6 z-50 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-lg">
