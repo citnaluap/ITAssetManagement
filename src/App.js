@@ -154,7 +154,8 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n+1) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n+1) .text-lg.font-semibold {
     color: #7dd3fc !important;
-    text-shadow: 0 0 10px rgba(56, 189, 248, 0.4), 0 2px 4px rgba(56, 189, 248, 0.2) !important;
+    text-shadow: 0 0 20px rgba(56, 189, 248, 0.6), 0 4px 12px rgba(125, 211, 252, 0.5), 0 0 40px rgba(56, 189, 248, 0.3) !important;
+    font-weight: 800 !important;
   }
   
   html.theme-dark .rounded-3xl:nth-child(6n+2),
@@ -175,7 +176,8 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n+2) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n+2) .text-lg.font-semibold {
     color: #86efac !important;
-    text-shadow: 0 0 10px rgba(74, 222, 128, 0.4), 0 2px 4px rgba(74, 222, 128, 0.2) !important;
+    text-shadow: 0 0 20px rgba(74, 222, 128, 0.6), 0 4px 12px rgba(134, 239, 172, 0.5), 0 0 40px rgba(74, 222, 128, 0.3) !important;
+    font-weight: 800 !important;
   }
   
   html.theme-dark .rounded-3xl:nth-child(6n+3),
@@ -196,7 +198,8 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n+3) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n+3) .text-lg.font-semibold {
     color: #d8b4fe !important;
-    text-shadow: 0 0 10px rgba(192, 132, 252, 0.4), 0 2px 4px rgba(192, 132, 252, 0.2) !important;
+    text-shadow: 0 0 20px rgba(192, 132, 252, 0.6), 0 4px 12px rgba(216, 180, 254, 0.5), 0 0 40px rgba(192, 132, 252, 0.3) !important;
+    font-weight: 800 !important;
   }
   
   html.theme-dark .rounded-3xl:nth-child(6n+4),
@@ -217,7 +220,8 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n+4) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n+4) .text-lg.font-semibold {
     color: #f9a8d4 !important;
-    text-shadow: 0 0 10px rgba(244, 114, 182, 0.4), 0 2px 4px rgba(244, 114, 182, 0.2) !important;
+    text-shadow: 0 0 20px rgba(244, 114, 182, 0.6), 0 4px 12px rgba(249, 168, 212, 0.5), 0 0 40px rgba(244, 114, 182, 0.3) !important;
+    font-weight: 800 !important;
   }
   
   html.theme-dark .rounded-3xl:nth-child(6n+5),
@@ -238,7 +242,8 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n+5) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n+5) .text-lg.font-semibold {
     color: #fda4af !important;
-    text-shadow: 0 0 10px rgba(251, 113, 133, 0.4), 0 2px 4px rgba(251, 113, 133, 0.2) !important;
+    text-shadow: 0 0 20px rgba(251, 113, 133, 0.6), 0 4px 12px rgba(253, 164, 175, 0.5), 0 0 40px rgba(251, 113, 133, 0.3) !important;
+    font-weight: 800 !important;
   }
   
   html.theme-dark .rounded-3xl:nth-child(6n),
@@ -259,57 +264,59 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n) .text-lg.font-semibold {
     color: #fdba74 !important;
-    text-shadow: 0 0 10px rgba(251, 146, 60, 0.4), 0 2px 4px rgba(251, 146, 60, 0.2) !important;
+    text-shadow: 0 0 20px rgba(251, 146, 60, 0.6), 0 4px 12px rgba(253, 186, 116, 0.5), 0 0 40px rgba(251, 146, 60, 0.3) !important;
+    font-weight: 800 !important;
   }
   
   /* Enhanced Card Titles - Dark Mode */
   html.theme-dark .text-2xl.font-bold {
-    font-size: 2.25rem !important;
+    font-size: 2.75rem !important;
     background: linear-gradient(135deg, #60a5fa 0%, #38bdf8 100%) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
-    filter: drop-shadow(0 2px 12px rgba(96, 165, 250, 0.5)) !important;
-    font-weight: 800 !important;
+    filter: drop-shadow(0 4px 20px rgba(96, 165, 250, 0.7)) drop-shadow(0 0 30px rgba(56, 189, 248, 0.5)) !important;
+    font-weight: 900 !important;
     letter-spacing: -0.03em !important;
   }
   html.theme-dark .text-xl.font-bold,
   html.theme-dark .text-xl.font-semibold {
-    font-size: 1.5rem !important;
+    font-size: 1.875rem !important;
     color: #60a5fa !important;
-    text-shadow: 0 2px 10px rgba(96, 165, 250, 0.4), 0 0 20px rgba(96, 165, 250, 0.2) !important;
-    font-weight: 700 !important;
+    text-shadow: 0 4px 16px rgba(96, 165, 250, 0.6), 0 0 30px rgba(96, 165, 250, 0.4), 0 0 50px rgba(56, 189, 248, 0.3) !important;
+    font-weight: 800 !important;
     letter-spacing: -0.02em !important;
   }
   html.theme-dark .text-lg.font-bold,
   html.theme-dark .text-lg.font-semibold {
-    font-size: 1.375rem !important;
-    color: #93c5fd !important;
-    text-shadow: 0 2px 8px rgba(147, 197, 253, 0.35) !important;
-    font-weight: 700 !important;
+    font-size: 1.625rem !important;
+    color: #7dd3fc !important;
+    text-shadow: 0 3px 12px rgba(125, 211, 252, 0.5), 0 0 24px rgba(147, 197, 253, 0.4) !important;
+    font-weight: 800 !important;
     letter-spacing: -0.015em !important;
   }
   html.theme-dark .text-base.font-bold,
   html.theme-dark .text-base.font-semibold {
-    font-size: 1.125rem !important;
-    color: #bfdbfe !important;
-    text-shadow: 0 1px 6px rgba(191, 219, 254, 0.3) !important;
-    font-weight: 700 !important;
+    font-size: 1.375rem !important;
+    color: #93c5fd !important;
+    text-shadow: 0 2px 10px rgba(147, 197, 253, 0.45), 0 0 20px rgba(191, 219, 254, 0.3) !important;
+    font-weight: 800 !important;
   }
   html.theme-dark .text-sm.font-bold,
   html.theme-dark .text-sm.font-semibold {
-    font-size: 1rem !important;
-    color: #dbeafe !important;
-    text-shadow: 0 1px 4px rgba(219, 234, 254, 0.25) !important;
-    font-weight: 700 !important;
+    font-size: 1.125rem !important;
+    color: #bfdbfe !important;
+    text-shadow: 0 2px 8px rgba(191, 219, 254, 0.4), 0 0 16px rgba(219, 234, 254, 0.3) !important;
+    font-weight: 800 !important;
   }
   html.theme-dark .text-sm.font-bold.text-slate-900,
   html.theme-dark .text-sm.font-semibold.text-slate-900,
   html.theme-dark .text-base.font-semibold.text-slate-900,
   html.theme-dark .text-lg.font-semibold.text-slate-900,
   html.theme-dark .text-lg.font-bold.text-slate-900 {
-    color: #e0f2fe !important;
-    text-shadow: 0 2px 8px rgba(96, 165, 250, 0.3) !important;
+    color: #bfdbfe !important;
+    text-shadow: 0 3px 14px rgba(96, 165, 250, 0.5), 0 0 25px rgba(147, 197, 253, 0.4) !important;
+    font-weight: 800 !important;
   }
 `;
 
@@ -11940,7 +11947,7 @@ const App = () => {
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
-              <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-white/70">Hardware</p>
+              <p className="text-2xl font-bold uppercase tracking-wide">Hardware</p>
               <h2 className="mt-3 text-3xl font-semibold">Full-fidelity device management</h2>
               <p className="mt-2 text-sm text-white/75">Real-time visibility into every laptop, display, dock, and printer with proactive lifecycle tracking.</p>
               <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -11990,7 +11997,7 @@ const App = () => {
               <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-500">Hardware table</p>
+                    <p className="text-lg font-bold uppercase tracking-wide">Hardware table</p>
                     <p className="text-xs text-slate-500">Filter, search, and add devices from the same surface.</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -12123,7 +12130,7 @@ const App = () => {
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
-              <p className={`text-[11px] font-semibold uppercase tracking-[0.35rem] ${heroLabelClass}`}>Repair desk</p>
+              <p className="text-2xl font-bold uppercase tracking-wide">Repair desk</p>
               <div className="mt-4 grid gap-6 lg:grid-cols-[1.8fr,1fr]">
                 <div className="space-y-4">
                   <h2 className={`text-4xl font-semibold leading-tight ${heroHeadingClass}`}>Centralize depot status, parts ordering, and repair guides.</h2>
@@ -12218,7 +12225,7 @@ const App = () => {
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
-              <p className={`text-xs font-semibold uppercase tracking-[0.35rem] ${heroLabelClass}`}>Employees</p>
+              <p className="text-2xl font-bold uppercase tracking-wide">Employees</p>
               <h2 className={`mt-3 text-3xl font-semibold ${heroHeadingClass}`}>The faces powering UDS technology</h2>
               <p className={`mt-2 text-sm ${heroSubtextClass}`}>
                 Browse featured team members, their departments, and contact info to keep deployments aligned with your workforce.
@@ -12464,7 +12471,7 @@ const App = () => {
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
-              <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-white/70">Reports</p>
+              <p className="text-2xl font-bold uppercase tracking-wide">Reports</p>
               <h2 className="mt-3 text-3xl font-semibold text-white">Insights, forecasts, and exports</h2>
               <p className="mt-2 text-sm text-white/75">
                 Benchmark hardware performance, anticipate spend, and share ready-to-run reports with stakeholders.
@@ -12564,7 +12571,7 @@ const App = () => {
                 <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
                 <div className="grid max-w-full gap-8 overflow-hidden lg:grid-cols-2">
                   <div>
-                    <p className={`text-[11px] font-semibold uppercase tracking-[0.35rem] ${heroLabelClass}`}>Vendor galaxy</p>
+                    <p className="text-2xl font-bold uppercase tracking-wide">Vendor galaxy</p>
                     <h2 className={`mt-4 text-4xl font-semibold leading-tight ${heroHeadingClass}`}>
                       Bold partnerships powering laptops, networks, and carrier logistics.
                     </h2>
@@ -13795,7 +13802,7 @@ const App = () => {
                 <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-white/70">Software</p>
+                    <p className="text-2xl font-bold uppercase tracking-wide">Software</p>
                     <h2 className="mt-3 text-3xl font-semibold text-white">Licensing + SaaS operations</h2>
                     <p className="mt-2 text-sm text-white/75">
                       Centralize entitlement tracking for Microsoft 365, Adobe, AutoCAD, Cisco Secure Client, Duo, Keeper, ESET, Barracuda, Citrix,
