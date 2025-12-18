@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
 import { BrowserMultiFormatReader } from '@zxing/browser';
@@ -5716,127 +5716,79 @@ const DepreciationForecastTable = ({ forecast = [] }) => (
   </CardShell>
 );
 
-const AssetFilters = ({ filters, onChange, onReset, types, embedded = false }) => (
-  <div
-    className={`${
-      embedded
-        ? 'rounded-2xl border border-slate-100 bg-slate-50/60 p-4'
-        : 'rounded-2xl border border-slate-100 bg-white p-4 shadow-sm'
-    }`}
-  >
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-[2fr_repeat(3,minmax(0,1fr))_auto] xl:items-center">
-      <div className="relative sm:col-span-2 xl:col-span-1">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-        <input
-          value={filters.search}
-          onChange={(event) => onChange('search', event.target.value)}
-          placeholder="Search by model, serial, or user"
-          className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-        />
+const AssetFilters = ({ filters, onChange, onReset, types, embedded = false, isDarkMode = false }) => {
+  const wrapperClass = embedded
+    ? `rounded-2xl border ${isDarkMode ? 'border-white/10 bg-slate-900/40 shadow-inner' : 'border-slate-100 bg-slate-50/60'} p-4`
+    : `rounded-2xl border ${isDarkMode ? 'border-white/10 bg-slate-900/70 shadow-[0_15px_35px_rgba(2,6,23,0.6)]' : 'border-slate-100 bg-white shadow-sm'} p-4`;
+  const controlBase = 'h-11 w-full rounded-xl border text-sm outline-none focus:ring-2 transition';
+  const controlTone = isDarkMode
+    ? 'border-white/15 bg-slate-900/80 text-slate-50 placeholder:text-slate-500 focus:border-sky-400 focus:ring-sky-500/30'
+    : 'border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-100';
+  const toggleClass = `flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold ${
+    isDarkMode ? 'border-white/15 bg-slate-900/80 text-slate-50' : 'border-slate-200 bg-white text-slate-700'
+  }`;
+  const resetButtonClass = `inline-flex h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition ${
+    isDarkMode
+      ? 'border-white/15 bg-slate-900/80 text-slate-50 hover:border-sky-400 hover:text-sky-200'
+      : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:text-blue-600'
+  }`;
+  const checkboxClass = `h-4 w-4 rounded border ${
+    isDarkMode ? 'border-slate-600 bg-slate-900/80 text-sky-400 focus:ring-sky-500/30' : 'border-slate-300 text-blue-600 focus:ring-blue-500'
+  }`;
+  return (
+    <div className={wrapperClass}>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-[2fr_repeat(3,minmax(0,1fr))_auto] xl:items-center">
+        <div className="relative sm:col-span-2 xl:col-span-1">
+          <Search
+            className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}
+          />
+          <input
+            value={filters.search}
+            onChange={(event) => onChange('search', event.target.value)}
+            placeholder="Search by model, serial, or user"
+            className={`${controlBase} ${controlTone} pl-9 pr-3`}
+          />
+        </div>
+        <select
+          value={filters.type}
+          onChange={(event) => onChange('type', event.target.value)}
+          className={`${controlBase} ${controlTone} px-4`}
+        >
+          <option value="all">All types</option>
+          {types.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </select>
+        <select
+          value={filters.status}
+          onChange={(event) => onChange('status', event.target.value)}
+          className={`${controlBase} ${controlTone} px-4`}
+        >
+          <option value="all">All statuses</option>
+          <option value="Available">Available</option>
+          <option value="Checked Out">Checked Out</option>
+          <option value="Maintenance">Maintenance</option>
+          <option value="Retired">Retired</option>
+        </select>
+        <label className={toggleClass}>
+          <input
+            type="checkbox"
+            checked={Boolean(filters.hideRetired)}
+            onChange={(event) => onChange('hideRetired', event.target.checked)}
+            className={checkboxClass}
+          />
+          Hide retired
+        </label>
+        <button type="button" onClick={onReset} className={resetButtonClass}>
+          <X className="h-4 w-4" />
+          Reset
+        </button>
       </div>
-      <select
-        value={filters.type}
-        onChange={(event) => onChange('type', event.target.value)}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-      >
-        <option value="all">All types</option>
-        {types.map((type) => (
-          <option key={type} value={type}>
-            {type}
-          </option>
-        ))}
-      </select>
-      <select
-        value={filters.status}
-        onChange={(event) => onChange('status', event.target.value)}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-      >
-        <option value="all">All statuses</option>
-        <option value="Available">Available</option>
-        <option value="Checked Out">Checked Out</option>
-        <option value="Maintenance">Maintenance</option>
-        <option value="Retired">Retired</option>
-      </select>
-      <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
-        <input
-          type="checkbox"
-          checked={Boolean(filters.hideRetired)}
-          onChange={(event) => onChange('hideRetired', event.target.checked)}
-          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-        />
-        Hide retired
-      </label>
-      <button
-        type="button"
-        onClick={onReset}
-        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600"
-      >
-        <X className="h-4 w-4" />
-        Reset
-      </button>
     </div>
-  </div>
-);
-
-const EmployeeFilters = ({ search, filters, departments, locations, jobTitles, onSearchChange, onFilterChange, onReset }) => (
-  <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_auto]">
-      <div className="relative sm:col-span-2 lg:col-span-1">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-        <input
-          value={search}
-          onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Search by name, title, or department"
-          className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-        />
-      </div>
-      <select
-        value={filters.department}
-        onChange={(event) => onFilterChange('department', event.target.value)}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-      >
-        <option value="all">All departments</option>
-        {departments.map((dept) => (
-          <option key={dept} value={dept}>
-            {dept}
-          </option>
-        ))}
-      </select>
-      <select
-        value={filters.location}
-        onChange={(event) => onFilterChange('location', event.target.value)}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-      >
-        <option value="all">All locations</option>
-        {locations.map((loc) => (
-          <option key={loc} value={loc}>
-            {loc}
-          </option>
-        ))}
-      </select>
-      <select
-        value={filters.jobTitle}
-        onChange={(event) => onFilterChange('jobTitle', event.target.value)}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-      >
-        <option value="all">All roles</option>
-        {jobTitles.map((title) => (
-          <option key={title} value={title}>
-            {title}
-          </option>
-        ))}
-      </select>
-      <button
-        type="button"
-        onClick={onReset}
-        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600"
-      >
-        <X className="h-4 w-4" />
-        Reset
-      </button>
-    </div>
-  </div>
-);
+  );
+};
 
 const AssetTable = ({
   assets,
@@ -8046,22 +7998,9 @@ const App = () => {
           }
           return acc;
         }, {});
-        console.log('Org chart loader 1: Loaded supervisor data for', Object.keys(supervisorMap).length, 'employees');
-        if (cancelled) return;
-        setEmployeeGallery((prev) =>
-          prev.map((member) => {
-            const key = normalizeKey(member.lookupKey || member.name || '');
-            const sup = supervisorMap[key];
-            if (!sup) return member;
-            return {
-              ...member,
-              supervisor: member.supervisor || sup.supervisor,
-              supervisorEmail: member.supervisorEmail || sup.supervisorEmail,
-            };
-          }),
-        );
+
       } catch (error) {
-        console.warn('Failed to load org chart', error);
+        console.warn('Org chart fetch failed', error);
       }
     };
     loadOrgChart();
@@ -10970,6 +10909,7 @@ const App = () => {
   };
 
   const handleOpenHelpDeskPortal = useCallback(() => {
+    setMenuOpen(false);
     setActivePage('HelpDesk');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
@@ -11233,6 +11173,7 @@ const App = () => {
     { label: 'Reports', onClick: () => handleJumpToSection('Reports', 'reports-hero') },
     { label: 'Software', onClick: () => handleJumpToSection('Software', 'software-hero') },
     { label: 'Vendors', onClick: () => handleJumpToSection('Vendors', 'vendors-hero') },
+    { label: 'HelpDesk Portal', page: 'HelpDesk', onClick: handleOpenHelpDeskPortal },
   ];
 
   const menuSectionLinks = [
@@ -12227,6 +12168,7 @@ const App = () => {
                     onChange={handleFilterChange}
                     onReset={() => setFilters({ ...defaultAssetFilters })}
                     types={typeOptions}
+                    isDarkMode={isDarkMode}
                   />
                   {(filters.search || filters.type !== 'all' || filters.status !== 'all' || filters.readiness !== 'all' || !filters.hideRetired) && (
                     <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50/70 px-3 py-2 text-xs text-slate-700">
@@ -12268,7 +12210,11 @@ const App = () => {
                         <select
                           value={assetPageSize}
                           onChange={(event) => setAssetPageSize(Number(event.target.value) || 15)}
-                          className="h-9 rounded-xl border border-slate-200 bg-white px-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                          className={`h-9 rounded-xl border px-2 text-sm outline-none focus:ring-2 ${
+                            isDarkMode
+                              ? 'border-white/15 bg-slate-900/70 text-slate-100 focus:border-sky-400 focus:ring-sky-500/30'
+                              : 'border-slate-200 bg-white text-slate-700 focus:border-blue-500 focus:ring-blue-100'
+                          }`}
                         >
                           {[10, 15, 25, 50].map((size) => (
                             <option key={size} value={size}>
@@ -14206,23 +14152,23 @@ const App = () => {
       </div>
 
       {spotlightOpen && selectedAsset && (
-      <AssetSpotlightModal
-        asset={selectedAsset}
-        onClose={() => {
-          setSpotlightOpen(false);
-          setSelectedAssetId(null);
-        }}
-        repairHistory={assetRepairHistory}
-        ownerHistory={assetOwnerHistory}
-        onEdit={setAssetForm}
-        onApproveIntake={handleApproveIntake}
-        onOpenAutomate={handleOpenAutomate}
-        ownerContact={ownerContact}
-        onRepair={handleOpenRepairTicketForAsset}
-        onClearMaintenance={handleClearMaintenanceAlert}
-        onClearMaintenanceAll={handleClearAllMaintenanceAlerts}
-      />
-    )}
+        <AssetSpotlightModal
+          asset={selectedAsset}
+          onClose={() => {
+            setSpotlightOpen(false);
+            setSelectedAssetId(null);
+          }}
+          repairHistory={assetRepairHistory}
+          ownerHistory={assetOwnerHistory}
+          onEdit={setAssetForm}
+          onApproveIntake={handleApproveIntake}
+          onOpenAutomate={handleOpenAutomate}
+          ownerContact={ownerContact}
+          onRepair={handleOpenRepairTicketForAsset}
+          onClearMaintenance={handleClearMaintenanceAlert}
+          onClearMaintenanceAll={handleClearAllMaintenanceAlerts}
+        />
+      )}
       {assetForm && (
         <AssetFormModal
           asset={assetForm}
@@ -14341,22 +14287,26 @@ const App = () => {
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-500">Navigate</p>
                 <div className="mt-2 flex flex-col gap-2 overflow-x-clip">
-                  {menuNavItems.map((item) => (
-                    <button
-                      key={`menu-nav-${item.label}`}
-                      type="button"
-                      onClick={item.onClick}
-                      className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-sm font-semibold ${
-                        activePage === item.label
-                          ? 'border-blue-200 bg-blue-50 text-blue-700'
-                          : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200'
-                      }`}
-                      style={{maxWidth: '100%'}}
-                    >
-                      {item.label}
-                      <ArrowRightLeft className="h-4 w-4" />
-                    </button>
-                  ))}
+                  {menuNavItems.map((item) => {
+                    const currentPage = item.page || item.label;
+                    const isActive = activePage === currentPage;
+                    return (
+                      <button
+                        key={`menu-nav-${item.label}`}
+                        type="button"
+                        onClick={item.onClick}
+                        className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-sm font-semibold ${
+                          isActive
+                            ? 'border-blue-200 bg-blue-50 text-blue-700'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200'
+                        }`}
+                        style={{ maxWidth: '100%' }}
+                      >
+                        {item.label}
+                        <ArrowRightLeft className="h-4 w-4" />
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               <div>
@@ -14428,8 +14378,8 @@ const App = () => {
           onMenu={() => setMenuOpen(true)}
         />
       )}
-      </div>
     </div>
+  </div>
   );
 };
 
