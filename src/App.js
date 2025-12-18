@@ -3,6 +3,7 @@ import jsQR from 'jsqr';
 import QRCode from 'qrcode';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import * as XLSX from 'xlsx';
+import UDSLogo from './assets/uds-logo.png';
 import {
   Laptop,
   Server,
@@ -58,6 +59,25 @@ import employeePhotoMap from './data/employeePhotos.json';
 import automateMap from './data/automateMap.json';
 
 const DARK_MODE_STYLES = `
+  /* CSS Custom Properties for Award-Winning Design */
+  :root {
+    --spacing-unit: 0.5rem;
+    --golden-ratio: 1.618;
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    --shadow-elevation-low: 0 1px 2px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.02);
+    --shadow-elevation-medium: 0 4px 16px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+    --shadow-elevation-high: 0 12px 40px rgba(0,0,0,0.12), 0 6px 20px rgba(0,0,0,0.08);
+    --shadow-elevation-ultra: 0 24px 80px rgba(0,0,0,0.16), 0 12px 40px rgba(0,0,0,0.12);
+  }
+
+  .neon-blue-text {
+    color: #38bdf8 !important;
+    text-shadow: 0 0 6px rgba(56, 189, 248, 0.65), 0 0 14px rgba(56, 189, 248, 0.35);
+  }
+  
   html.theme-dark body {
     background:
       radial-gradient(circle at 18% 18%, rgba(100, 240, 255, 0.14), transparent 32%),
@@ -72,8 +92,17 @@ const DARK_MODE_STYLES = `
   html.theme-dark .bg-white\\/80,
   html.theme-dark .bg-white\\/90 {
     background: linear-gradient(135deg, #101827 0%, #1a2332 100%) !important;
-    border: 2px solid #2563eb !important;
-    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1) !important;
+    border: 1px solid #1d4ed8 !important;
+    box-shadow: 0 2px 12px rgba(37, 99, 235, 0.12), 0 0 0 1px rgba(59, 130, 246, 0.08) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base) !important;
+  }
+  html.theme-dark .bg-white:hover,
+  html.theme-dark .rounded-3xl:hover,
+  html.theme-dark .glass-card:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2), 0 0 0 1px rgba(59, 130, 246, 0.15), 0 0 12px rgba(59, 130, 246, 0.1) !important;
   }
   html.theme-dark .bg-slate-50,
   html.theme-dark .bg-slate-50\\/60,
@@ -84,8 +113,11 @@ const DARK_MODE_STYLES = `
   html.theme-dark .bg-slate-100\\/70,
   html.theme-dark .bg-slate-200 {
     background: linear-gradient(135deg, #0f1831 0%, #1e293b 100%) !important;
-    border: 2px solid #0ea5e9 !important;
-    box-shadow: 0 4px 16px rgba(14, 165, 233, 0.2), 0 0 0 1px rgba(14, 165, 233, 0.1) !important;
+    border: 1px solid #0ea5e9 !important;
+    box-shadow: 0 2px 10px rgba(14, 165, 233, 0.16), 0 0 0 1px rgba(14, 165, 233, 0.08) !important;
+    backdrop-filter: blur(14px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+    transition: all var(--transition-base) !important;
   }
   html.theme-dark .bg-blue-50 { 
     background: linear-gradient(135deg, rgba(59,130,246,0.25) 0%, rgba(37,99,235,0.18) 100%) !important; 
@@ -126,20 +158,96 @@ const DARK_MODE_STYLES = `
   html.theme-dark textarea::placeholder {
     color: #a5b4cf !important;
   }
+  html.theme-dark .hero-shell {
+    overflow-x: clip !important;
+  }
   html.theme-dark .glass-card {
     background: linear-gradient(145deg, rgba(12, 16, 32, 0.96), rgba(11, 18, 36, 0.9)) !important;
     box-shadow:
-      0 28px 70px rgba(0, 0, 0, 0.6),
-      0 8px 32px rgba(37, 99, 235, 0.2),
-      0 0 0 1px rgba(92, 224, 255, 0.18) !important;
-    border: 2px solid rgba(37, 99, 235, 0.4) !important;
+      0 16px 40px rgba(0, 0, 0, 0.45),
+      0 4px 18px rgba(37, 99, 235, 0.15),
+      0 0 0 1px rgba(92, 224, 255, 0.12) !important;
+    border: 1px solid rgba(37, 99, 235, 0.35) !important;
+    backdrop-filter: blur(24px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
+    transition: all var(--transition-base) !important;
+    will-change: transform, box-shadow !important;
+  }
+  
+  /* Stagger Animation for Cards */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  html.theme-dark .rounded-3xl,
+  html.theme-dark .glass-card {
+    animation: slideInUp var(--transition-spring) backwards !important;
+  }
+  
+  html.theme-dark .rounded-3xl:nth-child(1),
+  html.theme-dark .glass-card:nth-child(1) { animation-delay: 0ms !important; }
+  html.theme-dark .rounded-3xl:nth-child(2),
+  html.theme-dark .glass-card:nth-child(2) { animation-delay: 50ms !important; }
+  html.theme-dark .rounded-3xl:nth-child(3),
+  html.theme-dark .glass-card:nth-child(3) { animation-delay: 100ms !important; }
+  html.theme-dark .rounded-3xl:nth-child(4),
+  html.theme-dark .glass-card:nth-child(4) { animation-delay: 150ms !important; }
+  html.theme-dark .rounded-3xl:nth-child(5),
+  html.theme-dark .glass-card:nth-child(5) { animation-delay: 200ms !important; }
+  html.theme-dark .rounded-3xl:nth-child(6),
+  html.theme-dark .glass-card:nth-child(6) { animation-delay: 250ms !important; }
+  html.theme-dark .rounded-3xl:nth-child(n+7),
+  html.theme-dark .glass-card:nth-child(n+7) { animation-delay: 300ms !important; }
+  
+  /* Button Micro-interactions */
+  html.theme-dark button,
+  html.theme-dark .button,
+  html.theme-dark [role="button"] {
+    transition: all var(--transition-fast) !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+  
+  html.theme-dark button:hover,
+  html.theme-dark .button:hover,
+  html.theme-dark [role="button"]:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3) !important;
+  }
+  
+  html.theme-dark button:active,
+  html.theme-dark .button:active,
+  html.theme-dark [role="button"]:active {
+    transform: translateY(0) scale(0.98) !important;
+    transition: all var(--transition-fast) !important;
+  }
+  
+  /* Ripple effect */
+  @keyframes ripple {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
   }
   
   /* Neon Border & Title Color Variants - Dark Mode */
   html.theme-dark .rounded-3xl:nth-child(6n+1),
   html.theme-dark .glass-card:nth-child(6n+1) {
-    border: 2px solid #38bdf8 !important;
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.3), 0 4px 12px rgba(56, 189, 248, 0.2) !important;
+    border: 1px solid #38bdf8 !important;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.25), 0 3px 8px rgba(56, 189, 248, 0.15) !important;
+    transition: all var(--transition-base) !important;
+  }
+  html.theme-dark .rounded-3xl:nth-child(6n+1):hover,
+  html.theme-dark .glass-card:nth-child(6n+1):hover {
+    border-color: #7dd3fc !important;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.22), 0 4px 10px rgba(56, 189, 248, 0.12), 0 0 16px rgba(125, 211, 252, 0.08) !important;
   }
   html.theme-dark .rounded-3xl:nth-child(6n+1) .text-sm.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n+1) .text-sm.font-semibold,
@@ -154,14 +262,20 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n+1) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n+1) .text-lg.font-semibold {
     color: #7dd3fc !important;
-    text-shadow: 0 0 20px rgba(56, 189, 248, 0.6), 0 4px 12px rgba(125, 211, 252, 0.5), 0 0 40px rgba(56, 189, 248, 0.3) !important;
+    text-shadow: 0 0 8px rgba(56, 189, 248, 0.25), 0 2px 6px rgba(125, 211, 252, 0.13), 0 0 12px rgba(56, 189, 248, 0.08) !important;
     font-weight: 800 !important;
   }
   
   html.theme-dark .rounded-3xl:nth-child(6n+2),
   html.theme-dark .glass-card:nth-child(6n+2) {
-    border: 2px solid #4ade80 !important;
-    box-shadow: 0 0 15px rgba(74, 222, 128, 0.3), 0 4px 12px rgba(74, 222, 128, 0.2) !important;
+    border: 1px solid #4ade80 !important;
+    box-shadow: 0 0 8px rgba(74, 222, 128, 0.25), 0 3px 8px rgba(74, 222, 128, 0.15) !important;
+    transition: all var(--transition-base) !important;
+  }
+  html.theme-dark .rounded-3xl:nth-child(6n+2):hover,
+  html.theme-dark .glass-card:nth-child(6n+2):hover {
+    border-color: #86efac !important;
+    box-shadow: 0 0 16px rgba(74, 222, 128, 0.3), 0 6px 16px rgba(74, 222, 128, 0.2) !important;
   }
   html.theme-dark .rounded-3xl:nth-child(6n+2) .text-sm.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n+2) .text-sm.font-semibold,
@@ -176,14 +290,20 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n+2) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n+2) .text-lg.font-semibold {
     color: #86efac !important;
-    text-shadow: 0 0 20px rgba(74, 222, 128, 0.6), 0 4px 12px rgba(134, 239, 172, 0.5), 0 0 40px rgba(74, 222, 128, 0.3) !important;
+    text-shadow: 0 0 8px rgba(74, 222, 128, 0.35), 0 2px 6px rgba(134, 239, 172, 0.25), 0 0 14px rgba(74, 222, 128, 0.15) !important;
     font-weight: 800 !important;
   }
   
   html.theme-dark .rounded-3xl:nth-child(6n+3),
   html.theme-dark .glass-card:nth-child(6n+3) {
-    border: 2px solid #c084fc !important;
-    box-shadow: 0 0 15px rgba(192, 132, 252, 0.3), 0 4px 12px rgba(192, 132, 252, 0.2) !important;
+    border: 1px solid #c084fc !important;
+    box-shadow: 0 0 8px rgba(192, 132, 252, 0.25), 0 3px 8px rgba(192, 132, 252, 0.15) !important;
+    transition: all var(--transition-base) !important;
+  }
+  html.theme-dark .rounded-3xl:nth-child(6n+3):hover,
+  html.theme-dark .glass-card:nth-child(6n+3):hover {
+    border-color: #d8b4fe !important;
+    box-shadow: 0 0 16px rgba(192, 132, 252, 0.3), 0 6px 16px rgba(192, 132, 252, 0.2) !important;
   }
   html.theme-dark .rounded-3xl:nth-child(6n+3) .text-sm.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n+3) .text-sm.font-semibold,
@@ -198,14 +318,20 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n+3) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n+3) .text-lg.font-semibold {
     color: #d8b4fe !important;
-    text-shadow: 0 0 20px rgba(192, 132, 252, 0.6), 0 4px 12px rgba(216, 180, 254, 0.5), 0 0 40px rgba(192, 132, 252, 0.3) !important;
+    text-shadow: 0 0 8px rgba(192, 132, 252, 0.35), 0 2px 6px rgba(216, 180, 254, 0.25), 0 0 14px rgba(192, 132, 252, 0.15) !important;
     font-weight: 800 !important;
   }
   
   html.theme-dark .rounded-3xl:nth-child(6n+4),
   html.theme-dark .glass-card:nth-child(6n+4) {
-    border: 2px solid #f472b6 !important;
-    box-shadow: 0 0 15px rgba(244, 114, 182, 0.3), 0 4px 12px rgba(244, 114, 182, 0.2) !important;
+    border: 1px solid #f472b6 !important;
+    box-shadow: 0 0 8px rgba(244, 114, 182, 0.25), 0 3px 8px rgba(244, 114, 182, 0.15) !important;
+    transition: all var(--transition-base) !important;
+  }
+  html.theme-dark .rounded-3xl:nth-child(6n+4):hover,
+  html.theme-dark .glass-card:nth-child(6n+4):hover {
+    border-color: #f9a8d4 !important;
+    box-shadow: 0 0 16px rgba(244, 114, 182, 0.3), 0 6px 16px rgba(244, 114, 182, 0.2) !important;
   }
   html.theme-dark .rounded-3xl:nth-child(6n+4) .text-sm.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n+4) .text-sm.font-semibold,
@@ -220,14 +346,20 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n+4) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n+4) .text-lg.font-semibold {
     color: #f9a8d4 !important;
-    text-shadow: 0 0 20px rgba(244, 114, 182, 0.6), 0 4px 12px rgba(249, 168, 212, 0.5), 0 0 40px rgba(244, 114, 182, 0.3) !important;
+    text-shadow: 0 0 8px rgba(244, 114, 182, 0.35), 0 2px 6px rgba(249, 168, 212, 0.25), 0 0 14px rgba(244, 114, 182, 0.15) !important;
     font-weight: 800 !important;
   }
   
   html.theme-dark .rounded-3xl:nth-child(6n+5),
   html.theme-dark .glass-card:nth-child(6n+5) {
-    border: 2px solid #fb7185 !important;
-    box-shadow: 0 0 15px rgba(251, 113, 133, 0.3), 0 4px 12px rgba(251, 113, 133, 0.2) !important;
+    border: 1px solid #fb7185 !important;
+    box-shadow: 0 0 8px rgba(251, 113, 133, 0.25), 0 3px 8px rgba(251, 113, 133, 0.15) !important;
+    transition: all var(--transition-base) !important;
+  }
+  html.theme-dark .rounded-3xl:nth-child(6n+5):hover,
+  html.theme-dark .glass-card:nth-child(6n+5):hover {
+    border-color: #fda4af !important;
+    box-shadow: 0 0 16px rgba(251, 113, 133, 0.3), 0 6px 16px rgba(251, 113, 133, 0.2) !important;
   }
   html.theme-dark .rounded-3xl:nth-child(6n+5) .text-sm.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n+5) .text-sm.font-semibold,
@@ -242,14 +374,20 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n+5) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n+5) .text-lg.font-semibold {
     color: #fda4af !important;
-    text-shadow: 0 0 20px rgba(251, 113, 133, 0.6), 0 4px 12px rgba(253, 164, 175, 0.5), 0 0 40px rgba(251, 113, 133, 0.3) !important;
+    text-shadow: 0 0 8px rgba(251, 113, 133, 0.35), 0 2px 6px rgba(253, 164, 175, 0.25), 0 0 14px rgba(251, 113, 133, 0.15) !important;
     font-weight: 800 !important;
   }
   
   html.theme-dark .rounded-3xl:nth-child(6n),
   html.theme-dark .glass-card:nth-child(6n) {
-    border: 2px solid #fb923c !important;
-    box-shadow: 0 0 15px rgba(251, 146, 60, 0.3), 0 4px 12px rgba(251, 146, 60, 0.2) !important;
+    border: 1px solid #fb923c !important;
+    box-shadow: 0 0 8px rgba(251, 146, 60, 0.25), 0 3px 8px rgba(251, 146, 60, 0.15) !important;
+    transition: all var(--transition-base) !important;
+  }
+  html.theme-dark .rounded-3xl:nth-child(6n):hover,
+  html.theme-dark .glass-card:nth-child(6n):hover {
+    border-color: #fdba74 !important;
+    box-shadow: 0 0 16px rgba(251, 146, 60, 0.3), 0 6px 16px rgba(251, 146, 60, 0.2) !important;
   }
   html.theme-dark .rounded-3xl:nth-child(6n) .text-sm.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n) .text-sm.font-semibold,
@@ -264,7 +402,7 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n) .text-lg.font-semibold {
     color: #fdba74 !important;
-    text-shadow: 0 0 20px rgba(251, 146, 60, 0.6), 0 4px 12px rgba(253, 186, 116, 0.5), 0 0 40px rgba(251, 146, 60, 0.3) !important;
+    text-shadow: 0 0 8px rgba(251, 146, 60, 0.35), 0 2px 6px rgba(253, 186, 116, 0.25), 0 0 14px rgba(251, 146, 60, 0.15) !important;
     font-weight: 800 !important;
   }
   
@@ -275,7 +413,7 @@ const DARK_MODE_STYLES = `
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
-    filter: drop-shadow(0 4px 20px rgba(96, 165, 250, 0.7)) drop-shadow(0 0 30px rgba(56, 189, 248, 0.5)) !important;
+    filter: drop-shadow(0 2px 12px rgba(96, 165, 250, 0.55)) drop-shadow(0 0 18px rgba(56, 189, 248, 0.35)) !important;
     font-weight: 900 !important;
     letter-spacing: -0.03em !important;
   }
@@ -283,7 +421,7 @@ const DARK_MODE_STYLES = `
   html.theme-dark .text-xl.font-semibold {
     font-size: 1.875rem !important;
     color: #60a5fa !important;
-    text-shadow: 0 4px 16px rgba(96, 165, 250, 0.6), 0 0 30px rgba(96, 165, 250, 0.4), 0 0 50px rgba(56, 189, 248, 0.3) !important;
+    text-shadow: 0 3px 12px rgba(96, 165, 250, 0.4), 0 0 18px rgba(96, 165, 250, 0.28) !important;
     font-weight: 800 !important;
     letter-spacing: -0.02em !important;
   }
@@ -291,7 +429,7 @@ const DARK_MODE_STYLES = `
   html.theme-dark .text-lg.font-semibold {
     font-size: 1.625rem !important;
     color: #7dd3fc !important;
-    text-shadow: 0 3px 12px rgba(125, 211, 252, 0.5), 0 0 24px rgba(147, 197, 253, 0.4) !important;
+    text-shadow: 0 2px 8px rgba(125, 211, 252, 0.4), 0 0 16px rgba(147, 197, 253, 0.28) !important;
     font-weight: 800 !important;
     letter-spacing: -0.015em !important;
   }
@@ -299,14 +437,14 @@ const DARK_MODE_STYLES = `
   html.theme-dark .text-base.font-semibold {
     font-size: 1.375rem !important;
     color: #93c5fd !important;
-    text-shadow: 0 2px 10px rgba(147, 197, 253, 0.45), 0 0 20px rgba(191, 219, 254, 0.3) !important;
+    text-shadow: 0 2px 6px rgba(147, 197, 253, 0.35), 0 0 12px rgba(191, 219, 254, 0.2) !important;
     font-weight: 800 !important;
   }
   html.theme-dark .text-sm.font-bold,
   html.theme-dark .text-sm.font-semibold {
     font-size: 1.125rem !important;
     color: #bfdbfe !important;
-    text-shadow: 0 2px 8px rgba(191, 219, 254, 0.4), 0 0 16px rgba(219, 234, 254, 0.3) !important;
+    text-shadow: 0 2px 5px rgba(191, 219, 254, 0.3), 0 0 10px rgba(219, 234, 254, 0.2) !important;
     font-weight: 800 !important;
   }
   html.theme-dark .text-sm.font-bold.text-slate-900,
@@ -425,7 +563,7 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .shadow-lg {
     box-shadow: 0 12px 36px rgba(15, 23, 42, 0.08) !important;
   }
-  html.theme-light .hero-shell { color: #0b1324 !important; }
+  html.theme-light .hero-shell { color: #0b1324 !important; overflow-x: clip !important; }
   html.theme-light .hero-shell [class*="text-white"] { color: #0b1324 !important; }
   html.theme-light .hero-shell [class*="text-white/"] { color: #111827 !important; }
   html.theme-light .hero-shell [class*="bg-white/"] {
@@ -457,6 +595,51 @@ const LIGHT_MODE_STYLES = `
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(245, 249, 255, 0.96)) !important;
     border: 2px solid rgba(59, 130, 246, 0.4) !important;
     box-shadow: 0 18px 56px rgba(15, 23, 42, 0.14), 0 4px 16px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    transition: all var(--transition-base) !important;
+  }
+  
+  /* Light Mode Card Hover Effects */
+  html.theme-light .rounded-3xl:hover,
+  html.theme-light .glass-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 24px 80px rgba(15, 23, 42, 0.18), 0 8px 32px rgba(59, 130, 246, 0.2) !important;
+  }
+  
+  /* Stagger Animations - Light Mode */
+  html.theme-light .rounded-3xl,
+  html.theme-light .glass-card {
+    animation: slideInUp var(--transition-spring) backwards !important;
+  }
+  
+  html.theme-light .rounded-3xl:nth-child(1),
+  html.theme-light .glass-card:nth-child(1) { animation-delay: 0ms !important; }
+  html.theme-light .rounded-3xl:nth-child(2),
+  html.theme-light .glass-card:nth-child(2) { animation-delay: 50ms !important; }
+  html.theme-light .rounded-3xl:nth-child(3),
+  html.theme-light .glass-card:nth-child(3) { animation-delay: 100ms !important; }
+  html.theme-light .rounded-3xl:nth-child(4),
+  html.theme-light .glass-card:nth-child(4) { animation-delay: 150ms !important; }
+  html.theme-light .rounded-3xl:nth-child(5),
+  html.theme-light .glass-card:nth-child(5) { animation-delay: 200ms !important; }
+  html.theme-light .rounded-3xl:nth-child(6),
+  html.theme-light .glass-card:nth-child(6) { animation-delay: 250ms !important; }
+  html.theme-light .rounded-3xl:nth-child(n+7),
+  html.theme-light .glass-card:nth-child(n+7) { animation-delay: 300ms !important; }
+  
+  /* Button Micro-interactions - Light Mode */
+  html.theme-light button:hover,
+  html.theme-light .button:hover,
+  html.theme-light [role="button"]:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25) !important;
+  }
+  
+  html.theme-light button:active,
+  html.theme-light .button:active,
+  html.theme-light [role="button"]:active {
+    transform: translateY(0) scale(0.98) !important;
   }
   
   /* Neon Border & Title Color Variants - Light Mode */
@@ -464,6 +647,12 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .glass-card:nth-child(6n+1) {
     border: 2px solid #0ea5e9 !important;
     box-shadow: 0 0 12px rgba(14, 165, 233, 0.25), 0 4px 12px rgba(14, 165, 233, 0.15) !important;
+    transition: all var(--transition-base) !important;
+  }
+  html.theme-light .rounded-3xl:nth-child(6n+1):hover,
+  html.theme-light .glass-card:nth-child(6n+1):hover {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 24px rgba(14, 165, 233, 0.4), 0 8px 20px rgba(14, 165, 233, 0.25), 0 0 40px rgba(56, 189, 248, 0.15) !important;
   }
   html.theme-light .rounded-3xl:nth-child(6n+1) .text-sm.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n+1) .text-sm.font-semibold,
@@ -485,6 +674,12 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .glass-card:nth-child(6n+2) {
     border: 2px solid #10b981 !important;
     box-shadow: 0 0 12px rgba(16, 185, 129, 0.25), 0 4px 12px rgba(16, 185, 129, 0.15) !important;
+    transition: all var(--transition-base) !important;
+  }
+  html.theme-light .rounded-3xl:nth-child(6n+2):hover,
+  html.theme-light .glass-card:nth-child(6n+2):hover {
+    border-color: #34d399 !important;
+    box-shadow: 0 0 24px rgba(16, 185, 129, 0.4), 0 8px 20px rgba(16, 185, 129, 0.25), 0 0 40px rgba(52, 211, 153, 0.15) !important;
   }
   html.theme-light .rounded-3xl:nth-child(6n+2) .text-sm.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n+2) .text-sm.font-semibold,
@@ -506,6 +701,12 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .glass-card:nth-child(6n+3) {
     border: 2px solid #8b5cf6 !important;
     box-shadow: 0 0 12px rgba(139, 92, 246, 0.25), 0 4px 12px rgba(139, 92, 246, 0.15) !important;
+    transition: all var(--transition-base) !important;
+  }
+  html.theme-light .rounded-3xl:nth-child(6n+3):hover,
+  html.theme-light .glass-card:nth-child(6n+3):hover {
+    border-color: #a78bfa !important;
+    box-shadow: 0 0 24px rgba(139, 92, 246, 0.4), 0 8px 20px rgba(139, 92, 246, 0.25), 0 0 40px rgba(167, 139, 250, 0.15) !important;
   }
   html.theme-light .rounded-3xl:nth-child(6n+3) .text-sm.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n+3) .text-sm.font-semibold,
@@ -527,6 +728,12 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .glass-card:nth-child(6n+4) {
     border: 2px solid #ec4899 !important;
     box-shadow: 0 0 12px rgba(236, 72, 153, 0.25), 0 4px 12px rgba(236, 72, 153, 0.15) !important;
+    transition: all var(--transition-base) !important;
+  }
+  html.theme-light .rounded-3xl:nth-child(6n+4):hover,
+  html.theme-light .glass-card:nth-child(6n+4):hover {
+    border-color: #f472b6 !important;
+    box-shadow: 0 0 24px rgba(236, 72, 153, 0.4), 0 8px 20px rgba(236, 72, 153, 0.25), 0 0 40px rgba(244, 114, 182, 0.15) !important;
   }
   html.theme-light .rounded-3xl:nth-child(6n+4) .text-sm.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n+4) .text-sm.font-semibold,
@@ -548,6 +755,12 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .glass-card:nth-child(6n+5) {
     border: 2px solid #ef4444 !important;
     box-shadow: 0 0 12px rgba(239, 68, 68, 0.25), 0 4px 12px rgba(239, 68, 68, 0.15) !important;
+    transition: all var(--transition-base) !important;
+  }
+  html.theme-light .rounded-3xl:nth-child(6n+5):hover,
+  html.theme-light .glass-card:nth-child(6n+5):hover {
+    border-color: #f87171 !important;
+    box-shadow: 0 0 24px rgba(239, 68, 68, 0.4), 0 8px 20px rgba(239, 68, 68, 0.25), 0 0 40px rgba(248, 113, 113, 0.15) !important;
   }
   html.theme-light .rounded-3xl:nth-child(6n+5) .text-sm.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n+5) .text-sm.font-semibold,
@@ -569,6 +782,12 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .glass-card:nth-child(6n) {
     border: 2px solid #f97316 !important;
     box-shadow: 0 0 12px rgba(249, 115, 22, 0.25), 0 4px 12px rgba(249, 115, 22, 0.15) !important;
+    transition: all var(--transition-base) !important;
+  }
+  html.theme-light .rounded-3xl:nth-child(6n):hover,
+  html.theme-light .glass-card:nth-child(6n):hover {
+    border-color: #fb923c !important;
+    box-shadow: 0 0 24px rgba(249, 115, 22, 0.4), 0 8px 20px rgba(249, 115, 22, 0.25), 0 0 40px rgba(251, 146, 60, 0.15) !important;
   }
   html.theme-light .rounded-3xl:nth-child(6n) .text-sm.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n) .text-sm.font-semibold,
@@ -950,22 +1169,6 @@ const defaultEmployeeProfile = {
 const NAV_LINKS = ['Overview', 'Hardware', 'Repairs', 'Employees', 'Reports', 'Software', 'Vendors'];
 
 const PUBLIC_URL = process.env.PUBLIC_URL || '';
-const normalizedPublicUrl = PUBLIC_URL.replace(/\/+$/, '');
-const deriveHelpDeskFallback = () => {
-  if (typeof window !== 'undefined') {
-    const { port, origin } = window.location;
-    if (port === '3000') {
-      // Local dev: assume the portal runs separately on 3001.
-      return 'http://localhost:3010';
-    }
-    // Default to the same origin plus the helpdesk path.
-    return `${origin}/helpdesk-portal/`;
-  }
-  // Production build fallback.
-  return `${normalizedPublicUrl || ''}/helpdesk-portal/`;
-};
-const HELP_DESK_PORTAL_FALLBACK = deriveHelpDeskFallback();
-const HELP_DESK_PORTAL_URL = process.env.REACT_APP_HELPDESK_PORTAL_URL || HELP_DESK_PORTAL_FALLBACK;
 const ZOOM_WEBHOOK_URL = process.env.REACT_APP_ZOOM_WEBHOOK_URL || '';
 const ZOOM_WEBHOOK_TOKEN = process.env.REACT_APP_ZOOM_WEBHOOK_TOKEN || '';
 const ZOOM_ALERT_ENDPOINT = API_STORAGE_BASE ? `${API_STORAGE_BASE}/zoom-alert` : '';
@@ -1081,7 +1284,7 @@ const PRINTER_VENDOR_DIRECTORY = {
     id: 'colony',
     name: 'Colony Products',
     description: 'Canon copier fleet service and toner logistics.',
-    badge: 'bg-rose-50 text-rose-700 ring-rose-100',
+    badge: 'tone-chip tone-alert',
     brands: ['Canon'],
     contact: {
       label: 'Submit service request',
@@ -1093,7 +1296,7 @@ const PRINTER_VENDOR_DIRECTORY = {
     id: 'weaver',
     name: 'Weaver Associates',
     description: 'Weaver handles HP, Lexmark, and Epson toner & maintenance.',
-    badge: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+    badge: 'tone-chip tone-success',
     brands: ['HP', 'Lexmark', 'Epson'],
     contact: {
       label: 'Submit repair ticket',
@@ -1136,7 +1339,7 @@ const NETWORK_PRINTERS = RAW_NETWORK_PRINTER_ROWS.map((row) => {
     ...row,
     vendor: vendorId,
     vendorName: vendorInfo?.name || 'Vendor',
-    vendorBadge: vendorInfo?.badge || 'bg-slate-100 text-slate-600 ring-slate-200',
+    vendorBadge: vendorInfo?.badge || 'tone-chip tone-neutral',
   };
 });
 const NETWORK_PRINTER_BRAND_TOTALS = NETWORK_PRINTERS.reduce((acc, printer) => {
@@ -2689,14 +2892,27 @@ const isAssetReady = (asset = {}) => {
 };
 
 const statusClasses = {
-  Available: 'bg-emerald-50 text-emerald-700',
-  'Checked Out': 'bg-blue-50 text-blue-700',
-  Maintenance: 'bg-amber-50 text-amber-700',
+  Available: 'bg-emerald-50 status-success',
+  'Checked Out': 'bg-blue-50 status-info',
+  Maintenance: 'bg-amber-50 status-warning',
   Retired: 'bg-slate-100 text-slate-500',
 };
 
 const getAssetDisplayStatus = (asset) =>
   normalizeStatusLabel(asset?.status) || (asset?.checkedOut ? 'Checked Out' : 'Available');
+
+const getRenewalBadgeTone = (daysUntilRenewal) => {
+  if (daysUntilRenewal < 0) {
+    return 'tone-alert';
+  }
+  if (daysUntilRenewal <= 30) {
+    return 'tone-warning';
+  }
+  if (daysUntilRenewal <= 90) {
+    return 'tone-info';
+  }
+  return 'tone-neutral';
+};
 
 const YEAR_IN_MS = 1000 * 60 * 60 * 24 * 365;
 const LAPTOP_REPAIR_NOTES = [
@@ -3014,16 +3230,16 @@ const PrimaryNav = ({
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-3">
             <img
-              src={MEDIA.logo}
+              src={UDSLogo}
               alt="United Disabilities Services logo"
-              className="h-11 w-11 rounded-2xl border border-slate-100 bg-white object-contain p-1.5 shadow-sm"
+              className="h-20 w-20 rounded-2xl border border-slate-100 bg-white object-contain p-1.5 shadow-sm"
             />
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">United Disabilities Services</p>
-              <p className="text-base font-semibold text-slate-900">Asset Control Studio</p>
+              <p className="text-5xl font-extrabold leading-tight neon-blue-text">Asset Control Studio</p>
             </div>
           </div>
-          <span className="hidden items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 sm:inline-flex">
+          <span className="hidden items-center gap-2 tone-chip tone-warning px-3 py-1 text-[11px] font-semibold sm:inline-flex">
             <ShieldCheck className="h-3.5 w-3.5" />
             Sync paused
           </span>
@@ -3140,9 +3356,6 @@ const DeviceSpotlightCard = ({ title, stats = [], stat, description, image, meta
         ? 'border-slate-700 bg-slate-900 text-white' 
         : 'border-slate-200 bg-white text-slate-900'
     }`}>
-      {image && <img src={image} alt="" className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 hover:opacity-50 ${
-        isDarkMode ? 'opacity-40' : 'opacity-20'
-      }`} />}
       <div className={`absolute inset-0 ${
         isDarkMode 
           ? 'bg-gradient-to-br from-slate-900/95 via-blue-900/80 to-purple-900/70' 
@@ -3255,9 +3468,9 @@ const OverviewAttentionPanel = ({
   onClearWarrantyReminder = () => {},
 }) => {
   const summary = [
-    { label: 'Overdue', value: overdue.length, tone: 'bg-rose-50 text-rose-700' },
-    { label: 'Due soon', value: dueSoon.length, tone: 'bg-amber-50 text-amber-700' },
-    { label: 'Work orders', value: maintenance.length, tone: 'bg-blue-50 text-blue-700' },
+    { label: 'Overdue', value: overdue.length, tone: 'tone-panel tone-alert' },
+    { label: 'Due soon', value: dueSoon.length, tone: 'tone-panel tone-warning' },
+    { label: 'Work orders', value: maintenance.length, tone: 'tone-panel tone-info' },
   ];
   const reminders = reminderPreview.slice(0, 4);
 
@@ -3277,7 +3490,7 @@ const OverviewAttentionPanel = ({
     >
       <div className="grid gap-3 sm:grid-cols-3">
         {summary.map((item) => (
-          <div key={item.label} className={`rounded-2xl border border-slate-100 p-3 text-sm font-semibold ${item.tone}`}>
+          <div key={item.label} className={`${item.tone} p-3 text-sm font-semibold`}>
             <p className="text-xs uppercase tracking-wide text-slate-500">{item.label}</p>
             <p className="text-lg">{item.value}</p>
           </div>
@@ -3298,9 +3511,7 @@ const OverviewAttentionPanel = ({
                 </p>
               </div>
               <span
-                className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${
-                  reminder.overdue ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'
-                }`}
+                className={`tone-chip ${reminder.overdue ? 'tone-alert' : 'tone-warning'} px-3 py-1 text-[11px] font-semibold uppercase tracking-wide`}
               >
                 {reminder.overdue ? 'Overdue' : `Due in ${reminder.daysRemaining}d`}
               </span>
@@ -3308,7 +3519,7 @@ const OverviewAttentionPanel = ({
             {reminder.type === 'Service' && (
               <button
                 type="button"
-                className="mt-2 text-xs font-semibold text-amber-700 underline underline-offset-4"
+                className="mt-2 text-xs font-semibold status-warning underline underline-offset-4"
                 onClick={() => onClearServiceReminder(reminder)}
               >
                 Clear
@@ -3337,9 +3548,7 @@ const OverviewAttentionPanel = ({
               >
                 {suite.software}
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${
-                    suite.status === 'Overused' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'
-                  }`}
+                  className={`tone-chip ${suite.status === 'Overused' ? 'tone-alert' : 'tone-warning'} px-2 py-0.5 text-[10px] uppercase tracking-wide`}
                 >
                   {suite.status}
                 </span>
@@ -3367,7 +3576,7 @@ const OverviewActivityCard = ({ history = [], maintenance = [], lookupAsset }) =
           <div key={entry.id} className="flex items-start gap-3 rounded-2xl border border-slate-100 p-3">
             <div
               className={`rounded-full p-2 ${
-                entry.action === 'Check Out' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'
+                entry.action === 'Check Out' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 status-success-muted'
               }`}
             >
               <ArrowRightLeft className="h-4 w-4" />
@@ -3450,11 +3659,14 @@ const VendorCard = ({ vendor }) => {
     <div className="glass-card flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/50 bg-white shadow-2xl ring-1 ring-slate-100 hover-lift transition-all duration-500 hover:ring-2 hover:ring-blue-300/50">
       <div className="relative h-48 w-full overflow-hidden">
         <img src={imageSrc} alt={`${vendor.name} visual`} className="h-full w-full object-cover" loading="lazy" />
-        <div className="absolute inset-0" style={{ backgroundImage: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`, opacity: 0.85 }} />
+        <div className="absolute inset-0" style={{ backgroundImage: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`, opacity: 0.75 }} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-slate-900/40 to-transparent" />
         <div className="absolute bottom-4 left-4 right-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/70">Vendor partner</p>
-          <p className="mt-1 text-2xl font-semibold text-white drop-shadow">{vendor.name}</p>
-          <p className="text-xs text-white/80">{vendor.description}</p>
+          <div className="rounded-2xl bg-slate-950/65 p-4 text-white shadow-lg shadow-black/30 backdrop-blur">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/80">Vendor partner</p>
+            <p className="mt-1 text-2xl font-semibold drop-shadow">{vendor.name}</p>
+            <p className="text-xs text-white/85">{vendor.description}</p>
+          </div>
         </div>
       </div>
       <div className="flex flex-1 flex-col justify-between p-6">
@@ -3475,12 +3687,12 @@ const VendorCard = ({ vendor }) => {
             <p className="text-xs uppercase tracking-widest text-slate-400">Devices</p>
             <p className="mt-1 text-xl">{vendor.assetCount}</p>
           </div>
-          <div className="rounded-2xl bg-emerald-50/80 p-3 text-center text-emerald-700">
-            <p className="text-xs uppercase tracking-widest text-emerald-600/80">Active</p>
+          <div className="tone-panel tone-success p-3 text-center">
+            <p className="text-xs uppercase tracking-widest opacity-80">Active</p>
             <p className="mt-1 text-xl">{vendor.activeCount}</p>
           </div>
-          <div className="rounded-2xl bg-amber-50/80 p-3 text-center text-amber-700">
-            <p className="text-xs uppercase tracking-widest text-amber-600/80">Maintenance</p>
+          <div className="tone-panel tone-warning p-3 text-center">
+            <p className="text-xs uppercase tracking-widest opacity-80">Maintenance</p>
             <p className="mt-1 text-xl">{vendor.maintenanceCount}</p>
           </div>
         </div>
@@ -3918,12 +4130,12 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll, isDarkMode = f
                 : 'bg-white ring-amber-200 shadow-sm'
             }`}
           >
-            <CalendarClock className={`h-5 w-5 ${isDarkMode ? 'text-amber-200' : 'text-amber-700'}`} />
+            <CalendarClock className="h-5 w-5 status-warning" />
           </span>
           <div>
             <p
               className={`text-[11px] font-semibold uppercase tracking-[0.3rem] ${
-                isDarkMode ? 'text-white/70' : 'text-amber-700/80'
+                isDarkMode ? 'text-white/70' : 'status-warning opacity-80'
               }`}
             >
               Warranty alerts
@@ -3941,7 +4153,7 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll, isDarkMode = f
               className={`rounded-2xl px-4 py-2 text-xs font-semibold transition hover:-translate-y-0.5 ${
                 isDarkMode
                   ? 'border border-white/20 bg-white/10 text-white hover:border-white/30 hover:bg-white/15'
-                  : 'border border-amber-200 bg-white/80 text-amber-800 shadow-sm hover:border-amber-300 hover:bg-white'
+                  : 'border border-amber-200 bg-white/80 status-warning shadow-sm hover:border-amber-300 hover:bg-white'
               }`}
               onClick={() => onClearAll(alerts)}
             >
@@ -3972,7 +4184,7 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll, isDarkMode = f
         >
           <p
             className={`text-[11px] uppercase tracking-[0.25rem] ${
-              isDarkMode ? 'text-white/60' : 'text-amber-700/70'
+              isDarkMode ? 'text-white/60' : 'status-warning opacity-70'
             }`}
           >
             Total alerts
@@ -3986,12 +4198,12 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll, isDarkMode = f
         >
           <p
             className={`text-[11px] uppercase tracking-[0.25rem] ${
-              isDarkMode ? 'text-white/60' : 'text-amber-700/70'
+              isDarkMode ? 'text-white/60' : 'status-warning opacity-70'
             }`}
           >
             Next expiry
           </p>
-          <p className={`mt-2 text-lg font-semibold ${isDarkMode ? 'text-amber-100' : 'text-amber-700'}`}>{nextExpiry || '-'}</p>
+          <p className="mt-2 text-lg font-semibold status-warning">{nextExpiry || '-'}</p>
         </div>
         <div
           className={`rounded-2xl border p-4 shadow-inner backdrop-blur ${
@@ -4000,7 +4212,7 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll, isDarkMode = f
         >
           <p
             className={`text-[11px] uppercase tracking-[0.25rem] ${
-              isDarkMode ? 'text-white/60' : 'text-amber-700/70'
+              isDarkMode ? 'text-white/60' : 'status-warning opacity-70'
             }`}
           >
             Action
@@ -4022,7 +4234,7 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll, isDarkMode = f
             <div className="flex items-center gap-3">
               <div
                 className={`flex h-9 w-9 items-center justify-center rounded-xl ring-1 ${
-                  isDarkMode ? 'bg-amber-500/20 text-amber-100 ring-amber-300/40' : 'bg-amber-100 text-amber-700 ring-amber-200'
+                  isDarkMode ? 'bg-amber-500/20 status-warning ring-amber-300/40' : 'bg-amber-100 status-warning ring-amber-200'
                 }`}
               >
                 {index + 1}
@@ -4037,8 +4249,8 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll, isDarkMode = f
               </div>
             </div>
             <div className="text-right">
-              <p className={`text-xs uppercase tracking-wide ${isDarkMode ? 'text-white/60' : 'text-amber-700/70'}`}>Expires</p>
-              <p className={`text-sm font-semibold ${isDarkMode ? 'text-amber-100' : 'text-amber-700'}`}>{formatDate(alert.warrantyExpiry)}</p>
+              <p className={`text-xs uppercase tracking-wide ${isDarkMode ? 'text-white/60' : 'status-warning opacity-70'}`}>Expires</p>
+              <p className="text-sm font-semibold status-warning">{formatDate(alert.warrantyExpiry)}</p>
             </div>
           </div>
         ))}
@@ -4054,7 +4266,7 @@ const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll, isDarkMode = f
             {typeof onViewAll === 'function' && (
               <button
                 type="button"
-                className={isDarkMode ? 'text-amber-200 underline underline-offset-4' : 'text-amber-700 underline underline-offset-4'}
+                className="status-warning underline underline-offset-4"
                 onClick={onViewAll}
               >
                 Review all
@@ -4347,9 +4559,9 @@ const AnalyticsInsightsPanel = ({ costData = [], depreciation = [] }) => (
 const MaintenanceWorkflowBoard = ({ workOrders = [], isDarkMode = false }) => {
   const columns = [
     { label: 'Planned', key: 'Planned', color: 'from-sky-100 to-white', chip: 'bg-sky-500/10 text-sky-700' },
-    { label: 'In Progress', key: 'In Progress', color: 'from-amber-100 to-white', chip: 'bg-amber-500/10 text-amber-700' },
+    { label: 'In Progress', key: 'In Progress', color: 'from-amber-100 to-white', chip: 'bg-amber-500/10 status-warning' },
     { label: 'Awaiting Parts', key: 'Awaiting Parts', color: 'from-indigo-100 to-white', chip: 'bg-indigo-500/10 text-indigo-700' },
-    { label: 'Completed', key: 'Completed', color: 'from-emerald-100 to-white', chip: 'bg-emerald-500/10 text-emerald-700' },
+    { label: 'Completed', key: 'Completed', color: 'from-emerald-100 to-white', chip: 'bg-emerald-500/10 status-success' },
   ];
 
   const totals = workOrders.reduce(
@@ -4364,12 +4576,12 @@ const MaintenanceWorkflowBoard = ({ workOrders = [], isDarkMode = false }) => {
   const statusBadge = (severity = 'Normal') => {
     const tone =
       /high/i.test(severity) || /sev\s*1/i.test(severity)
-        ? 'bg-rose-50 text-rose-700 border-rose-100'
+        ? 'tone-chip tone-alert'
         : /medium|sev\s*2/i.test(severity)
-          ? 'bg-amber-50 text-amber-700 border-amber-100'
-          : 'bg-emerald-50 text-emerald-700 border-emerald-100';
+          ? 'tone-chip tone-warning'
+          : 'tone-chip tone-success';
     return (
-      <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${tone}`}>{severity}</span>
+      <span className={`${tone} px-3 py-1 text-xs font-semibold`}>{severity}</span>
     );
   };
 
@@ -4789,7 +5001,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
           <div>
             <p
               className={`text-[11px] font-semibold uppercase tracking-[0.35rem] ${
-                isDarkMode ? 'text-white/70' : 'text-amber-700/80'
+                isDarkMode ? 'text-white/70' : 'status-warning opacity-80'
               }`}
             >
               Repair desk
@@ -4803,7 +5015,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
               className={`inline-flex items-center gap-2 rounded-2xl px-3 py-1.5 text-xs font-semibold transition hover:-translate-y-0.5 ${
                 isDarkMode
                   ? 'border border-white/20 bg-white/10 text-white hover:border-white/30 hover:bg-white/15'
-                  : 'border border-amber-200 bg-white text-amber-800 shadow-sm hover:border-blue-200 hover:text-blue-700'
+                  : 'border border-amber-200 bg-white status-warning shadow-sm hover:border-blue-200 hover:text-blue-700'
               }`}
             >
               <Plus className="h-4 w-4" />
@@ -4812,7 +5024,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
           )}
         </div>
         <div className="text-right">
-          <p className={`text-xs uppercase tracking-widest ${isDarkMode ? 'text-white/60' : 'text-amber-700/80'}`}>Avg age in repair</p>
+          <p className={`text-xs uppercase tracking-widest ${isDarkMode ? 'text-white/60' : 'status-warning opacity-80'}`}>Avg age in repair</p>
           <p className={`text-2xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{avgRepairAgeMonths || 0} mo</p>
         </div>
       </div>
@@ -4826,7 +5038,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
             <div>
               <p
                 className={`text-xs font-semibold uppercase tracking-[0.25rem] ${
-                  isDarkMode ? 'text-white/70' : 'text-amber-700/80'
+                  isDarkMode ? 'text-white/70' : 'status-warning opacity-80'
                 }`}
               >
                 Laptops out for repair
@@ -4835,7 +5047,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
             </div>
             <span
               className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                isDarkMode ? 'bg-amber-900/40 text-amber-100 ring-1 ring-amber-500/30' : 'bg-amber-100 text-amber-800 ring-1 ring-amber-200'
+                isDarkMode ? 'bg-amber-900/40 status-warning ring-1 ring-amber-500/30' : 'bg-amber-100 status-warning ring-1 ring-amber-200'
               }`}
             >
               {repairTotal > 0 ? 'In progress' : 'All clear'}
@@ -4896,7 +5108,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
               <div>
                 <p
                   className={`text-xs font-semibold uppercase tracking-[0.25rem] ${
-                    isDarkMode ? 'text-white/70' : 'text-amber-700/80'
+                    isDarkMode ? 'text-white/70' : 'status-warning opacity-80'
                   }`}
                 >
                   Loaner coverage
@@ -4921,7 +5133,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
                   isDarkMode ? 'border-white/10 bg-white/5 text-white' : 'border-emerald-100 bg-white text-slate-800'
                 }`}
               >
-                <p className={`text-lg ${isDarkMode ? 'text-emerald-200' : 'text-emerald-700'}`}>{loanerAvailableCount}</p>
+                <p className="text-lg status-success">{loanerAvailableCount}</p>
                 <p className={isDarkMode ? 'text-white/70' : 'text-slate-600'}>Available</p>
               </div>
               <div
@@ -4929,7 +5141,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
                   isDarkMode ? 'border-white/10 bg-white/5 text-white' : 'border-amber-100 bg-white text-slate-800'
                 }`}
               >
-                <p className={`text-lg ${isDarkMode ? 'text-amber-200' : 'text-amber-700'}`}>{loanerDeployedCount}</p>
+                <p className="text-lg status-warning">{loanerDeployedCount}</p>
                 <p className={isDarkMode ? 'text-white/70' : 'text-slate-600'}>Deployed</p>
               </div>
               <div
@@ -4956,7 +5168,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
                   >
                     <div>
                       <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{loaner.assetId}</p>
-                      <p className={`text-[11px] ${isDarkMode ? 'text-emerald-200' : 'text-emerald-700'}`}>{loaner.location}</p>
+                      <p className="text-[11px] status-success">{loaner.location}</p>
                     </div>
                     {typeof onLoanerCheckout === 'function' && (
                       <button
@@ -4965,7 +5177,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
                         className={`rounded-2xl px-3 py-1 text-xs font-semibold transition hover:-translate-y-0.5 ${
                           isDarkMode
                             ? 'border border-emerald-800 bg-emerald-950 text-emerald-100 hover:border-emerald-700'
-                            : 'border border-emerald-200 bg-white text-emerald-700 shadow-sm hover:border-emerald-300'
+                            : 'border border-emerald-200 bg-white status-success shadow-sm hover:border-emerald-300'
                         }`}
                       >
                         Check out
@@ -4989,7 +5201,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
           <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800/60">
             <p
               className={`text-xs font-semibold uppercase tracking-[0.25rem] ${
-                isDarkMode ? 'text-white/70' : 'text-amber-700/80'
+                isDarkMode ? 'text-white/70' : 'status-warning opacity-80'
               }`}
             >
               Currently deployed
@@ -5062,7 +5274,7 @@ const RepairPartsPanel = ({ models = [], isDarkMode = false }) => {
         <div>
           <p
             className={`text-[11px] font-semibold uppercase tracking-[0.35rem] ${
-              isDarkMode ? 'text-white/70' : 'text-amber-700/80'
+              isDarkMode ? 'text-white/70' : 'status-warning opacity-80'
             }`}
           >
             Parts ordering
@@ -5076,7 +5288,7 @@ const RepairPartsPanel = ({ models = [], isDarkMode = false }) => {
           className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${
             isDarkMode
               ? 'bg-emerald-900/40 text-emerald-100 ring-emerald-500/30'
-              : 'bg-emerald-50 text-emerald-700 ring-emerald-100'
+              : 'bg-emerald-50 status-success ring-emerald-100'
           }`}
         >
           Replacement parts
@@ -5102,7 +5314,7 @@ const RepairPartsPanel = ({ models = [], isDarkMode = false }) => {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{entry.model}</p>
-                  <p className={`text-[11px] uppercase tracking-widest ${isDarkMode ? 'text-white/60' : 'text-amber-700/70'}`}>
+                  <p className={`text-[11px] uppercase tracking-widest ${isDarkMode ? 'text-white/60' : 'status-warning opacity-70'}`}>
                     {entry.count} in fleet
                   </p>
                 </div>
@@ -5339,9 +5551,7 @@ const LicenseRiskReport = ({ data = [], onExport }) => {
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-slate-900">{suite.software}</p>
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                    suite.status === 'Overused' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
-                  }`}
+                  className={`tone-chip ${suite.status === 'Overused' ? 'tone-alert' : 'tone-warning'} px-2 py-0.5 text-[11px] font-semibold`}
                 >
                   {suite.status}
                 </span>
@@ -5405,8 +5615,8 @@ const LoanerCoverageReport = ({ data, onExport }) => {
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 text-center">
-          <p className="text-xs uppercase tracking-[0.3rem] text-emerald-600">Available</p>
-          <p className="mt-1 text-2xl font-semibold text-emerald-700">{loanerAvailableCount}</p>
+          <p className="text-xs uppercase tracking-[0.3rem] status-success-muted">Available</p>
+          <p className="mt-1 text-2xl font-semibold status-success">{loanerAvailableCount}</p>
         </div>
         <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-center">
           <p className="text-xs uppercase tracking-[0.3rem] text-blue-600">Deployed</p>
@@ -5938,7 +6148,7 @@ const ActivityPanel = ({ history, lookupAsset }) => (
           <div key={entry.id} className="flex items-start gap-3 rounded-2xl border border-slate-100 p-4">
             <div
               className={`rounded-full p-2 ${
-                entry.action === 'Check Out' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'
+                entry.action === 'Check Out' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 status-success-muted'
               }`}
             >
               <ArrowRightLeft className="h-4 w-4" />
@@ -6027,7 +6237,7 @@ const QrToolingPanel = ({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Scan className="h-4 w-4 text-emerald-600" />
+          <Scan className="h-4 w-4 status-success-muted" />
           <p className="text-sm font-semibold text-slate-900">Scan QR / barcode</p>
         </div>
         <div className="flex items-center gap-2">
@@ -6036,8 +6246,8 @@ const QrToolingPanel = ({
             onClick={scannerActive ? onStopScanner : onStartScanner}
             className={`rounded-2xl px-3 py-1.5 text-xs font-semibold ${
               scannerActive
-                ? 'border border-rose-200 bg-rose-50 text-rose-700'
-                : 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                ? 'border border-rose-200 bg-rose-50 status-alert'
+                : 'border border-emerald-200 bg-emerald-50 status-success'
             }`}
           >
             {scannerActive ? 'Stop' : 'Start'}
@@ -6060,8 +6270,8 @@ const QrToolingPanel = ({
           </div>
         )}
       </div>
-      {scannerError && <p className="text-xs text-rose-600">{scannerError}</p>}
-      {scanMessage && <p className="text-xs text-amber-600">{scanMessage}</p>}
+      {scannerError && <p className="text-xs status-alert-muted">{scannerError}</p>}
+      {scanMessage && <p className="text-xs status-warning-muted">{scanMessage}</p>}
       <div className="space-y-2">
         <label className="text-xs font-semibold text-slate-700">Enter code manually</label>
         <div className="flex items-center gap-2">
@@ -6300,7 +6510,7 @@ const MobileActionBar = ({ onAdd, onWarranty, onFilters, onScan, onMenu }) => (
       <button
         type="button"
         onClick={onScan}
-        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700"
+        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 status-success"
       >
         <Scan className="h-4 w-4" />
         Scan
@@ -6316,7 +6526,7 @@ const MobileActionBar = ({ onAdd, onWarranty, onFilters, onScan, onMenu }) => (
       <button
         type="button"
         onClick={onWarranty}
-        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800"
+        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 status-warning"
       >
         <CalendarClock className="h-4 w-4" />
         Warranty
@@ -6417,7 +6627,7 @@ const AssetSpotlight = ({
             {!ready && (
               <button
                 onClick={() => onApproveIntake?.(asset)}
-                className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
+                className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold status-success hover:bg-emerald-100"
                 type="button"
               >
                 <Check className="h-4 w-4" />
@@ -6438,7 +6648,7 @@ const AssetSpotlight = ({
               <button
                 type="button"
                 onClick={() => onRepair?.(asset)}
-                className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+                className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold status-warning hover:bg-amber-100"
               >
                 <HardDrive className="h-4 w-4" />
                 Repair
@@ -6504,16 +6714,16 @@ const AssetSpotlight = ({
           {!ready && (
             <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-bold uppercase tracking-wider text-amber-700">Intake Readiness</p>
-                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+                <p className="text-xs font-bold uppercase tracking-wider status-warning">Intake Readiness</p>
+                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold status-warning">
                   {qualityScore}% Complete
                 </span>
               </div>
               {qualityIssues.length > 0 && (
-                <ul className="space-y-1 text-xs text-amber-800">
+                <ul className="space-y-1 text-xs status-warning">
                   {qualityIssues.map((issue) => (
                     <li key={issue} className="flex items-start gap-2">
-                      <span className="text-amber-500 mt-0.5">•</span>
+                      <span className="status-warning-muted mt-0.5">•</span>
                       <span>{issue}</span>
                     </li>
                   ))}
@@ -6544,7 +6754,7 @@ const AssetSpotlight = ({
                     <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Repair History</p>
                     <button
                       type="button"
-                      className="text-[11px] font-semibold text-amber-700 underline underline-offset-2"
+                      className="text-[11px] font-semibold status-warning underline underline-offset-2"
                       onClick={() => onClearMaintenanceAll(repairHistory)}
                     >
                       Clear all
@@ -6561,7 +6771,7 @@ const AssetSpotlight = ({
                           <div className="flex items-center gap-2">
                             <span
                               className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                                item.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                                item.status === 'Completed' ? 'bg-emerald-100 status-success' : 'bg-amber-100 status-warning'
                               }`}
                             >
                               {item.status}
@@ -6863,7 +7073,7 @@ const AssetFormModal = ({
         <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4 text-sm text-slate-700">
           <div className="flex items-center justify-between">
             <p className="font-semibold text-slate-800">Intake readiness</p>
-            <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${qualityIssues.length === 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+            <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${qualityIssues.length === 0 ? 'bg-emerald-50 status-success' : 'bg-amber-50 status-warning'}`}>
               {qualityIssues.length === 0 ? 'Ready' : `${qualityScore}% complete`}
             </span>
           </div>
@@ -7418,13 +7628,13 @@ const EmployeeFormModal = ({
                 <button
                   type="button"
                   onClick={handleRemovePhoto}
-                  className="text-xs font-semibold text-rose-600 hover:text-rose-500"
+                  className="text-xs font-semibold status-alert-muted hover:opacity-80"
                   disabled={uploadingPhoto}
                 >
                   Remove photo
                 </button>
               )}
-              {photoError && <p className="text-xs text-rose-600">{photoError}</p>}
+              {photoError && <p className="text-xs status-alert-muted">{photoError}</p>}
               {!photoError && uploadingPhoto && <p className="text-xs text-slate-500">Uploading to secure storage...</p>}
             </div>
           </div>
@@ -7475,7 +7685,7 @@ const WarrantyAlertModal = ({ alerts = [], onClose, onClear, onClearAll }) => {
               <button
                 type="button"
                 onClick={handleClearAll}
-                className="rounded-2xl border border-amber-200 bg-white px-4 py-1.5 text-xs font-semibold text-amber-800 transition hover:border-amber-300 hover:text-amber-900"
+                className="rounded-2xl border border-amber-200 bg-white px-4 py-1.5 text-xs font-semibold status-warning transition hover:border-amber-300 hover:text-amber-900"
               >
                 Clear all alerts
               </button>
@@ -7510,14 +7720,14 @@ const WarrantyAlertModal = ({ alerts = [], onClose, onClear, onClearAll }) => {
                         {alert.warrantyExpiry ? formatDate(alert.warrantyExpiry) : 'Not set'}
                       </td>
                       <td className="px-4 py-3 align-top">
-                        <span className={`text-sm font-semibold ${alert.overdue ? 'text-rose-600' : 'text-amber-600'}`}>{statusLabel}</span>
+                        <span className={`text-sm font-semibold ${alert.overdue ? 'status-alert-muted' : 'status-warning-muted'}`}>{statusLabel}</span>
                       </td>
                       {canClear && (
                         <td className="px-4 py-3 align-top text-right">
                           <button
                             type="button"
                             onClick={() => onClear(alert)}
-                            className="rounded-full px-3 py-1 text-xs font-semibold text-amber-800 transition hover:text-rose-600"
+                            className="rounded-full px-3 py-1 text-xs font-semibold status-warning transition hover:opacity-80"
                           >
                             Clear
                           </button>
@@ -7767,10 +7977,10 @@ const App = () => {
               : (ticket.assignedTo || '').trim();
         const vendorBadge =
           vendorId === 'colony'
-            ? 'bg-rose-50 text-rose-700 ring-rose-100'
+            ? 'tone-chip tone-alert'
             : vendorId === 'weaver'
-              ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
-              : 'bg-slate-100 text-slate-700 ring-slate-200';
+              ? 'tone-chip tone-success'
+              : 'tone-chip tone-neutral';
         return {
           ...ticket,
           printerLabel: printer
@@ -10204,7 +10414,7 @@ const App = () => {
       if (!form) return;
       const vendor = (form.vendorName || '').toLowerCase().includes('colony') ? 'colony' : form.vendor || '';
       const vendorBadge = vendor
-        ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
+        ? 'bg-emerald-50 status-success ring-emerald-100'
         : 'bg-slate-100 text-slate-700 ring-slate-200';
       const normalized = { ...form, id: form.id || Date.now(), vendor, vendorBadge };
       setNetworkPrinters((prev) => {
@@ -11541,7 +11751,7 @@ const App = () => {
           <p className="mt-2 text-sm text-slate-600">
             Enter your username to continue with Duo 2FA verification.
           </p>
-          {authError && <p className="mt-3 rounded-2xl bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700">{authError}</p>}
+          {authError && <p className="mt-3 rounded-2xl bg-rose-50 px-4 py-2 text-sm font-semibold status-alert">{authError}</p>}
           <form onSubmit={beginDuoLogin} className="mt-6">
             <label htmlFor="username" className="block text-sm font-medium text-slate-700">
               Username
@@ -11630,7 +11840,7 @@ const App = () => {
           onClose={() => setCommandPaletteOpen(false)}
         />
         {isOffline && (
-          <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm status-warning">
             Offline mode: changes will queue locally until you reconnect.
           </div>
         )}
@@ -11680,7 +11890,7 @@ const App = () => {
                 </div>
                 <div className={`rounded-2xl p-4 text-sm shadow-inner ${heroStatCardClass}`}>
                   <p className={`text-[11px] uppercase tracking-[0.3rem] ${heroLabelClass}`}>Support</p>
-                  <p className={`mt-1 text-lg font-semibold ${heroHeadingClass}`}>Open HelpDesk Portal</p>
+                  <p className="mt-1 text-lg font-semibold neon-blue-text">Open HelpDesk Portal</p>
                   <button
                     type="button"
                     onClick={handleOpenHelpDeskPortal}
@@ -11833,13 +12043,9 @@ const App = () => {
                           isDarkMode ? 'text-slate-400' : 'text-slate-600'
                         }`}>{software.vendor}</p>
                       </div>
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        software.daysUntilRenewal <= 30 
-                          ? (isDarkMode ? 'bg-rose-500/20 text-rose-300' : 'bg-rose-100 text-rose-700')
-                          : software.daysUntilRenewal <= 60
-                          ? (isDarkMode ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-100 text-amber-700')
-                          : (isDarkMode ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700')
-                      }`}>
+                      <span
+                        className={`tone-chip ${getRenewalBadgeTone(software.daysUntilRenewal)} px-2.5 py-1 text-xs font-semibold`}
+                      >
                         {software.daysUntilRenewal} days
                       </span>
                     </div>
@@ -11870,13 +12076,11 @@ const App = () => {
               </div>
               {softwareRenewalsOverdue.length > 0 && (
                 <div className={`mt-4 rounded-2xl border-2 p-4 ${
-                  isDarkMode 
-                    ? 'border-rose-500/30 bg-rose-950/50' 
+                  isDarkMode
+                    ? 'border-rose-500/30 bg-rose-950/50'
                     : 'border-rose-300 bg-rose-50'
                 }`}>
-                  <p className={`flex items-center gap-2 text-sm font-bold ${
-                    isDarkMode ? 'text-rose-300' : 'text-rose-700'
-                  }`}>
+                  <p className="flex items-center gap-2 text-sm font-bold status-alert">
                     <Bell className="h-4 w-4" />
                     {softwareRenewalsOverdue.length} OVERDUE renewal{softwareRenewalsOverdue.length !== 1 ? 's' : ''} requiring immediate attention
                   </p>
@@ -11890,9 +12094,7 @@ const App = () => {
                         <span className={`font-semibold ${
                           isDarkMode ? 'text-white' : 'text-slate-900'
                         }`}>{software.software}</span>
-                        <span className={`font-semibold ${
-                          isDarkMode ? 'text-rose-400' : 'text-rose-600'
-                        }`}>{Math.abs(software.daysUntilRenewal)} days overdue</span>
+                        <span className="font-semibold status-alert-muted">{Math.abs(software.daysUntilRenewal)} days overdue</span>
                       </div>
                     ))}
                   </div>
@@ -11947,8 +12149,7 @@ const App = () => {
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
-              <p className="text-2xl font-bold uppercase tracking-wide">Hardware</p>
-              <h2 className="mt-3 text-3xl font-semibold">Full-fidelity device management</h2>
+              <p className="text-2xl font-bold tracking-wide">Hardware</p>
               <p className="mt-2 text-sm text-white/75">Real-time visibility into every laptop, display, dock, and printer with proactive lifecycle tracking.</p>
               <div className="mt-6 grid gap-4 sm:grid-cols-3">
                 <div>
@@ -12130,10 +12331,9 @@ const App = () => {
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
-              <p className="text-2xl font-bold uppercase tracking-wide">Repair desk</p>
+              <p className="text-2xl font-bold tracking-wide">Repair desk</p>
               <div className="mt-4 grid gap-6 lg:grid-cols-[1.8fr,1fr]">
                 <div className="space-y-4">
-                  <h2 className={`text-4xl font-semibold leading-tight ${heroHeadingClass}`}>Centralize depot status, parts ordering, and repair guides.</h2>
                   <p className={`text-sm ${heroSubtextClass}`}>
                     See every laptop in maintenance, reserve loaners, and jump straight to Amazon parts carts or YouTube guides matched to your fleet models.
                   </p>
@@ -12225,8 +12425,7 @@ const App = () => {
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
-              <p className="text-2xl font-bold uppercase tracking-wide">Employees</p>
-              <h2 className={`mt-3 text-3xl font-semibold ${heroHeadingClass}`}>The faces powering UDS technology</h2>
+              <p className="text-2xl font-bold tracking-wide">Employees</p>
               <p className={`mt-2 text-sm ${heroSubtextClass}`}>
                 Browse featured team members, their departments, and contact info to keep deployments aligned with your workforce.
               </p>
@@ -12471,8 +12670,7 @@ const App = () => {
               <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
               <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
-              <p className="text-2xl font-bold uppercase tracking-wide">Reports</p>
-              <h2 className="mt-3 text-3xl font-semibold text-white">Insights, forecasts, and exports</h2>
+              <p className="text-2xl font-bold tracking-wide">Reports</p>
               <p className="mt-2 text-sm text-white/75">
                 Benchmark hardware performance, anticipate spend, and share ready-to-run reports with stakeholders.
               </p>
@@ -12555,30 +12753,24 @@ const App = () => {
         )}
 
         {activePage === 'Vendors' && (
-          <div className="overflow-x-hidden">
-            <div className="overflow-x-hidden">
+          <div style={{overflowX: 'hidden', maxWidth: '100vw', width: '100%', boxSizing: 'border-box'}}>
+            <div style={{overflowX: 'hidden', maxWidth: '100%', padding: '0'}}>
               <section
                 id="vendors-hero"
-                className={`hero-shell relative mb-8 w-full max-w-full overflow-hidden rounded-[2.5rem] border p-8 shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ${
+                className={`hero-shell relative mb-8 w-full rounded-[2.5rem] border p-8 shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 ${
                   isDarkMode
                     ? 'border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
                     : 'border-slate-200 bg-gradient-to-br from-white via-emerald-50 to-teal-100 text-slate-900 ring-emerald-100'
                 }`}
-                style={heroAccentStyle}
+                style={{...heroAccentStyle, overflow: 'hidden', maxWidth: '100%', boxSizing: 'border-box'}}
               >
-                <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
-                <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
-                <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
-                <div className="grid max-w-full gap-8 overflow-hidden lg:grid-cols-2">
+                <div className="grid max-w-full gap-8 overflow-x-clip lg:grid-cols-2" style={{maxWidth: '100%', width: '100%'}}>
                   <div>
-                    <p className="text-2xl font-bold uppercase tracking-wide">Vendor galaxy</p>
-                    <h2 className={`mt-4 text-4xl font-semibold leading-tight ${heroHeadingClass}`}>
-                      Bold partnerships powering laptops, networks, and carrier logistics.
-                    </h2>
+                    <p className="text-2xl font-bold tracking-wide">Vendors</p>
                     <p className={`mt-3 text-sm ${heroSubtextClass}`}>
                       Showcase vendor accountability with live device counts, SLAs, and lightning-fast contacts from a single pane.
                     </p>
-                    <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="mt-8 grid gap-4 sm:grid-cols-2" style={{maxWidth: '100%'}}>
                       <div className={`rounded-2xl p-4 text-center ${heroStatCardClass}`}>
                         <p className={`text-xs uppercase tracking-widest ${heroLabelClass}`}>Vendors engaged</p>
                         <p className={`mt-2 text-3xl font-semibold ${heroHeadingClass}`}>{vendorProfiles.length}</p>
@@ -12681,12 +12873,12 @@ const App = () => {
                       const status = (ticket.status || '').toLowerCase();
                       const statusTone =
                         status.includes('complete')
-                          ? 'bg-emerald-50 text-emerald-700 ring-emerald-100'
+                          ? 'tone-chip tone-success'
                           : status.includes('progress')
-                            ? 'bg-blue-50 text-blue-700 ring-blue-100'
+                            ? 'tone-chip tone-info'
                             : status.includes('await')
-                              ? 'bg-amber-50 text-amber-700 ring-amber-100'
-                              : 'bg-slate-100 text-slate-700 ring-slate-200';
+                              ? 'tone-chip tone-warning'
+                              : 'tone-chip tone-neutral';
                       return (
                         <div
                           key={ticket.id || ticket.printerLabel || ticket.assetId}
@@ -12695,7 +12887,7 @@ const App = () => {
                           <div className="min-w-[240px] flex-1 space-y-1">
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="text-sm font-semibold text-slate-900">{ticket.printerLabel}</p>
-                              <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${ticket.vendorBadge}`}>
+                              <span className={`${ticket.vendorBadge} px-2.5 py-1 text-[11px] font-semibold`}>
                                 {ticket.vendorName}
                               </span>
                             </div>
@@ -12707,7 +12899,7 @@ const App = () => {
                             <p className="text-xs text-slate-600">{ticket.issue || 'Awaiting triage details'}</p>
                           </div>
                           <div className="flex flex-col items-end gap-2">
-                            <span className={`rounded-full px-3 py-1 text-[11px] font-bold ${statusTone}`}>{ticket.status || 'Queued'}</span>
+                            <span className={`${statusTone} px-3 py-1 text-[11px] font-bold`}>{ticket.status || 'Queued'}</span>
                             <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{ticket.severity || 'Normal'}</span>
                             <div className="flex items-center gap-2">
                               {ticket.eta && <span className="text-[11px] font-semibold text-slate-500">ETA {ticket.eta}</span>}
@@ -13802,7 +13994,7 @@ const App = () => {
                 <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-2xl font-bold uppercase tracking-wide">Software</p>
+                    <p className="text-2xl font-bold tracking-wide">Software</p>
                     <h2 className="mt-3 text-3xl font-semibold text-white">Licensing + SaaS operations</h2>
                     <p className="mt-2 text-sm text-white/75">
                       Centralize entitlement tracking for Microsoft 365, Adobe, AutoCAD, Cisco Secure Client, Duo, Keeper, ESET, Barracuda, Citrix,
@@ -13895,29 +14087,29 @@ const App = () => {
                   <div className={`rounded-2xl border p-4 ${
                     isDarkMode ? 'border-rose-500/30 bg-rose-950/40' : 'border-rose-200 bg-white'
                   }`}>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Overdue</p>
-                    <p className={`mt-1 text-3xl font-bold ${isDarkMode ? 'text-rose-200' : 'text-rose-700'}`}>
+                    <p className="text-xs font-semibold uppercase tracking-wide status-alert-muted">Overdue</p>
+                    <p className="mt-1 text-3xl font-bold status-alert">
                       {softwareRenewalsOverdue.length}
                     </p>
-                    <p className="text-xs text-rose-600">Requires immediate action</p>
+                    <p className="text-xs status-alert-muted">Requires immediate action</p>
                   </div>
                   <div className={`rounded-2xl border p-4 ${
                     isDarkMode ? 'border-amber-500/30 bg-amber-950/30' : 'border-amber-200 bg-white'
                   }`}>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">Next 90 days</p>
-                    <p className={`mt-1 text-3xl font-bold ${isDarkMode ? 'text-amber-200' : 'text-amber-700'}`}>
+                    <p className="text-xs font-semibold uppercase tracking-wide status-warning-muted">Next 90 days</p>
+                    <p className="mt-1 text-3xl font-bold status-warning">
                       {softwareRenewalsDue90Days.length}
                     </p>
-                    <p className="text-xs text-amber-600">Budget planning required</p>
+                    <p className="text-xs status-warning-muted">Budget planning required</p>
                   </div>
                   <div className={`rounded-2xl border p-4 ${
                     isDarkMode ? 'border-blue-500/30 bg-blue-950/40' : 'border-blue-200 bg-white'
                   }`}>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Total annual cost</p>
-                    <p className={`mt-1 text-3xl font-bold ${isDarkMode ? 'text-blue-200' : 'text-blue-700'}`}>
+                    <p className="text-xs font-semibold uppercase tracking-wide status-info-muted">Total annual cost</p>
+                    <p className="mt-1 text-3xl font-bold status-info">
                       {formatCurrency(SOFTWARE_PORTFOLIO.reduce((sum, s) => sum + (s.seats * s.costPerSeat * 12), 0))}
                     </p>
-                    <p className="text-xs text-blue-600">All software licenses</p>
+                    <p className="text-xs status-info-muted">All software licenses</p>
                   </div>
                 </div>
 
@@ -13974,17 +14166,7 @@ const App = () => {
                             <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>{formatCurrency(software.annualCost)}</p>
                           </div>
                           <span
-                            className={`self-start whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold sm:self-auto ${
-                              software.daysUntilRenewal < 0
-                                ? 'bg-rose-600 text-white shadow-[0_8px_30px_rgba(225,29,72,0.35)]'
-                                : software.daysUntilRenewal <= 30
-                                ? 'bg-amber-600 text-white shadow-[0_8px_30px_rgba(245,158,11,0.35)]'
-                                : software.daysUntilRenewal <= 60
-                                ? 'bg-yellow-600 text-white shadow-[0_8px_30px_rgba(234,179,8,0.35)]'
-                                : software.daysUntilRenewal <= 90
-                                ? 'bg-blue-600 text-white shadow-[0_8px_30px_rgba(59,130,246,0.35)]'
-                                : 'bg-slate-600 text-white shadow-[0_8px_30px_rgba(51,65,85,0.35)]'
-                            }`}
+                            className={`tone-chip ${getRenewalBadgeTone(software.daysUntilRenewal)} self-start whitespace-nowrap px-3 py-1.5 text-xs font-bold shadow-sm sm:self-auto`}
                           >
                             {software.daysUntilRenewal < 0
                               ? `${Math.abs(software.daysUntilRenewal)}d OVERDUE`
@@ -14143,7 +14325,7 @@ const App = () => {
       {menuOpen && (
         <div className="fixed inset-0 z-40 flex">
           <div className="w-full flex-1 bg-slate-900/60" onClick={() => setMenuOpen(false)} />
-          <div className="relative h-full w-full max-w-sm bg-white shadow-2xl">
+          <div className="relative h-full w-full max-w-sm bg-white shadow-2xl overflow-x-clip">
             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
               <p className="text-sm font-semibold text-slate-900">Quick menu</p>
               <button
@@ -14155,10 +14337,10 @@ const App = () => {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="max-h-[calc(100vh-56px)] overflow-y-auto p-4 space-y-4">
+            <div className="max-h-[calc(100vh-56px)] overflow-y-auto overflow-x-clip p-4 space-y-4">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-500">Navigate</p>
-                <div className="mt-2 flex flex-col gap-2">
+                <div className="mt-2 flex flex-col gap-2 overflow-x-clip">
                   {menuNavItems.map((item) => (
                     <button
                       key={`menu-nav-${item.label}`}
@@ -14169,6 +14351,7 @@ const App = () => {
                           ? 'border-blue-200 bg-blue-50 text-blue-700'
                           : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200'
                       }`}
+                      style={{maxWidth: '100%'}}
                     >
                       {item.label}
                       <ArrowRightLeft className="h-4 w-4" />

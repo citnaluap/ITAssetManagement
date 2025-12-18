@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   ArrowRight,
@@ -21,6 +21,17 @@ import {
 } from 'lucide-react';
 
 const HELP_DESK_EMAIL = 'ITHelpDesk@udservices.org';
+const REQUESTS_STORAGE_KEY = 'uds-helpdesk-requests';
+const CHAT_STORAGE_KEY = 'uds-helpdesk-chat';
+const STATUS_FILTERS = ['All', 'Pending', 'In Review', 'Closed'];
+const BOT_GREETING = "Hi! I'm the UDS Tech Guide. Tell me what you need-password help, VPN issues, or hardware requests.";
+
+const getDefaultChatMessages = () => [
+  {
+    role: 'bot',
+    text: BOT_GREETING,
+  },
+];
 
 const knowledgeBase = [
   { id: 'kb-1', title: 'Reset your UDS password', summary: 'Use the self-service reset portal and add a backup method.', tags: ['account', 'password'], minutes: 3 },
@@ -58,10 +69,10 @@ const buildHelpDeskEmailBody = ({ name, email, department, urgency, topic, detai
   return rows.join('\n');
 };
 
-const sendHelpDeskEmail = (payload) => {
+const sendHelpDeskEmail = (payload, options = {}) => {
   if (typeof window === 'undefined') return;
   const subject = `IT Help Request from ${payload.name || 'UDS employee'}`;
-  const body = buildHelpDeskEmailBody(payload);
+  const body = options.body || buildHelpDeskEmailBody(payload);
   const href = `mailto:${HELP_DESK_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   window.location.href = href;
 };
@@ -86,7 +97,9 @@ const quickHelp = [
   { title: 'Printer jams / toner', body: 'Share the printer ID and location. Include a photo of any error code.', icon: Server },
 ];
 
-const InlineTag = ({ children }) => <span className="chip">{children}</span>;
+const InlineTag = ({ children, className = '' }) => (
+  <span className={`chip${className ? ` ${className}` : ''}`}>{children}</span>
+);
 
 const ServiceCard = ({ item }) => {
   const Icon = item.icon;
@@ -175,7 +188,7 @@ const ChatMessage = ({ role, text }) => (
 const buildAiReply = (text) => {
   const input = text.toLowerCase();
   if (input.includes('password')) {
-    return 'Got it. For password resets: open the UDS self-service reset page, choose “I forgot my password”, and approve the Duo prompt. If you cannot receive Duo, reply with “no mfa” and I will route to IT with urgency.';
+    return 'Got it. For password resets: open the UDS self-service reset page, choose "I forgot my password", and approve the Duo prompt. If you cannot receive Duo, reply with "no mfa" and I will route to IT with urgency.';
   }
   if (input.includes('vpn')) {
     return 'Let’s steady the VPN. Confirm you’re on UDS-Secure or wired, then open GlobalProtect and select the “UDS-Gateway”. If disconnects continue, include the exact time and I will open a ticket with logs.';
@@ -184,14 +197,53 @@ const buildAiReply = (text) => {
     return 'I can start a laptop request. Share who it’s for, needed-by date, and whether you need a dock/monitors. I will summarize and send to IT to stage hardware.';
   }
   if (input.includes('printer')) {
-    return 'For printing issues: share the printer ID and location, and a photo of the error panel if possible. I’ll package this for the Help Desk.';
+    return 'For printing issues: share the printer ID and location, and a photo of the error panel if possible. I\'ll package this for the Help Desk.';
   }
-  return 'I’ll help route this. Please add details like device type, urgency, and where you’re working (onsite/remote). I can also draft a ticket for IT.';
+  return 'I\'ll help route this. Please add details like device type, urgency, and where you\'re working (onsite/remote). I can also draft a ticket for IT.';
+};
+
+const loadStoredRequests = () => {
+  if (typeof window === 'undefined') return initialRequests;
+  try {
+    const cached = window.localStorage.getItem(REQUESTS_STORAGE_KEY);
+    const parsed = cached ? JSON.parse(cached) : [];
+    return Array.isArray(parsed) && parsed.length ? [...parsed, ...initialRequests] : initialRequests;
+  } catch (error) {
+    console.warn('Unable to read stored requests', error);
+    return initialRequests;
+  }
+};
+
+const loadStoredChatMessages = () => {
+  const fallback = getDefaultChatMessages();
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const cached = window.localStorage.getItem(CHAT_STORAGE_KEY);
+    const parsed = cached ? JSON.parse(cached) : [];
+    return Array.isArray(parsed) && parsed.length ? parsed : fallback;
+  } catch (error) {
+    console.warn('Unable to read stored chat messages', error);
+    return fallback;
+  }
+};
+
+const copyTicketToClipboard = async (text) => {
+  if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) return false;
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    console.warn('Clipboard access failed', error);
+    return false;
+  }
 };
 
 function App() {
-  const [requests, setRequests] = useState(initialRequests);
+  const [requests, setRequests] = useState(() => loadStoredRequests());
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [formAlert, setFormAlert] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -200,10 +252,10 @@ function App() {
     urgency: 'Normal',
     details: '',
   });
-  const [chatMessages, setChatMessages] = useState([
-    { role: 'bot', text: 'Hi! I’m the UDS Tech Guide. Tell me what you need—password help, VPN issues, or hardware requests.' },
-  ]);
+  const [chatMessages, setChatMessages] = useState(() => loadStoredChatMessages());
   const [chatInput, setChatInput] = useState('');
+  const [botTyping, setBotTyping] = useState(false);
+  const typingTimeoutRef = useRef(null);
 
   const filteredArticles = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -215,29 +267,138 @@ function App() {
         a.tags.some((tag) => tag.toLowerCase().includes(term)),
     );
   }, [search]);
+  const filteredRequests = useMemo(() => {
+    if (statusFilter === 'All') return requests;
+    return requests.filter((request) => request.status === statusFilter);
+  }, [requests, statusFilter]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const userCreatedRequests = requests.filter((request) => request.fromUser);
+      window.localStorage.setItem(REQUESTS_STORAGE_KEY, JSON.stringify(userCreatedRequests));
+    } catch (error) {
+      console.warn('Unable to persist requests', error);
+    }
+  }, [requests]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const lastMessages = chatMessages.slice(-20);
+      window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(lastMessages));
+    } catch (error) {
+      console.warn('Unable to persist chat messages', error);
+    }
+  }, [chatMessages]);
+  useEffect(() => {
+    if (!formAlert || formAlert.type === 'error' || formAlert.detailText) return;
+    const timeout = setTimeout(() => setFormAlert(null), 6000);
+    return () => clearTimeout(timeout);
+  }, [formAlert]);
+  useEffect(
+    () => () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    },
+    [],
+  );
 
-  const handleFormSubmit = (event) => {
+  const handleFormSubmit = async (event) => {
     event.preventDefault();
-    if (!form.name || !form.email || !form.topic || !form.details) return;
-    const now = new Date();
-    const entry = {
-      id: `REQ-${Math.floor(Math.random() * 9000 + 1000)}`,
-      type: form.topic.toLowerCase().includes('issue') ? 'Issue' : 'Request',
-      name: form.name,
-      topic: form.topic,
-      status: 'Pending',
-      timestamp: now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
-    };
-    setRequests((prev) => [entry, ...prev]);
-    setForm((prev) => ({ ...prev, topic: '', details: '' }));
-    sendHelpDeskEmail({
-      name: form.name,
-      email: form.email,
-      department: form.department,
+    const trimmedForm = {
+      name: form.name.trim(),
+      email: form.email.trim(),
+      department: form.department.trim(),
+      topic: form.topic.trim(),
       urgency: form.urgency,
-      topic: form.topic,
-      details: form.details,
-    });
+      details: form.details.trim(),
+    };
+    const missingFields = [];
+    if (!trimmedForm.name) missingFields.push('name');
+    if (!trimmedForm.email) missingFields.push('email');
+    if (!trimmedForm.topic) missingFields.push('topic');
+    if (!trimmedForm.details) missingFields.push('details');
+    if (missingFields.length) {
+      setFormAlert({ type: 'error', message: `Please complete the required fields: ${missingFields.join(', ')}.` });
+      return;
+    }
+    const emailInvalid = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedForm.email);
+    if (emailInvalid) {
+      setFormAlert({ type: 'error', message: 'Please enter a valid email address so we can follow up.' });
+      return;
+    }
+    setIsSubmitting(true);
+    setFormAlert(null);
+    try {
+      const now = new Date();
+      const entry = {
+        id: `REQ-${Math.floor(Math.random() * 9000 + 1000)}`,
+        type: trimmedForm.topic.toLowerCase().includes('issue') ? 'Issue' : 'Request',
+        name: trimmedForm.name,
+        topic: trimmedForm.topic,
+        status: 'Pending',
+        timestamp: now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+        fromUser: true,
+      };
+      setRequests((prev) => [entry, ...prev]);
+      setForm((prev) => ({
+        ...prev,
+        name: trimmedForm.name,
+        email: trimmedForm.email,
+        department: trimmedForm.department,
+        topic: '',
+        details: '',
+      }));
+      const payload = {
+        name: trimmedForm.name,
+        email: trimmedForm.email,
+        department: trimmedForm.department,
+        urgency: trimmedForm.urgency,
+        topic: trimmedForm.topic,
+        details: trimmedForm.details,
+      };
+      const emailBody = buildHelpDeskEmailBody(payload);
+      sendHelpDeskEmail(payload, { body: emailBody });
+      const copied = await copyTicketToClipboard(emailBody);
+      setFormAlert({
+        type: 'success',
+        message: copied
+          ? 'Request logged! We opened your email client and copied the ticket text in case you need it elsewhere.'
+          : 'Request logged! Your email client should open automatically. Copy the ticket details below if it does not.',
+        detailText: copied ? undefined : emailBody,
+      });
+    } catch (error) {
+      console.error('Unable to submit help desk request', error);
+      setFormAlert({
+        type: 'error',
+        message: 'Something went wrong drafting the ticket. Please try again or email ITHelpDesk@udservices.org directly.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const scrollToRequestForm = () => {
+    if (typeof document === 'undefined') return;
+    document.getElementById('request-form')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const resetChat = () => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    setChatMessages(getDefaultChatMessages());
+    setBotTyping(false);
+    setChatInput('');
+  };
+
+  const handleAlertCopy = async () => {
+    if (!formAlert?.detailText) return;
+    const copied = await copyTicketToClipboard(formAlert.detailText);
+    if (copied) {
+      setFormAlert((prev) => (prev ? { ...prev, message: 'Ticket body copied. Paste it anywhere you need it.' } : prev));
+    }
   };
 
   const sendChat = (text) => {
@@ -245,9 +406,16 @@ function App() {
     if (!trimmed) return;
     setChatMessages((prev) => [...prev, { role: 'user', text: trimmed }]);
     setChatInput('');
-    setTimeout(() => {
+    setBotTyping(true);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    const replyDelay = Math.min(900, 250 + trimmed.length * 8);
+    typingTimeoutRef.current = setTimeout(() => {
+      setBotTyping(false);
       setChatMessages((prev) => [...prev, { role: 'bot', text: buildAiReply(trimmed) }]);
-    }, 150);
+      typingTimeoutRef.current = null;
+    }, replyDelay);
   };
 
   return (
@@ -264,7 +432,7 @@ function App() {
               Start with self-help, ask the AI guide, or send a request to IT. For urgent outages, call immediately—everything else can be logged here.
             </p>
             <div className="cta-row">
-              <button className="btn btn-primary" type="button" onClick={() => document.getElementById('request-form')?.scrollIntoView({ behavior: 'smooth' })}>
+              <button className="btn btn-primary" type="button" onClick={scrollToRequestForm}>
                 <Send size={18} />
                 Submit a request
               </button>
@@ -322,7 +490,7 @@ function App() {
                   Search tips or issues
                   <input
                     className="input"
-                    placeholder="Try “VPN disconnects” or “reset password”"
+                    placeholder={'Try "VPN disconnects" or "reset password"'}
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                   />
@@ -363,6 +531,22 @@ function App() {
               <div className="section-title">Start a request</div>
               <h2 style={{ margin: '6px 0 8px' }}>Tell IT what you need</h2>
               <p style={{ margin: '0 0 12px', color: '#55607a' }}>Use this form for non-urgent requests. We will acknowledge within 1 business day.</p>
+              {formAlert && (
+                <div className={`form-alert ${formAlert.type}`} role="alert" aria-live="assertive">
+                  <div className="form-alert-message">{formAlert.message}</div>
+                  <button className="alert-close" type="button" onClick={() => setFormAlert(null)}>
+                    Dismiss
+                  </button>
+                  {formAlert.detailText && (
+                    <div className="form-alert-details">
+                      <button className="btn btn-ghost btn-small" type="button" onClick={handleAlertCopy}>
+                        Copy ticket text
+                      </button>
+                      <pre className="code-block">{formAlert.detailText}</pre>
+                    </div>
+                  )}
+                </div>
+              )}
               <form id="request-form" onSubmit={handleFormSubmit} className="grid" style={{ gap: 12 }}>
                 <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <label className="label">
@@ -409,9 +593,9 @@ function App() {
                   />
                 </label>
                 <div className="cta-row">
-                  <button className="btn btn-primary" type="submit">
+                  <button className="btn btn-primary" type="submit" disabled={isSubmitting}>
                     <Send size={18} />
-                    Submit to IT
+                    {isSubmitting ? 'Submitting...' : 'Submit to IT'}
                   </button>
                   <a className="btn btn-ghost" href={`mailto:${HELP_DESK_EMAIL}?subject=${encodeURIComponent('IT Help Request')}`}>
                     <Mail size={18} />
@@ -431,15 +615,27 @@ function App() {
                     <div className="section-title" style={{ letterSpacing: '0.2em' }}>
                       AI Tech Guide
                     </div>
-                    <p style={{ margin: 0, color: '#55607a', fontSize: 14 }}>Ask about issues, hardware, or policies. I’ll draft a ticket if needed.</p>
+                    <p style={{ margin: 0, color: '#55607a', fontSize: 14 }}>Ask about issues, hardware, or policies. I'll draft a ticket if needed.</p>
                   </div>
                 </div>
-                <InlineTag>Beta</InlineTag>
+                <div className="list-inline">
+                  <InlineTag>Beta</InlineTag>
+                  <button className="btn btn-ghost btn-small" type="button" onClick={resetChat}>
+                    Reset chat
+                  </button>
+                </div>
               </div>
               <div className="chat-messages">
                 {chatMessages.map((msg, idx) => (
                   <ChatMessage key={`${msg.role}-${idx}-${msg.text.slice(0, 8)}`} role={msg.role} text={msg.text} />
                 ))}
+                {botTyping && (
+                  <div className="chat-typing">
+                    <span className="typing-dot" />
+                    <span className="typing-dot" />
+                    <span className="typing-dot" />
+                  </div>
+                )}
               </div>
               <div style={{ display: 'grid', gap: 8 }}>
                 <div className="list-inline">
@@ -482,12 +678,35 @@ function App() {
             </div>
             <div className="card">
               <div className="section-title">Your recent requests</div>
-              <p style={{ margin: '6px 0 12px', color: '#55607a' }}>We email updates as statuses change. Newest first.</p>
-              <div className="requests-list">
-                {requests.map((req) => (
-                  <RequestRow key={req.id} request={req} />
+              <p style={{ margin: '6px 0 12px', color: '#55607a' }}>We email updates as statuses change. Saved locally so you can pick up on this device.</p>
+              <div className="list-inline filter-row" role="group" aria-label="Filter requests by status">
+                {STATUS_FILTERS.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={`chip filter-chip${statusFilter === option ? ' active' : ''}`}
+                    onClick={() => setStatusFilter(option)}
+                  >
+                    {option}
+                  </button>
                 ))}
               </div>
+              {filteredRequests.length > 0 ? (
+                <div className="requests-list">
+                  {filteredRequests.map((req) => (
+                    <RequestRow key={req.id} request={req} />
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <p style={{ margin: 0, color: '#55607a' }}>
+                    No requests in this filter. Submit a ticket and it will appear here for quick reference.
+                  </p>
+                  <button className="btn btn-ghost btn-small" type="button" onClick={scrollToRequestForm}>
+                    Start a request
+                  </button>
+                </div>
+              )}
               <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginTop: 12 }}>
                 <div className="card" style={{ background: '#0f172a', color: 'white' }}>
                   <div className="list-inline">
