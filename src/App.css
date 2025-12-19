@@ -78,6 +78,152 @@
   --radius-full: 9999px;
 }
 
+/* ==================== Experience Layout ==================== */
+.experience-grid {
+  position: relative;
+  isolation: isolate;
+}
+
+.experience-grid__main {
+  position: relative;
+  z-index: 2;
+}
+
+@media (min-width: 1024px) {
+  .experience-grid {
+    align-items: flex-start;
+  }
+  .experience-grid__nav,
+  .experience-grid__insights {
+    position: sticky;
+    top: 2rem;
+  }
+}
+
+.navigation-rail {
+  box-shadow: var(--shadow-xl);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.navigation-rail .rail-link {
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.navigation-rail .rail-link:hover {
+  transform: translateX(4px);
+}
+
+.insight-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.insight-card {
+  border-radius: 1.75rem;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  box-shadow: var(--shadow-lg);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+html.theme-dark .navigation-rail {
+  border-color: rgba(148, 163, 184, 0.15);
+  box-shadow: 0 25px 60px rgba(2, 6, 23, 0.65);
+}
+
+html.theme-dark .insight-card {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.9));
+  box-shadow: 0 25px 60px rgba(2, 6, 23, 0.75);
+}
+
+html.theme-dark .navigation-rail .rail-link {
+  border-color: rgba(148, 163, 184, 0.1);
+  color: rgba(226, 232, 240, 0.8);
+}
+
+html.theme-dark .navigation-rail .rail-link:hover {
+  color: #f8fafc;
+}
+
+/* ==================== Overview Experience ==================== */
+.overview-orchestrator__panel,
+.overview-orchestrator__radar {
+  position: relative;
+  overflow: hidden;
+}
+
+.overview-pulse > div {
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.overview-pulse > div:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.overview-beacons > div:last-child {
+  border-radius: 2rem;
+  box-shadow: var(--shadow-lg);
+}
+
+.overview-flightdeck,
+.overview-actions-grid {
+  align-items: stretch;
+}
+
+.overview-actions-grid .space-y-4 > * {
+  box-shadow: var(--shadow-md);
+}
+
+html.theme-dark .overview-actions-grid .space-y-4 > * {
+  box-shadow: 0 25px 60px rgba(2, 6, 23, 0.7);
+}
+
+.quick-action-card {
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.quick-action-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+
+/* ==================== Command Header ==================== */
+.command-header {
+  position: relative;
+  overflow: hidden;
+}
+
+.command-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.15), transparent 55%),
+    radial-gradient(circle at 80% 0%, rgba(147, 51, 234, 0.12), transparent 45%);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.command-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+.experience-sidebar {
+  position: sticky;
+  top: 2rem;
+}
+
+.decision-rail {
+  position: sticky;
+  top: 2rem;
+}
+
 /* ==================== Stunning Employee Card System ==================== */
 .employee-card {
   position: relative;

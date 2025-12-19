@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
@@ -35,8 +35,10 @@ import {
   Smartphone,
   Navigation,
   Filter,
+  BarChart3,
   QrCode,
   Scan,
+  Wrench,
   Sun,
   Moon,
   Menu,
@@ -1167,7 +1169,16 @@ const defaultEmployeeProfile = {
   keyFob: '',
 };
 
-const NAV_LINKS = ['Overview', 'Hardware', 'Repairs', 'Employees', 'Reports', 'Software', 'Vendors'];
+const NAV_ITEMS = [
+  { key: 'Overview', label: 'Overview', icon: Sparkles, tagline: 'Mission control' },
+  { key: 'Hardware', label: 'Hardware', icon: Monitor, tagline: 'Fleet health' },
+  { key: 'Repairs', label: 'Repairs', icon: Wrench, tagline: 'Service desk' },
+  { key: 'Employees', label: 'Employees', icon: Users, tagline: 'People ops' },
+  { key: 'Reports', label: 'Reports', icon: BarChart3, tagline: 'Insights' },
+  { key: 'Software', label: 'Software', icon: Plug, tagline: 'Licenses' },
+  { key: 'Vendors', label: 'Vendors', icon: PhoneCall, tagline: 'Partners' },
+  { key: 'HelpDesk', label: 'HelpDesk', icon: Headset, tagline: 'Support hub' },
+];
 
 const PUBLIC_URL = process.env.PUBLIC_URL || '';
 const ZOOM_WEBHOOK_URL = process.env.REACT_APP_ZOOM_WEBHOOK_URL || '';
@@ -2763,6 +2774,21 @@ const formatDate = (value) => {
   });
 };
 
+const formatRelativeTime = (timestamp) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return '';
+  const diffMs = Date.now() - date.getTime();
+  if (diffMs < 0) return 'just now';
+  const minutes = Math.round(diffMs / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return `${days}d ago`;
+};
+
 const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -3212,139 +3238,277 @@ const CardShell = ({ title, icon: Icon, action, children }) => (
   </div>
 );
 
-const PrimaryNav = ({
+const CommandHeader = ({
   onAdd,
   onAddEmployee,
+  onOpenCommandPalette,
+  onToggleTheme,
+  onOpenMenu,
+  isDarkMode,
   activePage,
   onNavigate,
-  onToggleTheme,
-  isDarkMode,
-  onOpenMenu,
-  onOpenCommandPalette,
 }) => (
-  <nav
-    className={`nav-ribbon ${isDarkMode ? 'nav-dark text-slate-100' : 'text-slate-700'} mb-10 rounded-3xl px-6 py-5 backdrop-blur-xl shadow-2xl transition-all duration-500 overflow-hidden`}
-    style={{ overflow: 'hidden', maxWidth: '100%' }}
-  >
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-3">
-            <img
-              src={UDSLogo}
-              alt="United Disabilities Services logo"
-              className="h-20 w-20 rounded-2xl border border-slate-100 bg-white object-contain p-1.5 shadow-sm"
-            />
+  <header className="command-header relative mb-8 rounded-[32px] border border-slate-100 bg-white/80 p-6 shadow-[0_30px_80px_rgba(5,8,25,0.15)] backdrop-blur dark:border-white/10 dark:bg-slate-950/60">
+    <div className="grid gap-4 lg:grid-cols-[1.6fr,1fr]">
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-inner dark:border-white/10 dark:bg-white/5">
+              <img src={UDSLogo} alt="UDS logo" className="h-10 w-10 object-contain" />
+            </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">United Disabilities Services</p>
-              <p className="text-5xl font-extrabold leading-tight neon-blue-text">Asset Control Studio</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">UDS digital</p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">Unified Asset Studio</p>
             </div>
           </div>
-          <span className="hidden items-center gap-2 tone-chip tone-warning px-3 py-1 text-[11px] font-semibold sm:inline-flex">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Sync paused
-          </span>
-        </div>
-        <div className="flex flex-1 flex-wrap items-start justify-end gap-2">
-          <div className="flex items-center gap-2 self-start">
+          <div className="flex items-center gap-2">
             <button
-              className={`rounded-full border p-2 ${isDarkMode ? 'border-slate-700 text-slate-200 hover:border-slate-500' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}
               type="button"
               onClick={onToggleTheme}
-              title="Toggle theme"
+              className="rounded-2xl border border-slate-200 p-2 text-slate-500 transition hover:border-blue-200 hover:text-blue-600 dark:border-white/20 dark:text-white/70"
               aria-label="Toggle theme"
             >
               {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
             <button
-              className="rounded-full border border-slate-200 p-2 text-slate-500 hover:border-slate-300"
               type="button"
               onClick={onOpenMenu}
+              className="rounded-2xl border border-slate-200 p-2 text-slate-500 transition hover:border-blue-200 hover:text-blue-600 dark:border-white/20 dark:text-white/70"
               aria-label="Open menu"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-4 w-4" />
             </button>
           </div>
         </div>
-      </div>
-      <div
-        className={`flex w-full flex-wrap items-center justify-between gap-4 text-sm font-medium ${
-        isDarkMode ? 'text-slate-200' : 'text-slate-500'
-      }`}
-        style={{ overflow: 'hidden', maxWidth: '100%' }}
-      >
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-        <button
-          onClick={onAdd}
-          className="btn-primary inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg hover-lift hover:shadow-xl hover:shadow-emerald-500/50 transition-all duration-300 sm:w-auto"
-          style={{ letterSpacing: '0.025em' }}
-        >
-          <Monitor className="h-4 w-4" />
-          New asset
-        </button>
-        <button
-          onClick={onAddEmployee}
-          type="button"
-            className="btn-primary inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg hover-lift hover:shadow-xl hover:shadow-blue-500/50 transition-all duration-300 sm:w-auto"
-            style={{ letterSpacing: '0.025em' }}
+        <div className="grid gap-3 md:grid-cols-3">
+          <button
+            onClick={onAdd}
+            className="inline-flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:text-blue-600 dark:border-white/10 dark:bg-white/5 dark:text-white"
+            type="button"
           >
-            <Users className="h-4 w-4" />
-            New employee
+            <span>
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-400">Hardware</span>
+              New asset intake
+            </span>
+            <Monitor className="h-4 w-4" />
           </button>
-        <button
-          type="button"
-          onClick={onOpenCommandPalette}
-          className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-2.5 text-xs font-bold shadow-md hover-lift transition-all duration-300 sm:w-auto ${
-            isDarkMode
-                ? 'border border-slate-600 bg-gradient-to-br from-slate-800 to-slate-900 text-slate-100 hover:border-slate-500 hover:shadow-lg'
-                : 'border border-slate-300 bg-gradient-to-br from-white to-slate-50 text-slate-700 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-200/50'
-            }`}
-            style={{ letterSpacing: '0.025em' }}
+          <button
+            onClick={onAddEmployee}
+            className="inline-flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:text-blue-600 dark:border-white/10 dark:bg-white/5 dark:text-white"
+            type="button"
           >
+            <span>
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-400">People</span>
+              Add teammate
+            </span>
+            <Users className="h-4 w-4" />
+          </button>
+          <button
+            onClick={onOpenCommandPalette}
+            className="inline-flex items-center justify-between rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-left text-sm font-semibold text-blue-800 shadow-sm transition hover:border-blue-300 hover:bg-blue-100 dark:border-white/20 dark:bg-white/5 dark:text-white"
+            type="button"
+          >
+            <span>
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.25rem] text-blue-500 dark:text-white/70">Command</span>
+              Quick search & actions
+            </span>
             <Search className="h-4 w-4" />
-            Search
           </button>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-4 overflow-x-auto pb-1">
-          {NAV_LINKS.map((item) => (
+      </div>
+      <div className="command-header__nav rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-inner dark:border-white/15 dark:bg-white/5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Journeys</p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          {NAV_ITEMS.map(({ key, label, icon: Icon }) => (
             <button
-              key={item}
-              onClick={() => onNavigate?.(item)}
-              className={`nav-pill relative transition ${isDarkMode ? 'hover:text-white' : 'hover:text-slate-900'} ${
-                activePage === item ? 'is-active' : ''
-              }`}
+              key={`header-nav-${key}`}
+              onClick={() => onNavigate?.(key)}
               type="button"
-              aria-current={activePage === item ? 'page' : undefined}
+              className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-sm font-semibold transition ${
+                activePage === key
+                  ? 'border-blue-400 bg-blue-50 text-blue-700 dark:border-sky-400/60 dark:bg-white/10 dark:text-white'
+                  : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:text-blue-600 dark:border-white/10 dark:bg-transparent dark:text-white/70'
+              }`}
+              aria-current={activePage === key ? 'page' : undefined}
             >
-              <span className="glow" aria-hidden />
-              <span className="relative z-10">{item}</span>
+              <span className="flex items-center gap-2">
+                <Icon className="h-4 w-4" />
+                {label}
+              </span>
+              <ArrowRight className="h-4 w-4" />
             </button>
           ))}
         </div>
       </div>
     </div>
-  </nav>
+  </header>
 );
 
-const QuickActionCard = ({ title, description, icon: Icon, actionLabel, onAction }) => (
-  <div className="rounded-2xl border border-slate-100 bg-white/70 p-5 shadow-sm backdrop-blur">
-    <div className="flex items-start gap-3">
-      <div className="rounded-2xl bg-blue-50 p-3 text-blue-500">
-        <Icon className="h-5 w-5" />
+const DecisionPanels = ({
+  stats,
+  licenseInsights,
+  warrantyAlerts = [],
+  softwareRenewals = [],
+  helpdeskRequests = [],
+  recentHistory = [],
+  onNavigate,
+}) => {
+  const openHelpdesk = helpdeskRequests.filter((request) => (request.status || '').toLowerCase() !== 'resolved').slice(0, 3);
+  const renewalSample = softwareRenewals.slice(0, 3);
+  const activitySample = recentHistory.slice(0, 3);
+
+  return (
+    <div className="decision-rail flex flex-col gap-4">
+      <div className="insight-card rounded-3xl border border-slate-100 bg-white/80 p-5 shadow-lg dark:border-white/10 dark:bg-white/5">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Mission snapshot</p>
+            <p className="text-xl font-semibold text-slate-900 dark:text-white">Live KPIs</p>
+          </div>
+          <ShieldCheck className="h-5 w-5 text-emerald-500" />
+        </div>
+        <div className="mt-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">Assets</span>
+            <span className="text-lg font-semibold text-slate-900 dark:text-white">{stats?.total ?? 0}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">Ready</span>
+            <span className="text-lg font-semibold text-slate-900 dark:text-white">{stats?.available ?? 0}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">License usage</span>
+            <span className="text-lg font-semibold text-slate-900 dark:text-white">{licenseInsights?.percent ?? 0}%</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => onNavigate?.('Hardware')}
+          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800"
+        >
+          Open fleet view
+          <ArrowRight className="h-4 w-4" />
+        </button>
       </div>
-      <div className="flex-1">
-        <p className="text-sm font-semibold text-slate-900">{title}</p>
-        <p className="mt-1 text-sm text-slate-500">{description}</p>
+
+      <div className="insight-card rounded-3xl border border-slate-100 bg-white/70 p-5 shadow-lg dark:border-white/10 dark:bg-white/5">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Alerts</p>
+            <p className="text-lg font-semibold text-slate-900 dark:text-white">Renewals & watchlist</p>
+          </div>
+          <Bell className="h-5 w-5 text-amber-500" />
+        </div>
+        <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50/80 px-3 py-2 dark:bg-white/5 dark:text-white">
+            <span>Warranty alerts</span>
+            <span className="font-semibold text-slate-900 dark:text-white">{warrantyAlerts.length}</span>
+          </div>
+          {renewalSample.length > 0 ? (
+            renewalSample.map((item) => (
+              <div key={item.id} className="rounded-2xl border border-slate-100 px-3 py-2 dark:border-white/15">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.software}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-300">Due in {item.daysUntilRenewal} days</p>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-2xl border border-slate-100 px-3 py-2 text-xs font-semibold text-emerald-500 dark:border-white/15">All renewals are green</p>
+          )}
+        </div>
+        <div className="mt-4 grid gap-2">
+          <button
+            type="button"
+            onClick={() => onNavigate?.('Software')}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700 dark:border-white/15 dark:text-white/80"
+          >
+            View software runway
+            <ArrowRight className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigate?.('Hardware')}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700 dark:border-white/15 dark:text-white/80"
+          >
+            Open warranty center
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="insight-card rounded-3xl border border-slate-100 bg-white/70 p-5 shadow-lg dark:border-white/10 dark:bg-white/5">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Momentum</p>
+            <p className="text-lg font-semibold text-slate-900 dark:text-white">Activity & requests</p>
+          </div>
+          <History className="h-5 w-5 text-blue-500" />
+        </div>
+        <div className="mt-4 space-y-3 text-sm">
+          {activitySample.map((entry) => (
+            <div key={`${entry.id}-${entry.timestamp}`} className="rounded-2xl border border-slate-100 px-3 py-2 dark:border-white/15">
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">{entry.event}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-300">
+                {entry.timestamp
+                  ? new Date(entry.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  : 'Just now'}
+              </p>
+            </div>
+          ))}
+          {activitySample.length === 0 && (
+            <div className="rounded-2xl border border-slate-100 px-3 py-2 text-xs font-semibold text-slate-500 dark:border-white/15 dark:text-white/60">No activity yet</div>
+          )}
+        </div>
+        <div className="mt-4 space-y-2 text-sm">
+          <div className="flex items-center justify-between rounded-2xl border border-slate-100 px-3 py-2 dark:border-white/15">
+            <span className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400 dark:text-white/50">Helpdesk</span>
+            <span className="text-base font-semibold text-slate-900 dark:text-white">{openHelpdesk.length} open</span>
+          </div>
+          {openHelpdesk.map((ticket) => (
+            <div
+              key={ticket.id || `${ticket.email || 'request'}-${ticket.topic || ticket.details}`}
+              className="rounded-2xl border border-slate-100 px-3 py-2 dark:border-white/15"
+            >
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">{ticket.topic || ticket.details || 'New request'}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-300">{ticket.name || ticket.email}</p>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => onNavigate?.('HelpDesk')}
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
+        >
+          Triage requests
+          <Headset className="h-4 w-4" />
+        </button>
       </div>
     </div>
-    <button
-      onClick={onAction}
-      className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700"
-      type="button"
-    >
-      {actionLabel}
-      <ArrowRightLeft className="h-4 w-4" />
-    </button>
+  );
+};
+
+const QuickActionCard = ({ title, description, icon: Icon, actionLabel, onAction }) => (
+  <div className="quick-action-card rounded-[28px] border border-slate-100 bg-white/80 p-5 shadow-md backdrop-blur dark:border-white/10 dark:bg-white/5">
+    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex items-start gap-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 shadow-inner dark:bg-white/10 dark:text-white">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div>
+          <p className="text-base font-semibold text-slate-900 dark:text-white">{title}</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{description}</p>
+        </div>
+      </div>
+      <div className="md:text-right">
+        <button
+          onClick={onAction}
+          className="inline-flex items-center gap-2 rounded-2xl border border-blue-100 px-4 py-2 text-sm font-semibold text-blue-600 transition hover:border-blue-300 hover:text-blue-700 dark:border-slate-700 dark:text-slate-100"
+          type="button"
+        >
+          {actionLabel}
+          <ArrowRightLeft className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
   </div>
 );
 
@@ -3728,21 +3892,6 @@ const VendorCard = ({ vendor }) => {
       </div>
     </div>
   );
-};
-
-const formatRelativeTime = (timestamp) => {
-  if (!timestamp) return '';
-  const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) return '';
-  const diffMs = Date.now() - date.getTime();
-  if (diffMs < 0) return 'just now';
-  const minutes = Math.round(diffMs / 60000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.round(hours / 24);
-  return `${days}d ago`;
 };
 
 const NetworkPrinterBoard = ({
@@ -4546,44 +4695,50 @@ const AnalyticsInsightsPanel = ({ costData = [], depreciation = [] }) => (
       <p className="text-lg font-semibold text-slate-900">Fleet drilldowns</p>
       <p className="text-sm text-slate-500">Spot high-cost departments and monitor depreciation velocity.</p>
     </div>
-    <div className="grid gap-6 p-6 lg:grid-cols-2">
-      <div className="h-64">
+    <div className="space-y-10 p-6">
+      <div className="h-72">
         <ResponsiveContainer width="100%" height="100%" minWidth={200}>
           <BarChart data={costData} margin={{ top: 8, right: 8, left: -16, bottom: 24 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
             <XAxis
               dataKey="name"
               interval={0}
-              tick={{ fontSize: 10 }}
+              tick={{ fontSize: 12, fill: '#475569' }}
+              tickLine={false}
               tickMargin={10}
               height={48}
             />
-            <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+            <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} tick={{ fill: '#475569' }} tickLine={false} />
             <Tooltip formatter={(value) => formatCurrency(value)} />
             <Bar dataKey="value" fill="#2563eb" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
         <p className="mt-3 text-xs uppercase tracking-widest text-slate-400">Spend by department</p>
-        <div className="mt-2 grid gap-2 text-xs text-slate-600 sm:grid-cols-2 lg:hidden">
-          {costData.map((dept) => (
-            <div key={dept.name} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
-              <span className="font-semibold">{dept.name}</span>
-              <span className="text-slate-500">{formatCurrency(dept.value)}</span>
-            </div>
-          ))}
-        </div>
       </div>
-      <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%" minWidth={200}>
-          <LineChart data={depreciation} margin={{ top: 8, right: 12, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="month" />
-            <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
-            <Tooltip formatter={(value) => formatCurrency(value)} />
-            <Line type="monotone" dataKey="value" stroke="#a855f7" strokeWidth={3} dot={{ r: 4 }} />
-          </LineChart>
-        </ResponsiveContainer>
-        <p className="mt-3 text-xs uppercase tracking-widest text-slate-400">Depreciation outlook</p>
+      <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
+        <div className="h-72">
+          <ResponsiveContainer width="100%" height="100%" minWidth={200}>
+            <LineChart data={depreciation} margin={{ top: 8, right: 12, left: -4, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+              <XAxis dataKey="month" tick={{ fill: '#475569', fontSize: 12 }} tickLine={false} />
+              <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} tick={{ fill: '#475569' }} tickLine={false} />
+              <Tooltip formatter={(value) => formatCurrency(value)} />
+              <Line type="monotone" dataKey="value" stroke="#a855f7" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+            </LineChart>
+          </ResponsiveContainer>
+          <p className="mt-3 text-xs uppercase tracking-widest text-slate-400">Depreciation outlook</p>
+        </div>
+        <div className="rounded-3xl border border-slate-100 bg-slate-50/70 p-4 shadow-inner">
+          <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-slate-500">Top spenders</p>
+          <div className="mt-4 space-y-3">
+            {costData.slice(0, 5).map((dept) => (
+              <div key={`dept-pill-${dept.name}`} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm">
+                <span>{dept.name}</span>
+                <span className="text-slate-500">{formatCurrency(dept.value)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -8089,7 +8244,6 @@ const patchNetworkPrinter = useCallback(
   }, [networkPrinters, repairTickets]);
   const [employeeGallery, setEmployeeGallery] = usePersistentState(STORAGE_KEYS.employees, BASE_EMPLOYEE_GALLERY);
   useEffect(() => {
-    let cancelled = false;
     const loadOrgChart = async () => {
       try {
         const fileName = encodeURIComponent('Org Chart and HUB 12-25.xlsx');
@@ -8114,42 +8268,16 @@ const patchNetworkPrinter = useCallback(
         }
         if (!response?.ok) return;
         const buffer = await response.arrayBuffer();
-        const workbook = XLSX.read(buffer, { type: 'array' });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-        const getField = (row, key) => {
-          const target = key.toLowerCase();
-          const match = Object.entries(row).find(([k]) => k.toLowerCase() === target);
-          return match ? match[1] : '';
-        };
-        const supervisorMap = rows.reduce((acc, row) => {
-          const first = formatPersonName(getField(row, 'First Name'));
-          const last = formatPersonName(getField(row, 'Last Name'));
-          const name = `${first} ${last}`.trim();
-          const key = normalizeKey(name);
-          if (!key) return acc;
-          const managerName = (getField(row, 'Manager Name') || '').toString().trim();
-          const managerEmail = (
-            getField(row, 'Manager E-Mail Address') ||
-            getField(row, 'Manager Email Address') ||
-            ''
-          )
-            .toString()
-            .trim();
-          if (managerName || managerEmail) {
-            acc[key] = { supervisor: managerName, supervisorEmail: managerEmail };
-          }
-          return acc;
-        }, {});
+        XLSX.read(buffer, { type: 'array' });
+        // Org chart parsing is performed in the dedicated supervisor loader effect; skip parsing rows here to avoid an unused variable.
+        // Removed unused supervisorMap to avoid lint warnings; supervisor data is handled in the dedicated supervisor loader effect below.
 
       } catch (error) {
         console.warn('Org chart fetch failed', error);
       }
     };
     loadOrgChart();
-    return () => {
-      cancelled = true;
-    };
+    return () => {};
   }, [setEmployeeGallery]);
   useEffect(() => {
     if (keyFobNormalizedRef.current) {
@@ -11344,6 +11472,57 @@ const handleTestPrinter = useCallback(
     },
   ];
 
+  const overviewHeroSignals = useMemo(
+    () => [
+      {
+        label: 'Fleet readiness',
+        value: `${stats.available || 0} devices`,
+        meta: `${stats.checkedOut || 0} checked out`,
+        tone: 'emerald',
+      },
+      {
+        label: 'License capacity',
+        value: `${licenseInsights.percent || 0}%`,
+        meta: `${licenseInsights.used || 0}/${licenseInsights.seats || 0} seats`,
+        tone: 'indigo',
+      },
+      {
+        label: 'Renewal runway',
+        value: `${softwareRenewalsDue90Days.length} upcoming`,
+        meta: 'Next 90 days',
+        tone: 'amber',
+      },
+      {
+        label: 'Service load',
+        value: `${maintenanceWorkOrders.length} open`,
+        meta: 'Maintenance queue',
+        tone: 'rose',
+      },
+    ],
+    [licenseInsights.percent, licenseInsights.seats, licenseInsights.used, maintenanceWorkOrders.length, softwareRenewalsDue90Days.length, stats.available, stats.checkedOut],
+  );
+
+  const overviewPulseCards = useMemo(
+    () => [
+      {
+        label: 'Assets governed',
+        value: stats.total,
+        caption: 'Tracked across every site',
+      },
+      {
+        label: 'Inventory value',
+        value: formatCurrency(stats.totalValue || 0),
+        caption: 'Book value of active hardware',
+      },
+      {
+        label: 'Warranty at risk',
+        value: `${warrantyAlerts30.length} devices`,
+        caption: 'Expiring inside 30 days',
+      },
+    ],
+    [stats.total, stats.totalValue, warrantyAlerts30.length],
+  );
+
   const menuNavItems = [
     { label: 'Overview', onClick: () => handleJumpToSection('Overview', 'overview-hero') },
     { label: 'Hardware', onClick: () => handleJumpToSection('Hardware', 'hardware-hero') },
@@ -11914,51 +12093,51 @@ const handleTestPrinter = useCallback(
         <div className="grid-overlay" />
       </div>
       <div className="relative z-10">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8" style={containerStyle}>
-          <PrimaryNav
+        <div className="mx-auto max-w-[1500px] px-4 py-10 sm:px-6 lg:px-8" style={containerStyle}>
+          <CommandHeader
             onAdd={() => setAssetForm(defaultAsset)}
             onAddEmployee={handleAddEmployee}
-            onExport={handleExport}
+            onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+            onToggleTheme={handleToggleTheme}
+            onOpenMenu={() => setMenuOpen(true)}
+            isDarkMode={isDarkMode}
             activePage={activePage}
             onNavigate={setActivePage}
-            onToggleTheme={handleToggleTheme}
-            isDarkMode={isDarkMode}
-            onOpenMenu={() => setMenuOpen(true)}
-            onOpenCommandPalette={() => setCommandPaletteOpen(true)}
           />
-        <datalist id={employeeSuggestionListId}>
-          {employeeNames.map((name) => (
-            <option key={`employee-suggestion-${name}`} value={name} />
-          ))}
-        </datalist>
-        <datalist id={modelSuggestionListId}>
-          {modelOptions.map((model) => (
-            <option key={`model-suggestion-${model}`} value={model} />
-          ))}
-        </datalist>
-        <datalist id={departmentSuggestionListId}>
-          {departmentSuggestionOptions.map((dept) => (
-            <option key={`department-suggestion-${dept}`} value={dept} />
-          ))}
-        </datalist>
-        <datalist id={locationSuggestionListId}>
-          {locationSuggestionOptions.map((location) => (
-            <option key={`location-suggestion-${location}`} value={location} />
-          ))}
-        </datalist>
-        <datalist id={jobTitleSuggestionListId}>
-          {jobTitleSuggestionOptions.map((title) => (
-            <option key={`title-suggestion-${title}`} value={title} />
-          ))}
-        </datalist>
-        <CommandPalette
-          open={commandPaletteOpen}
-          query={commandQuery}
-          onQuery={setCommandQuery}
-          results={commandResults}
-          onSelect={handleCommandSelect}
-          onClose={() => setCommandPaletteOpen(false)}
-        />
+          <div className="experience-main space-y-8">
+            <datalist id={employeeSuggestionListId}>
+              {employeeNames.map((name) => (
+                <option key={`employee-suggestion-${name}`} value={name} />
+              ))}
+            </datalist>
+            <datalist id={modelSuggestionListId}>
+              {modelOptions.map((model) => (
+                <option key={`model-suggestion-${model}`} value={model} />
+              ))}
+            </datalist>
+            <datalist id={departmentSuggestionListId}>
+              {departmentSuggestionOptions.map((dept) => (
+                <option key={`department-suggestion-${dept}`} value={dept} />
+              ))}
+            </datalist>
+            <datalist id={locationSuggestionListId}>
+              {locationSuggestionOptions.map((location) => (
+                <option key={`location-suggestion-${location}`} value={location} />
+              ))}
+            </datalist>
+            <datalist id={jobTitleSuggestionListId}>
+              {jobTitleSuggestionOptions.map((title) => (
+                <option key={`title-suggestion-${title}`} value={title} />
+              ))}
+            </datalist>
+            <CommandPalette
+              open={commandPaletteOpen}
+              query={commandQuery}
+              onQuery={setCommandQuery}
+              results={commandResults}
+              onSelect={handleCommandSelect}
+              onClose={() => setCommandPaletteOpen(false)}
+            />
         {isOffline && (
           <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm status-warning">
             Offline mode: changes will queue locally until you reconnect.
@@ -11967,294 +12146,284 @@ const handleTestPrinter = useCallback(
 
         {activePage === 'Overview' && (
           <>
-            <section id="overview-hero" className="mb-10 grid gap-6 lg:grid-cols-[2fr,1fr]">
-          <div
-            className={`hero-shell relative overflow-hidden rounded-[32px] p-8 shadow-[0_24px_80px_rgba(2,6,23,0.55)] ring-1 neon-grid ${
-              isDarkMode
-                ? 'border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950 to-blue-900 text-white ring-white/10'
-                : 'border border-slate-200 bg-gradient-to-br from-white via-blue-50 to-sky-100 text-slate-900 ring-blue-100'
-            }`}
-            style={heroAccentStyle}
-          >
-            <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-blue-500/40 blur-3xl" />
-            <div className="pointer-events-none absolute -right-10 top-6 h-52 w-52 rounded-full bg-rose-400/30 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-16 left-10 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" />
-            <div className="relative space-y-5">
+            <section id="overview-hero" className="overview-orchestrator mb-10 grid gap-6 lg:grid-cols-[1.4fr,1fr]">
               <div
-                className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.35rem] shadow-sm backdrop-blur ${heroChipClass}`}
+                className={`overview-orchestrator__panel hero-shell relative overflow-hidden rounded-[32px] p-8 shadow-[0_30px_90px_rgba(2,6,23,0.55)] ring-1 ${
+                  isDarkMode
+                    ? 'border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950/90 to-slate-900 text-white ring-white/10'
+                    : 'border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-blue-50 text-slate-900 ring-blue-100'
+                }`}
+                style={heroAccentStyle}
               >
-                <Sparkles className="h-4 w-4" />
-                Asset command center
-              </div>
-              <div>
-                <h1 className={`text-4xl font-semibold leading-tight md:text-5xl ${heroHeadingClass}`}>One command surface for every asset lifecycle</h1>
-                <p className={`mt-3 text-base ${heroSubtextClass}`}>
-                  Monitor procurement, deployment, and renewals from a single, human-friendly surface.
-                </p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className={`rounded-2xl p-4 text-sm shadow-inner ${heroStatCardClass}`}>
-                  <p className={`text-[11px] uppercase tracking-[0.3rem] ${heroLabelClass}`}>Snapshot</p>
-                  <p className={`mt-1 text-lg font-semibold ${heroHeadingClass}`}>Share executive view</p>
-                  <button
-                    onClick={handleExport}
-                    className={`btn-primary mt-3 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition hover:-translate-y-0.5 ${
-                      isDarkMode
-                        ? 'border border-white/25 bg-gradient-to-r from-white/25 via-white/10 to-white/5 text-white hover:border-white/40'
-                        : 'border border-slate-200 bg-gradient-to-r from-white via-slate-50 to-slate-100 text-slate-800 hover:border-blue-200'
-                    }`}
+                <div className="pointer-events-none absolute -left-32 top-10 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" />
+                <div className="pointer-events-none absolute -right-20 bottom-10 h-72 w-72 rounded-full bg-rose-400/15 blur-3xl" />
+                <div className="relative space-y-6">
+                  <div
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.35rem] shadow-sm backdrop-blur ${heroChipClass}`}
                   >
-                    <Share2 className="h-4 w-4" />
-                    Export data
-                  </button>
-                </div>
-                <div className={`rounded-2xl p-4 text-sm shadow-inner ${heroStatCardClass}`}>
-                  <p className={`text-[11px] uppercase tracking-[0.3rem] ${heroLabelClass}`}>Support</p>
-                  <p className="mt-1 text-lg font-semibold neon-blue-text">Open HelpDesk Portal</p>
-                  <button
-                    type="button"
-                    onClick={handleOpenHelpDeskPortal}
-                    className={`btn-primary mt-3 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition hover:-translate-y-0.5 ${
-                      isDarkMode
-                        ? 'border border-white/25 bg-gradient-to-r from-white/20 via-white/10 to-white/5 text-white hover:border-white/40'
-                        : 'border border-slate-200 bg-gradient-to-r from-white via-slate-50 to-slate-100 text-slate-800 hover:border-blue-200'
-                    }`}
-                  >
-                    <ArrowRightLeft className="h-4 w-4" />
-                    Launch portal
-                  </button>
-                </div>
-                <div className={`rounded-2xl p-4 text-sm shadow-inner ${heroStatCardClass}`}>
-                  <p className={`text-[11px] uppercase tracking-[0.3rem] ${heroLabelClass}`}>Watchlist</p>
-                  <p className={`mt-1 text-lg font-semibold ${heroHeadingClass}`}>Warranty alerts</p>
-                  <button
-                    type="button"
-                    onClick={() => setWarrantyModalOpen(true)}
-                    className={`btn-primary mt-3 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition hover:-translate-y-0.5 ${
-                      isDarkMode
-                        ? 'border border-white/25 bg-gradient-to-r from-white/20 via-white/10 to-white/5 text-white hover:border-white/40'
-                        : 'border border-slate-200 bg-gradient-to-r from-white via-slate-50 to-slate-100 text-slate-800 hover:border-blue-200'
-                    }`}
-                  >
-                    <CalendarClock className="h-4 w-4" />
-                    View alerts
-                  </button>
-                </div>
-              </div>
-              <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                <div className={`rounded-2xl p-4 ${heroStatCardClass}`}>
-                  <p className={`text-[11px] uppercase tracking-[0.3rem] ${heroLabelClass}`}>Assets tracked</p>
-                  <p className={`mt-2 text-3xl font-semibold ${heroHeadingClass}`}>{stats.total}</p>
-                </div>
-                <div className={`rounded-2xl p-4 ${heroStatCardClass}`}>
-                  <p className={`text-[11px] uppercase tracking-[0.3rem] ${heroLabelClass}`}>Inventory value</p>
-                  <p className={`mt-2 text-3xl font-semibold ${heroHeadingClass}`}>{formatCurrency(stats.totalValue)}</p>
-                </div>
-                <div className={`rounded-2xl p-4 ${heroStatCardClass}`}>
-                  <p className={`text-[11px] uppercase tracking-[0.3rem] ${heroLabelClass}`}>Warranty alerts</p>
-                  <p className={`mt-2 text-3xl font-semibold ${heroHeadingClass}`}>{stats.expiringSoon}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div
-            className={`hero-shell relative overflow-hidden rounded-[32px] border p-6 shadow-[0_18px_60px_rgba(2,6,23,0.5)] ring-1 ${
-              isDarkMode
-                ? 'border-slate-900/70 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900 text-white ring-blue-500/15'
-                : 'border-slate-200 bg-gradient-to-br from-white via-sky-50 to-blue-100 text-slate-900 ring-blue-100'
-            }`}
-            style={heroAccentStyle}
-          >
-            <div className="absolute inset-0 opacity-40">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.2),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(236,72,153,0.18),transparent_30%)] blur-3xl" />
-            </div>
-            <div className="relative">
-              <p className={`text-xs font-semibold uppercase tracking-[0.3rem] ${heroLabelClass}`}>Fleet health</p>
-              <p className={`mt-3 text-4xl font-semibold ${heroHeadingClass}`}>{utilization}%</p>
-              <p className={`text-sm ${heroSubtextClass}`}>Checked out utilisation</p>
-              <div className={`mt-4 h-2 w-full rounded-full ${isDarkMode ? 'bg-white/10' : 'bg-slate-200'}`}>
-                <div
-                  className="h-2 rounded-full bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-300 shadow-[0_0_0_6px_rgba(59,130,246,0.2)]"
-                  style={{ width: `${utilization}%` }}
-                />
-              </div>
-              <div className="mt-6 space-y-4 text-sm">
-                <div className={`flex items-center justify-between rounded-2xl px-3 py-2 ${heroPanelClass}`}>
-                  <span className={heroSubtextClass}>Active hardware</span>
-                  <span className={`font-semibold ${heroHeadingClass}`}>{stats.available} available</span>
-                </div>
-                <div className={`flex items-center justify-between rounded-2xl px-3 py-2 ${heroPanelClass}`}>
-                  <span className={heroSubtextClass}>Checked out</span>
-                  <span className={`font-semibold ${heroHeadingClass}`}>{stats.checkedOut} devices</span>
-                </div>
-                <div className={`flex items-center justify-between rounded-2xl px-3 py-2 ${heroPanelClass}`}>
-                  <span className={heroSubtextClass}>License usage</span>
-                  <span className={`font-semibold ${heroHeadingClass}`}>{licenseInsights.percent}% of {licenseInsights.seats} seats</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="overview-metrics" className="mb-8 grid gap-6">
-          <SnapshotMetricsRow metrics={snapshotMetrics} />
-        </section>
-
-        <section id="overview-attention" className="mb-8 grid gap-6 lg:grid-cols-[1.6fr,1fr]">
-          <OverviewAttentionPanel
-            overdue={overdueAlerts}
-            dueSoon={dueSoonAlerts}
-            maintenance={maintenanceWorkOrders}
-            software={softwareAtRisk}
-            reminderPreview={reminderPreview}
-            onOpenAlerts={() => setWarrantyModalOpen(true)}
-            onClearServiceReminder={handleClearMaintenanceAlert}
-            onClearWarrantyReminder={handleClearWarrantyReminder}
-          />
-          <OverviewActivityCard history={recentHistory} maintenance={maintenanceWorkOrders} lookupAsset={getAssetName} />
-        </section>
-
-        {warrantyAlerts30.length > 0 && (
-          <section className="mb-8">
-            <WarrantyAlertStrip
-              alerts={warrantyAlerts30}
-              onViewAll={() => setWarrantyModalOpen(true)}
-              onClearAll={() => handleClearAllWarrantyAlerts(warrantyAlerts30)}
-              isDarkMode={isDarkMode}
-            />
-          </section>
-        )}
-
-        {softwareRenewalsDue90Days.length > 0 && (
-          <section className="mb-8">
-            <div className="glass-card rounded-3xl border border-slate-100 bg-gradient-to-br from-white via-purple-50/30 to-pink-50/30 p-6 shadow-lg">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-2xl bg-gradient-to-br from-purple-50 to-pink-50 p-3 shadow-inner">
-                    <CalendarClock className="h-6 w-6 text-purple-600" />
+                    <Sparkles className="h-4 w-4" />
+                    Unified operations plane
                   </div>
                   <div>
-                    <p className="text-lg font-bold text-slate-900">Software Renewal Alerts</p>
-                    <p className="text-sm text-slate-600">
-                      {softwareRenewalsDue90Days.length} license renewal{softwareRenewalsDue90Days.length !== 1 ? 's' : ''} due within 90 days
+                    <h1 className={`text-4xl font-semibold leading-tight md:text-5xl ${heroHeadingClass}`}>
+                      Orchestrate every asset decision with confidence
+                    </h1>
+                    <p className={`mt-3 max-w-2xl text-base ${heroSubtextClass}`}>
+                      Surface risk, capacity, and people context in one motion so you can brief leadership, deploy faster, and stay ahead of renewals.
                     </p>
                   </div>
-                </div>
-                <button
-                  onClick={() => setActivePage('Software')}
-                  className="rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg hover-lift hover:shadow-xl transition-all duration-300"
-                >
-                  View all renewals
-                </button>
-              </div>
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                {softwareRenewalsDue90Days.slice(0, 2).map((software) => (
-                  <div key={software.id} className={`rounded-2xl border p-4 shadow-md ${
-                    isDarkMode 
-                      ? 'border-slate-700 bg-slate-900 text-white' 
-                      : 'border-slate-200 bg-white text-slate-900'
-                  }`}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1">
-                        <p className={`font-semibold text-sm ${
-                          isDarkMode ? 'text-white' : 'text-slate-900'
-                        }`}>{software.software}</p>
-                        <p className={`text-xs ${
-                          isDarkMode ? 'text-slate-400' : 'text-slate-600'
-                        }`}>{software.vendor}</p>
-                      </div>
-                      <span
-                        className={`tone-chip ${getRenewalBadgeTone(software.daysUntilRenewal)} px-2.5 py-1 text-xs font-semibold`}
-                      >
-                        {software.daysUntilRenewal} days
-                      </span>
-                    </div>
-                    <div className={`mt-3 space-y-1 text-xs ${
-                      isDarkMode ? 'text-slate-300' : 'text-slate-600'
-                    }`}>
-                      <div className="flex justify-between">
-                        <span>Renewal date:</span>
-                        <span className={`font-semibold ${
-                          isDarkMode ? 'text-white' : 'text-slate-900'
-                        }`}>{new Date(software.renewalDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Annual cost:</span>
-                        <span className={`font-semibold ${
-                          isDarkMode ? 'text-white' : 'text-slate-900'
-                        }`}>{formatCurrency(software.annualCost)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Seats:</span>
-                        <span className={`font-semibold ${
-                          isDarkMode ? 'text-white' : 'text-slate-900'
-                        }`}>{software.seats} ({software.used} used)</span>
-                      </div>
-                    </div>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={handleExport}
+                      className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition hover:-translate-y-0.5 ${
+                        isDarkMode
+                          ? 'bg-white/15 text-white shadow-lg shadow-blue-500/20'
+                          : 'bg-slate-900 text-white shadow-lg shadow-blue-200/60'
+                      }`}
+                    >
+                      <Share2 className="h-4 w-4" />
+                      Share executive brief
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleOpenHelpDeskPortal}
+                      className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold transition ${
+                        isDarkMode
+                          ? 'border-white/30 text-white/90 hover:bg-white/10'
+                          : 'border-slate-200 text-slate-800 hover:border-blue-200'
+                      }`}
+                    >
+                      <Headset className="h-4 w-4" />
+                      Route a request
+                    </button>
                   </div>
-                ))}
-              </div>
-              {softwareRenewalsOverdue.length > 0 && (
-                <div className={`mt-4 rounded-2xl border-2 p-4 ${
-                  isDarkMode
-                    ? 'border-rose-500/30 bg-rose-950/50'
-                    : 'border-rose-300 bg-rose-50'
-                }`}>
-                  <p className="flex items-center gap-2 text-sm font-bold status-alert">
-                    <Bell className="h-4 w-4" />
-                    {softwareRenewalsOverdue.length} OVERDUE renewal{softwareRenewalsOverdue.length !== 1 ? 's' : ''} requiring immediate attention
-                  </p>
-                  <div className="mt-3 space-y-2">
-                    {softwareRenewalsOverdue.slice(0, 3).map((software) => (
-                      <div key={software.id} className={`flex items-center justify-between rounded-xl border p-3 text-sm ${
-                        isDarkMode 
-                          ? 'border-slate-800 bg-slate-900' 
-                          : 'border-rose-200 bg-white'
-                      }`}>
-                        <span className={`font-semibold ${
-                          isDarkMode ? 'text-white' : 'text-slate-900'
-                        }`}>{software.software}</span>
-                        <span className="font-semibold status-alert-muted">{Math.abs(software.daysUntilRenewal)} days overdue</span>
+                  <div className="overview-pulse grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {overviewPulseCards.map((card) => (
+                      <div key={card.label} className={`rounded-2xl border p-4 ${isDarkMode ? 'border-white/15 bg-white/5' : 'border-slate-200 bg-white'}`}>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-400">{card.label}</p>
+                        <p className={`mt-2 text-2xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{card.value}</p>
+                        <p className={`text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-500'}`}>{card.caption}</p>
                       </div>
                     ))}
                   </div>
                 </div>
-              )}
-            </div>
-          </section>
-        )}
-
-        <section id="overview-people" className="mb-8">
-          <SpendHotspotsCard costByDepartment={costByDepartment} topLocations={sheetInsights.topLocations} />
-        </section>
-
-        <section id="overview-actions" className="mb-8 grid gap-6 lg:grid-cols-[2fr,1fr]">
-          <div className="grid gap-4 md:grid-cols-2">
-            {quickActions.map((action) => (
-              <QuickActionCard key={action.title} {...action} />
-            ))}
-          </div>
-          <WhatsNewCard />
-        </section>
-
-            {isMobile && (
-              <div className="mb-20">
-                <div className="rounded-3xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-700 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <Navigation className="h-4 w-4 text-blue-600" />
-                    <div>
-                      <p className="font-semibold text-slate-900">Mobile-ready dashboard</p>
-                      <p className="text-xs text-slate-500">
-                        Tap the action bar to add hardware, scan QR codes or barcodes, or jump to warranty alerts.
-                      </p>
+              </div>
+              <div
+                className={`overview-orchestrator__radar hero-shell relative overflow-hidden rounded-[32px] border p-6 shadow-[0_25px_80px_rgba(2,6,23,0.5)] ring-1 ${
+                  isDarkMode
+                    ? 'border-slate-900/70 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900 text-white ring-blue-500/15'
+                    : 'border-slate-200 bg-gradient-to-br from-white via-sky-50 to-blue-100 text-slate-900 ring-blue-100'
+                }`}
+                style={heroAccentStyle}
+              >
+                <div className="absolute inset-0 opacity-30">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.15),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(236,72,153,0.18),transparent_30%)] blur-3xl" />
+                </div>
+                <div className="relative space-y-4">
+                  <p className={`text-xs font-semibold uppercase tracking-[0.3rem] ${heroLabelClass}`}>Live telemetry</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {overviewHeroSignals.map((signal) => {
+                      const toneWrapper =
+                        signal.tone === 'emerald'
+                          ? 'border-emerald-200/30 bg-emerald-500/5 text-emerald-50'
+                          : signal.tone === 'indigo'
+                          ? 'border-indigo-200/30 bg-indigo-500/5 text-indigo-50'
+                          : signal.tone === 'amber'
+                          ? 'border-amber-200/30 bg-amber-500/5 text-amber-50'
+                          : 'border-rose-200/30 bg-rose-500/5 text-rose-50';
+                      const toneMeta =
+                        signal.tone === 'emerald'
+                          ? 'text-emerald-200'
+                          : signal.tone === 'indigo'
+                          ? 'text-indigo-200'
+                          : signal.tone === 'amber'
+                          ? 'text-amber-100'
+                          : 'text-rose-100';
+                      return (
+                        <div key={signal.label} className={`rounded-2xl border px-4 py-3 backdrop-blur-lg ${toneWrapper}`}>
+                          <div className="flex items-center justify-between">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.3rem] opacity-80">{signal.label}</p>
+                            <span className={`text-xs font-semibold ${toneMeta}`}>{signal.meta}</span>
+                          </div>
+                          <p className="mt-2 text-2xl font-semibold">{signal.value}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="rounded-2xl border border-white/20 bg-white/5 p-4 text-sm text-white/80">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3rem] text-white/60">Utilisation</p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <p className="text-3xl font-semibold text-white">{utilization}%</p>
+                      <span className="text-xs text-white/70">Checked out</span>
+                    </div>
+                    <div className="mt-3 h-2 rounded-full bg-white/10">
+                      <div
+                        className="h-2 rounded-full bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-300 shadow-[0_0_0_8px_rgba(59,130,246,0.15)]"
+                        style={{ width: `${utilization}%` }}
+                      />
                     </div>
                   </div>
                 </div>
               </div>
+            </section>
+
+            <section className="overview-decisions mb-8">
+              <DecisionPanels
+                stats={stats}
+                licenseInsights={licenseInsights}
+                warrantyAlerts={warrantyAlerts30}
+                softwareRenewals={softwareRenewalsDue90Days}
+                helpdeskRequests={helpdeskRequests}
+                recentHistory={recentHistory}
+                onNavigate={setActivePage}
+              />
+            </section>
+
+            <section id="overview-metrics" className="overview-beacons mb-8 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Telemetry</p>
+                  <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">Signal beacons</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActivePage('Reports')}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700 dark:border-white/20 dark:text-white/80 dark:hover:border-white/40"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  Open reports gallery
+                </button>
+              </div>
+              <div className="rounded-[28px] border border-slate-100 bg-white/80 p-4 shadow-lg backdrop-blur dark:border-white/10 dark:bg-white/5">
+                <SnapshotMetricsRow metrics={snapshotMetrics} />
+              </div>
+            </section>
+
+            <section id="overview-attention" className="overview-flightdeck mb-8 grid gap-6 xl:grid-cols-[1.6fr,1fr]">
+              <div className="space-y-6">
+                <OverviewAttentionPanel
+                  overdue={overdueAlerts}
+                  dueSoon={dueSoonAlerts}
+                  maintenance={maintenanceWorkOrders}
+                  software={softwareAtRisk}
+                  reminderPreview={reminderPreview}
+                  onOpenAlerts={() => setWarrantyModalOpen(true)}
+                  onClearServiceReminder={handleClearMaintenanceAlert}
+                  onClearWarrantyReminder={handleClearWarrantyReminder}
+                />
+                {warrantyAlerts30.length > 0 && (
+                  <WarrantyAlertStrip
+                    alerts={warrantyAlerts30}
+                    onViewAll={() => setWarrantyModalOpen(true)}
+                    onClearAll={() => handleClearAllWarrantyAlerts(warrantyAlerts30)}
+                    isDarkMode={isDarkMode}
+                  />
+                )}
+              </div>
+              <OverviewActivityCard history={recentHistory} maintenance={maintenanceWorkOrders} lookupAsset={getAssetName} />
+            </section>
+
+            {softwareRenewalsDue90Days.length > 0 && (
+              <section className="overview-renewals mb-8">
+                <div className="glass-card rounded-3xl border border-slate-100 bg-gradient-to-br from-white via-purple-50/30 to-pink-50/30 p-6 shadow-lg dark:border-white/15 dark:from-white/5 dark:via-purple-500/5 dark:to-pink-500/5">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-2xl bg-gradient-to-br from-purple-50 to-pink-50 p-3 shadow-inner dark:from-white/10 dark:to-white/5">
+                        <CalendarClock className="h-6 w-6 text-purple-600 dark:text-white" />
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold text-slate-900 dark:text-white">Software renewal radar</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-300">
+                          {softwareRenewalsDue90Days.length} license renewal{softwareRenewalsDue90Days.length !== 1 ? 's' : ''} due within 90 days
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setActivePage('Software')}
+                      className="rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg hover:-translate-y-0.5 hover:shadow-xl transition"
+                    >
+                      View all renewals
+                    </button>
+                  </div>
+                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                    {softwareRenewalsDue90Days.slice(0, 2).map((software) => (
+                      <div
+                        key={software.id}
+                        className={`rounded-2xl border p-4 shadow-md ${
+                          isDarkMode ? 'border-slate-700 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-900'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <p className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{software.software}</p>
+                            <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>{software.vendor}</p>
+                          </div>
+                          <span className={`tone-chip ${getRenewalBadgeTone(software.daysUntilRenewal)} px-2.5 py-1 text-xs font-semibold`}>
+                            {software.daysUntilRenewal} days
+                          </span>
+                        </div>
+                        <div className={`mt-3 space-y-1 text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                          <div className="flex justify-between">
+                            <span>Renewal date:</span>
+                            <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                              {new Date(software.renewalDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Seats:</span>
+                            <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{software.seats}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
             )}
+
+            <section id="overview-people" className="mb-8">
+              <SpendHotspotsCard costByDepartment={costByDepartment} topLocations={sheetInsights.topLocations} />
+            </section>
+
+            <section id="overview-actions" className="overview-actions-grid mb-8 grid gap-6 xl:grid-cols-[1.6fr,1fr]">
+              <div className="space-y-4">
+                <div className="rounded-[28px] border border-slate-100 bg-white/80 p-4 shadow-lg backdrop-blur dark:border-white/15 dark:bg-white/5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-400">Command deck</p>
+                  <div
+                    className="mt-4 grid gap-4"
+                    style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))' }}
+                  >
+                    {quickActions.map((action) => (
+                      <QuickActionCard key={action.title} {...action} />
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-[28px] border border-dashed border-slate-200 p-4 text-sm text-slate-600 dark:border-white/15 dark:text-slate-300">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-400">Need inspiration?</p>
+                  <p className="mt-2 text-base font-semibold text-slate-900 dark:text-white">
+                    Jump to Hardware to stage devices or explore Software for licensing heatmaps.
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <WhatsNewCard />
+                {isMobile && (
+                  <div className="rounded-3xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-700 shadow-sm dark:border-white/15 dark:bg-white/5 dark:text-white/80">
+                    <div className="flex items-center gap-3">
+                      <Navigation className="h-4 w-4 text-blue-600 dark:text-sky-300" />
+                      <div>
+                        <p className="font-semibold text-slate-900 dark:text-white">Mobile-ready dashboard</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-300">
+                          Tap the action bar to add hardware, scan QR codes, or jump to warranty alerts.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
           </>
         )}
-
         {activePage === 'Hardware' && (
           <>
             <section
@@ -12835,10 +13004,10 @@ const handleTestPrinter = useCallback(
                   })
                 }
               />
+              <AnalyticsInsightsPanel costData={costByDepartment} depreciation={depreciationTrend} />
             </section>
 
-            <section className="mb-8 space-y-6">
-              <AnalyticsInsightsPanel costData={costByDepartment} depreciation={depreciationTrend} />
+            <section className="mb-8">
               <DepreciationForecastTable forecast={depreciationForecast} />
             </section>
 
@@ -14319,6 +14488,8 @@ const handleTestPrinter = useCallback(
           </>
         )}
       </div>
+    </div>
+  </div>
 
       {spotlightOpen && selectedAsset && (
         <AssetSpotlightModal
@@ -14520,7 +14691,6 @@ const handleTestPrinter = useCallback(
         />
       )}
     </div>
-  </div>
   );
 };
 
