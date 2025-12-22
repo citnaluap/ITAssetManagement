@@ -22,7 +22,6 @@ import {
   Check,
   Share2,
   ShieldCheck,
-  Bell,
   CalendarClock,
   Tag,
   MapPin,
@@ -3258,7 +3257,7 @@ const CommandHeader = ({
             </div>
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">UDS digital</p>
-              <p className="text-2xl font-semibold text-slate-900 dark:text-white">Unified Asset Studio</p>
+              <p className="text-2xl font-semibold text-slate-900 dark:text-white">Asset Control Studio</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -3342,174 +3341,6 @@ const CommandHeader = ({
       </div>
     </div>
   </header>
-);
-
-const DecisionPanels = ({
-  stats,
-  licenseInsights,
-  warrantyAlerts = [],
-  softwareRenewals = [],
-  helpdeskRequests = [],
-  recentHistory = [],
-  onNavigate,
-}) => {
-  const openHelpdesk = helpdeskRequests.filter((request) => (request.status || '').toLowerCase() !== 'resolved').slice(0, 3);
-  const renewalSample = softwareRenewals.slice(0, 3);
-  const activitySample = recentHistory.slice(0, 3);
-
-  return (
-    <div className="decision-rail flex flex-col gap-4">
-      <div className="insight-card rounded-3xl border border-slate-100 bg-white/80 p-5 shadow-lg dark:border-white/10 dark:bg-white/5">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Mission snapshot</p>
-            <p className="text-xl font-semibold text-slate-900 dark:text-white">Live KPIs</p>
-          </div>
-          <ShieldCheck className="h-5 w-5 text-emerald-500" />
-        </div>
-        <div className="mt-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">Assets</span>
-            <span className="text-lg font-semibold text-slate-900 dark:text-white">{stats?.total ?? 0}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">Ready</span>
-            <span className="text-lg font-semibold text-slate-900 dark:text-white">{stats?.available ?? 0}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">License usage</span>
-            <span className="text-lg font-semibold text-slate-900 dark:text-white">{licenseInsights?.percent ?? 0}%</span>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => onNavigate?.('Hardware')}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800"
-        >
-          Open fleet view
-          <ArrowRight className="h-4 w-4" />
-        </button>
-      </div>
-
-      <div className="insight-card rounded-3xl border border-slate-100 bg-white/70 p-5 shadow-lg dark:border-white/10 dark:bg-white/5">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Alerts</p>
-            <p className="text-lg font-semibold text-slate-900 dark:text-white">Renewals & watchlist</p>
-          </div>
-          <Bell className="h-5 w-5 text-amber-500" />
-        </div>
-        <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
-          <div className="flex items-center justify-between rounded-2xl bg-slate-50/80 px-3 py-2 dark:bg-white/5 dark:text-white">
-            <span>Warranty alerts</span>
-            <span className="font-semibold text-slate-900 dark:text-white">{warrantyAlerts.length}</span>
-          </div>
-          {renewalSample.length > 0 ? (
-            renewalSample.map((item) => (
-              <div key={item.id} className="rounded-2xl border border-slate-100 px-3 py-2 dark:border-white/15">
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.software}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-300">Due in {item.daysUntilRenewal} days</p>
-              </div>
-            ))
-          ) : (
-            <p className="rounded-2xl border border-slate-100 px-3 py-2 text-xs font-semibold text-emerald-500 dark:border-white/15">All renewals are green</p>
-          )}
-        </div>
-        <div className="mt-4 grid gap-2">
-          <button
-            type="button"
-            onClick={() => onNavigate?.('Software')}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700 dark:border-white/15 dark:text-white/80"
-          >
-            View software runway
-            <ArrowRight className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onNavigate?.('Hardware')}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700 dark:border-white/15 dark:text-white/80"
-          >
-            Open warranty center
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      <div className="insight-card rounded-3xl border border-slate-100 bg-white/70 p-5 shadow-lg dark:border-white/10 dark:bg-white/5">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Momentum</p>
-            <p className="text-lg font-semibold text-slate-900 dark:text-white">Activity & requests</p>
-          </div>
-          <History className="h-5 w-5 text-blue-500" />
-        </div>
-        <div className="mt-4 space-y-3 text-sm">
-          {activitySample.map((entry) => (
-            <div key={`${entry.id}-${entry.timestamp}`} className="rounded-2xl border border-slate-100 px-3 py-2 dark:border-white/15">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">{entry.event}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-300">
-                {entry.timestamp
-                  ? new Date(entry.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                  : 'Just now'}
-              </p>
-            </div>
-          ))}
-          {activitySample.length === 0 && (
-            <div className="rounded-2xl border border-slate-100 px-3 py-2 text-xs font-semibold text-slate-500 dark:border-white/15 dark:text-white/60">No activity yet</div>
-          )}
-        </div>
-        <div className="mt-4 space-y-2 text-sm">
-          <div className="flex items-center justify-between rounded-2xl border border-slate-100 px-3 py-2 dark:border-white/15">
-            <span className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400 dark:text-white/50">Helpdesk</span>
-            <span className="text-base font-semibold text-slate-900 dark:text-white">{openHelpdesk.length} open</span>
-          </div>
-          {openHelpdesk.map((ticket) => (
-            <div
-              key={ticket.id || `${ticket.email || 'request'}-${ticket.topic || ticket.details}`}
-              className="rounded-2xl border border-slate-100 px-3 py-2 dark:border-white/15"
-            >
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">{ticket.topic || ticket.details || 'New request'}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-300">{ticket.name || ticket.email}</p>
-            </div>
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={() => onNavigate?.('HelpDesk')}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
-        >
-          Triage requests
-          <Headset className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
-  );
-};
-
-const QuickActionCard = ({ title, description, icon: Icon, actionLabel, onAction }) => (
-  <div className="quick-action-card rounded-[28px] border border-slate-100 bg-white/80 p-5 shadow-md backdrop-blur dark:border-white/10 dark:bg-white/5">
-    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      <div className="flex items-start gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 shadow-inner dark:bg-white/10 dark:text-white">
-          <Icon className="h-5 w-5" />
-        </div>
-        <div>
-          <p className="text-base font-semibold text-slate-900 dark:text-white">{title}</p>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{description}</p>
-        </div>
-      </div>
-      <div className="md:text-right">
-        <button
-          onClick={onAction}
-          className="inline-flex items-center gap-2 rounded-2xl border border-blue-100 px-4 py-2 text-sm font-semibold text-blue-600 transition hover:border-blue-300 hover:text-blue-700 dark:border-slate-700 dark:text-slate-100"
-          type="button"
-        >
-          {actionLabel}
-          <ArrowRightLeft className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
-  </div>
 );
 
 const DeviceSpotlightCard = ({ title, stats = [], stat, description, image, meta, onStatClick, isDarkMode = false }) => {
@@ -3603,215 +3434,6 @@ const PaginationControls = ({ page, totalPages, onPageChange, align = 'between' 
         </button>
       </div>
     </div>
-  );
-};
-
-const SnapshotMetricsRow = ({ metrics = [], isDarkMode = false }) => (
-  <div className="glass-card rounded-3xl p-6 shadow-lg">
-    <p className="text-[11px] font-bold uppercase tracking-[0.35rem] bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Daily signals</p>
-    <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      {metrics.map((metric) => (
-        <div key={metric.label} className="metric-card p-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-purple-500">{metric.label}</p>
-          <p className="metric-value mt-2">{metric.value}</p>
-          <p className="metric-label mt-1">{metric.subline}</p>
-        </div>
-      ))}
-      {metrics.length === 0 && <p className="text-sm text-slate-500">No live metrics available.</p>}
-    </div>
-  </div>
-);
-
-const OverviewAttentionPanel = ({
-  overdue = [],
-  dueSoon = [],
-  maintenance = [],
-  software = [],
-  reminderPreview = [],
-  onOpenAlerts,
-  onClearServiceReminder = () => {},
-  onClearWarrantyReminder = () => {},
-}) => {
-  const summary = [
-    { label: 'Overdue', value: overdue.length, tone: 'tone-panel tone-alert' },
-    { label: 'Due soon', value: dueSoon.length, tone: 'tone-panel tone-warning' },
-    { label: 'Work orders', value: maintenance.length, tone: 'tone-panel tone-info' },
-  ];
-  const reminders = reminderPreview.slice(0, 4);
-
-  return (
-    <CardShell
-      title="Needs attention"
-      icon={Bell}
-      action={
-        <button
-          type="button"
-          onClick={onOpenAlerts}
-          className="rounded-2xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600"
-        >
-          Open alerts
-        </button>
-      }
-    >
-      <div className="grid gap-3 sm:grid-cols-3">
-        {summary.map((item) => (
-          <div key={item.label} className={`${item.tone} p-3 text-sm font-semibold`}>
-            <p className="text-xs uppercase tracking-wide text-slate-500">{item.label}</p>
-            <p className="text-lg">{item.value}</p>
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 space-y-3">
-        {reminders.length === 0 && <p className="text-sm text-slate-600">No upcoming lifecycle tasks. Keep shipping.</p>}
-        {reminders.map((reminder) => (
-          <div key={`${reminder.assetId}-${reminder.warrantyExpiry}`} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">{reminder.assetName || reminder.model}</p>
-                <p className="text-xs text-slate-500">
-                  {reminder.type} - {reminder.overdue ? 'Overdue' : `${reminder.daysRemaining} days`}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {reminder.location || 'Location TBD'} - {reminder.assignedTo || 'Unassigned'}
-                </p>
-              </div>
-              <span
-                className={`tone-chip ${reminder.overdue ? 'tone-alert' : 'tone-warning'} px-3 py-1 text-[11px] font-semibold uppercase tracking-wide`}
-              >
-                {reminder.overdue ? 'Overdue' : `Due in ${reminder.daysRemaining}d`}
-              </span>
-            </div>
-            {reminder.type === 'Service' && (
-              <button
-                type="button"
-                className="mt-2 text-xs font-semibold status-warning underline underline-offset-4"
-                onClick={() => onClearServiceReminder(reminder)}
-              >
-                Clear
-              </button>
-            )}
-            {reminder.type === 'Warranty' && (
-              <button
-                type="button"
-                className="mt-2 text-xs font-semibold text-slate-700 underline underline-offset-4"
-                onClick={() => onClearWarrantyReminder(reminder)}
-              >
-                Clear
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
-      {software.length > 0 && (
-        <div className="mt-4 rounded-xl border border-slate-200 bg-white/70 p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-500">Software watch</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {software.slice(0, 4).map((suite) => (
-              <span
-                key={suite.id}
-                className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200"
-              >
-                {suite.software}
-                <span
-                  className={`tone-chip ${suite.status === 'Overused' ? 'tone-alert' : 'tone-warning'} px-2 py-0.5 text-[10px] uppercase tracking-wide`}
-                >
-                  {suite.status}
-                </span>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-    </CardShell>
-  );
-};
-
-const OverviewActivityCard = ({ history = [], maintenance = [], lookupAsset }) => {
-  const activity = history.slice(0, 4);
-  const maintenanceByStatus = maintenance.reduce((acc, item) => {
-    acc[item.status] = (acc[item.status] || 0) + 1;
-    return acc;
-  }, {});
-
-  return (
-    <CardShell title="Ops feed" icon={History}>
-      <div className="space-y-3">
-        {activity.length === 0 && <p className="text-sm text-slate-600">No recent check-ins or check-outs.</p>}
-        {activity.map((entry) => (
-          <div key={entry.id} className="flex items-start gap-3 rounded-2xl border border-slate-100 p-3">
-            <div
-              className={`rounded-full p-2 ${
-                entry.action === 'Check Out' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 status-success-muted'
-              }`}
-            >
-              <ArrowRightLeft className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-800">
-                {entry.action} - {lookupAsset ? lookupAsset(entry.assetId) : entry.assetId}
-              </p>
-              <p className="text-xs text-slate-500">
-                {entry.date} | {entry.user}
-              </p>
-              {entry.notes && <p className="mt-1 text-sm text-slate-600">{entry.notes}</p>}
-            </div>
-          </div>
-        ))}
-      </div>
-      {maintenance.length > 0 && (
-        <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/70 p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-500">Maintenance queue</p>
-          <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-            {Object.entries(maintenanceByStatus).map(([status, count]) => (
-              <div key={status} className="rounded-lg bg-white px-3 py-2 font-semibold text-slate-700 ring-1 ring-slate-100">
-                <p className="text-[10px] uppercase tracking-wide text-slate-500">{status}</p>
-                <p className="text-sm">{count}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </CardShell>
-  );
-};
-
-const SpendHotspotsCard = ({ costByDepartment = [], topLocations = [] }) => {
-  const total = costByDepartment.reduce((sum, item) => sum + Number(item.value || 0), 0);
-  return (
-    <CardShell title="Spend hotspots" icon={Tag}>
-      {costByDepartment.length === 0 && <p className="text-sm text-slate-600">Add cost data to surface spend outliers.</p>}
-      {costByDepartment.length > 0 && (
-        <div className="space-y-3">
-          {costByDepartment.map((dept) => {
-            const percent = total ? Math.round((Number(dept.value || 0) / total) * 100) : 0;
-            return (
-              <div key={dept.name} className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
-                <div className="flex items-center justify-between text-sm font-semibold text-slate-800">
-                  <span>{dept.name}</span>
-                  <span>{formatCurrency(dept.value)}</span>
-                </div>
-                <div className="mt-2 h-2 rounded-full bg-white">
-                  <div className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-teal-400" style={{ width: `${percent}%` }} />
-                </div>
-                <p className="mt-1 text-[11px] uppercase tracking-wide text-slate-500">{percent}% of tracked spend</p>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {topLocations?.length > 0 && (
-        <div className="mt-4 rounded-xl border border-slate-100 bg-white/70 p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-500">Top locations</p>
-          <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-slate-700">
-            {topLocations.slice(0, 3).map((location) => (
-              <span key={location.location} className="rounded-full bg-slate-50 px-3 py-1 ring-1 ring-slate-100">
-                {location.location} ({location.count})
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-    </CardShell>
   );
 };
 
@@ -4280,206 +3902,6 @@ const SoftwareSuiteCard = ({ suite, onEdit, onDelete }) => {
     </div>
   );
 };
-
-const WarrantyAlertStrip = ({ alerts = [], onViewAll, onClearAll, isDarkMode = false }) => {
-  if (!alerts.length) {
-    return null;
-  }
-  const highlight = alerts.slice(0, 3);
-  const nextExpiry = highlight[0]?.warrantyExpiry ? formatDate(highlight[0].warrantyExpiry) : null;
-  return (
-    <div
-      className={`relative overflow-hidden rounded-3xl border p-6 ${
-        isDarkMode
-          ? 'border-slate-800/70 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white shadow-[0_20px_60px_rgba(15,23,42,0.55)]'
-          : 'border-amber-100 bg-gradient-to-br from-white via-amber-50/70 to-orange-50 text-slate-900 shadow-[0_16px_45px_rgba(15,23,42,0.12)]'
-      }`}
-    >
-      <div className={`absolute inset-0 blur-3xl ${isDarkMode ? 'opacity-40' : 'opacity-30'}`}>
-        <div
-          className={`absolute -left-10 -top-8 h-40 w-40 rounded-full ${isDarkMode ? 'bg-cyan-500/40' : 'bg-amber-200/60'}`}
-        />
-        <div
-          className={`absolute bottom-0 right-0 h-48 w-48 rounded-full ${isDarkMode ? 'bg-amber-400/30' : 'bg-orange-200/50'}`}
-        />
-      </div>
-      <div className="relative flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <span
-            className={`flex h-11 w-11 items-center justify-center rounded-2xl ring-1 ${
-              isDarkMode
-                ? 'bg-white/10 ring-white/20 shadow-inner'
-                : 'bg-white ring-amber-200 shadow-sm'
-            }`}
-          >
-            <CalendarClock className="h-5 w-5 status-warning" />
-          </span>
-          <div>
-            <p
-              className={`text-[11px] font-semibold uppercase tracking-[0.3rem] ${
-                isDarkMode ? 'text-white/70' : 'status-warning opacity-80'
-              }`}
-            >
-              Warranty alerts
-            </p>
-            <p className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Expiring within 30 days</p>
-            <p className={`text-sm ${isDarkMode ? 'text-white/70' : 'text-slate-700'}`}>
-              {alerts.length} device{alerts.length === 1 ? '' : 's'} need attention {nextExpiry ? `- next on ${nextExpiry}` : ''}
-            </p>
-          </div>
-        </div>
-          <div className="flex items-center gap-2">
-          {typeof onClearAll === 'function' && (
-            <button
-              type="button"
-              className={`rounded-2xl px-4 py-2 text-xs font-semibold transition hover:-translate-y-0.5 ${
-                isDarkMode
-                  ? 'border border-white/20 bg-white/10 text-white hover:border-white/30 hover:bg-white/15'
-                  : 'border border-amber-200 bg-white/80 status-warning shadow-sm hover:border-amber-300 hover:bg-white'
-              }`}
-              onClick={() => onClearAll(alerts)}
-            >
-              Clear all
-            </button>
-          )}
-          {typeof onViewAll === 'function' && (
-            <button
-              type="button"
-              className={`rounded-2xl px-4 py-2 text-xs font-semibold shadow-lg transition hover:-translate-y-0.5 ${
-                isDarkMode
-                  ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 shadow-amber-500/30'
-                  : 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-amber-400/50'
-              }`}
-              onClick={onViewAll}
-            >
-              View all
-            </button>
-          )}
-          </div>
-        </div>
-
-      <div className="relative mt-5 grid gap-3 sm:grid-cols-3">
-        <div
-          className={`rounded-2xl border p-4 shadow-inner backdrop-blur ${
-            isDarkMode ? 'border-white/10 bg-white/5' : 'border-amber-100 bg-white/80'
-          }`}
-        >
-          <p
-            className={`text-[11px] uppercase tracking-[0.25rem] ${
-              isDarkMode ? 'text-white/60' : 'status-warning opacity-70'
-            }`}
-          >
-            Total alerts
-          </p>
-          <p className={`mt-2 text-3xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{alerts.length}</p>
-        </div>
-        <div
-          className={`rounded-2xl border p-4 shadow-inner backdrop-blur ${
-            isDarkMode ? 'border-white/10 bg-white/5' : 'border-amber-100 bg-white/80'
-          }`}
-        >
-          <p
-            className={`text-[11px] uppercase tracking-[0.25rem] ${
-              isDarkMode ? 'text-white/60' : 'status-warning opacity-70'
-            }`}
-          >
-            Next expiry
-          </p>
-          <p className="mt-2 text-lg font-semibold status-warning">{nextExpiry || '-'}</p>
-        </div>
-        <div
-          className={`rounded-2xl border p-4 shadow-inner backdrop-blur ${
-            isDarkMode ? 'border-white/10 bg-white/5' : 'border-amber-100 bg-white/80'
-          }`}
-        >
-          <p
-            className={`text-[11px] uppercase tracking-[0.25rem] ${
-              isDarkMode ? 'text-white/60' : 'status-warning opacity-70'
-            }`}
-          >
-            Action
-          </p>
-          <p className={`mt-2 text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-            Schedule service or renew coverage
-          </p>
-        </div>
-      </div>
-
-      <div className="relative mt-5 space-y-3">
-        {highlight.map((alert, index) => (
-          <div
-            key={`${alert.assetId || alert.assetName}-warranty`}
-            className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm ${
-              isDarkMode ? 'border-white/10 bg-white/5 shadow-inner backdrop-blur' : 'border-amber-100/80 bg-white/80 shadow-sm'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={`flex h-9 w-9 items-center justify-center rounded-xl ring-1 ${
-                  isDarkMode ? 'bg-amber-500/20 status-warning ring-amber-300/40' : 'bg-amber-100 status-warning ring-amber-200'
-                }`}
-              >
-                {index + 1}
-              </div>
-              <div>
-                <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                  {alert.assetName || alert.model || 'Device'}
-                </p>
-                <p className={`text-xs ${isDarkMode ? 'text-white/70' : 'text-slate-600'}`}>
-                  {alert.location || 'Location TBD'} | {alert.assignedTo || 'Unassigned'}
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className={`text-xs uppercase tracking-wide ${isDarkMode ? 'text-white/60' : 'status-warning opacity-70'}`}>Expires</p>
-              <p className="text-sm font-semibold status-warning">{formatDate(alert.warrantyExpiry)}</p>
-            </div>
-          </div>
-        ))}
-        {alerts.length > highlight.length && (
-          <div
-            className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-xs font-semibold ${
-              isDarkMode
-                ? 'border-white/10 bg-white/5 text-white/80 backdrop-blur'
-                : 'border-amber-100 bg-white/90 text-slate-800 shadow-sm'
-            }`}
-          >
-            <span>+{alerts.length - highlight.length} more devices in queue</span>
-            {typeof onViewAll === 'function' && (
-              <button
-                type="button"
-                className="status-warning underline underline-offset-4"
-                onClick={onViewAll}
-              >
-                Review all
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const WhatsNewCard = () => (
-  <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-    <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">What&apos;s new</p>
-    <ul className="mt-4 space-y-3 text-sm text-slate-600">
-      <li className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
-        <p className="font-semibold text-slate-900">Loaner audit</p>
-        <p className="text-xs text-slate-500">Weekly spot-check scheduled for Friday to keep five devices staged.</p>
-      </li>
-      <li className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
-        <p className="font-semibold text-slate-900">Upcoming refresh</p>
-        <p className="text-xs text-slate-500">Finance laptops older than 5 years will be swapped starting next Monday.</p>
-      </li>
-      <li className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
-        <p className="font-semibold text-slate-900">Vendor cadence</p>
-        <p className="text-xs text-slate-500">Quarterly vendor review slated for next week.</p>
-      </li>
-    </ul>
-  </div>
-);
 
 const SoftwareFormModal = ({ suite, onSubmit, onCancel, suggestionListId }) => {
   const toFormState = (input) => ({
@@ -8304,7 +7726,6 @@ const patchNetworkPrinter = useCallback(
       ),
     [clearedMaintenanceAlertSet, clearedWarrantyAlertSet, rawLifecycleReminders],
   );
-  const reminderPreview = useMemo(() => lifecycleReminders.slice(0, 6), [lifecycleReminders]);
   const warrantyReminders = useMemo(
     () => lifecycleReminders.filter((item) => item.type === 'Warranty'),
     [lifecycleReminders],
@@ -10424,7 +9845,6 @@ const patchNetworkPrinter = useCallback(
     return { ...totals, percent };
   }, [licenseBuckets]);
 
-  const utilization = stats.total ? Math.round((stats.checkedOut / stats.total) * 100) : 0;
   const handleFilterChange = (field, value) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
@@ -10465,12 +9885,6 @@ const patchNetworkPrinter = useCallback(
       });
     },
     [setClearedMaintenanceAlerts],
-  );
-  const handleClearWarrantyReminder = useCallback(
-    (reminder) => {
-      handleClearWarrantyAlert(reminder);
-    },
-    [handleClearWarrantyAlert],
   );
   const parseStackInput = (value) => {
     if (Array.isArray(value)) {
@@ -11441,90 +10855,8 @@ const handleTestPrinter = useCallback(
     ],
     [],
   );
-  const quickActions = [
-    {
-      title: 'Register new hardware',
-      description: 'Log laptops, peripherals, or sensors and auto-assign to teams.',
-      icon: Plus,
-      actionLabel: 'Add asset',
-      onAction: () => setAssetForm(defaultAsset),
-    },
-    {
-      title: 'Add employee record',
-      description: 'Keep people data current before checkouts and approvals.',
-      icon: Users,
-      actionLabel: 'Add employee',
-      onAction: handleAddEmployee,
-    },
-    {
-      title: 'Scan asset label',
-      description: 'Use your camera to jump into a device record without scrolling the table.',
-      icon: Scan,
-      actionLabel: 'Start scanner',
-      onAction: handleStartScanner,
-    },
-    {
-      title: 'Warranty review',
-      description: 'See devices expiring soon and clear alerts after you act.',
-      icon: CalendarClock,
-      actionLabel: 'Open alerts',
-      onAction: () => setWarrantyModalOpen(true),
-    },
-  ];
-
-  const overviewHeroSignals = useMemo(
-    () => [
-      {
-        label: 'Fleet readiness',
-        value: `${stats.available || 0} devices`,
-        meta: `${stats.checkedOut || 0} checked out`,
-        tone: 'emerald',
-      },
-      {
-        label: 'License capacity',
-        value: `${licenseInsights.percent || 0}%`,
-        meta: `${licenseInsights.used || 0}/${licenseInsights.seats || 0} seats`,
-        tone: 'indigo',
-      },
-      {
-        label: 'Renewal runway',
-        value: `${softwareRenewalsDue90Days.length} upcoming`,
-        meta: 'Next 90 days',
-        tone: 'amber',
-      },
-      {
-        label: 'Service load',
-        value: `${maintenanceWorkOrders.length} open`,
-        meta: 'Maintenance queue',
-        tone: 'rose',
-      },
-    ],
-    [licenseInsights.percent, licenseInsights.seats, licenseInsights.used, maintenanceWorkOrders.length, softwareRenewalsDue90Days.length, stats.available, stats.checkedOut],
-  );
-
-  const overviewPulseCards = useMemo(
-    () => [
-      {
-        label: 'Assets governed',
-        value: stats.total,
-        caption: 'Tracked across every site',
-      },
-      {
-        label: 'Inventory value',
-        value: formatCurrency(stats.totalValue || 0),
-        caption: 'Book value of active hardware',
-      },
-      {
-        label: 'Warranty at risk',
-        value: `${warrantyAlerts30.length} devices`,
-        caption: 'Expiring inside 30 days',
-      },
-    ],
-    [stats.total, stats.totalValue, warrantyAlerts30.length],
-  );
-
   const menuNavItems = [
-    { label: 'Overview', onClick: () => handleJumpToSection('Overview', 'overview-hero') },
+    { label: 'Overview', onClick: () => handleJumpToSection('Overview', 'overview-preview') },
     { label: 'Hardware', onClick: () => handleJumpToSection('Hardware', 'hardware-hero') },
     { label: 'Repairs', onClick: () => handleJumpToSection('Repairs', 'repairs-hero') },
     { label: 'Employees', onClick: () => handleJumpToSection('Employees', 'employees-hero') },
@@ -11535,9 +10867,8 @@ const handleTestPrinter = useCallback(
   ];
 
   const menuSectionLinks = [
-    { label: 'Overview metrics', onClick: () => handleJumpToSection('Overview', 'overview-metrics') },
-    { label: 'Quick actions', onClick: () => handleJumpToSection('Overview', 'overview-actions') },
-    { label: 'QR tools', onClick: () => handleJumpToSection('Overview', 'qr-tools-overview') },
+    { label: 'Workspace previews', onClick: () => handleJumpToSection('Overview', 'overview-preview') },
+    { label: 'QR tools', onClick: () => handleJumpToSection('Hardware', 'qr-tools-overview') },
     { label: 'Asset table', onClick: () => handleJumpToSection('Hardware', 'asset-table') },
     { label: 'Repair desk', onClick: () => handleJumpToSection('Repairs', 'repairs-hero') },
     { label: 'Parts ordering', onClick: () => handleJumpToSection('Repairs', 'repair-resources') },
@@ -11977,6 +11308,160 @@ const handleTestPrinter = useCallback(
     ],
   );
 
+  const overviewPreviewCards = useMemo(() => {
+    const formatCount = (value) => (Number(value) || 0).toLocaleString();
+    const licenseCoverage = Math.round(Number(licenseInsights.percent) || 0);
+    const avgRepairAge = Math.round(Number(laptopServiceSummary.avgRepairAgeMonths) || 0);
+    const loanersReady = laptopServiceSummary.loanerAvailableCount || 0;
+    const openHelpdeskCount = helpdeskRequests.filter((request) => (request.status || '').toLowerCase() !== 'resolved').length;
+
+    return [
+      {
+        key: 'Hardware',
+        title: 'Hardware',
+        description: 'Inventory & readiness',
+        icon: Laptop,
+        tone: 'blue',
+        highlights: [
+          { label: 'Devices', value: formatCount(stats.total) },
+          { label: 'Ready', value: formatCount(stats.available) },
+        ],
+        meta: `${formatCount(stats.checkedOut)} checked out`,
+      },
+      {
+        key: 'Repairs',
+        title: 'Repairs',
+        description: 'Service queue overview',
+        icon: Wrench,
+        tone: 'amber',
+        highlights: [
+          { label: 'Work orders', value: formatCount(maintenanceWorkOrders.length) },
+          { label: 'Loaners ready', value: formatCount(loanersReady) },
+        ],
+        meta: `${avgRepairAge} mo avg repair`,
+      },
+      {
+        key: 'Employees',
+        title: 'Employees',
+        description: 'Directory & ownership',
+        icon: Users,
+        tone: 'emerald',
+        highlights: [
+          { label: 'Directory', value: formatCount(employeeGallery.length) },
+          { label: 'Departments', value: formatCount(employeeDepartmentCount) },
+        ],
+        meta: `${formatCount(remoteAssetCount)} remote devices`,
+      },
+      {
+        key: 'Software',
+        title: 'Software',
+        description: 'Licenses & renewals',
+        icon: Plug,
+        tone: 'indigo',
+        highlights: [
+          { label: 'Seats', value: `${licenseInsights.used || 0}/${licenseInsights.seats || 0}` },
+          { label: 'Renewals 90d', value: formatCount(softwareRenewalsDue90Days.length) },
+        ],
+        meta: `${licenseCoverage}% coverage`,
+      },
+      {
+        key: 'Reports',
+        title: 'Reports',
+        description: 'Trends & KPIs',
+        icon: BarChart3,
+        tone: 'rose',
+        highlights: [
+          { label: 'Reports', value: formatCount(reportCatalog.length) },
+          { label: 'Signals', value: formatCount(snapshotMetrics.length) },
+        ],
+        meta: `${formatCount(stats.expiringSoon || 0)} assets due`,
+      },
+      {
+        key: 'Vendors',
+        title: 'Vendors',
+        description: 'Partners & SLAs',
+        icon: Tag,
+        tone: 'purple',
+        highlights: [
+          { label: 'Partners', value: formatCount(vendorProfiles.length) },
+          { label: 'Devices', value: formatCount(vendorTotals.devices) },
+        ],
+        meta: `${formatCount(vendorTotals.active)} active`,
+      },
+      {
+        key: 'HelpDesk',
+        title: 'Help desk',
+        description: 'Requests & routing',
+        icon: Headset,
+        tone: 'slate',
+        highlights: [
+          { label: 'Requests', value: formatCount(helpdeskRequests.length) },
+          { label: 'Open', value: formatCount(openHelpdeskCount) },
+        ],
+        meta: 'Route the next ticket',
+      },
+    ];
+  }, [
+    employeeDepartmentCount,
+    employeeGallery.length,
+    helpdeskRequests,
+    licenseInsights.percent,
+    licenseInsights.seats,
+    licenseInsights.used,
+    maintenanceWorkOrders.length,
+    reportCatalog.length,
+    remoteAssetCount,
+    snapshotMetrics.length,
+    softwareRenewalsDue90Days.length,
+    stats.available,
+    stats.checkedOut,
+    stats.expiringSoon,
+    stats.total,
+    vendorProfiles.length,
+    vendorTotals.active,
+    vendorTotals.devices,
+    laptopServiceSummary.avgRepairAgeMonths,
+    laptopServiceSummary.loanerAvailableCount,
+  ]);
+
+  const overviewToneStyles = useMemo(
+    () => ({
+      blue: {
+        icon: isDarkMode ? 'bg-blue-500/20 text-blue-100' : 'bg-blue-50 text-blue-700',
+        meta: isDarkMode ? 'text-blue-200' : 'text-blue-600',
+      },
+      amber: {
+        icon: isDarkMode ? 'bg-amber-500/20 text-amber-100' : 'bg-amber-50 text-amber-600',
+        meta: isDarkMode ? 'text-amber-200' : 'text-amber-600',
+      },
+      emerald: {
+        icon: isDarkMode ? 'bg-emerald-500/20 text-emerald-100' : 'bg-emerald-50 text-emerald-600',
+        meta: isDarkMode ? 'text-emerald-200' : 'text-emerald-600',
+      },
+      indigo: {
+        icon: isDarkMode ? 'bg-indigo-500/20 text-indigo-100' : 'bg-indigo-50 text-indigo-600',
+        meta: isDarkMode ? 'text-indigo-200' : 'text-indigo-600',
+      },
+      rose: {
+        icon: isDarkMode ? 'bg-rose-500/20 text-rose-100' : 'bg-rose-50 text-rose-600',
+        meta: isDarkMode ? 'text-rose-200' : 'text-rose-600',
+      },
+      purple: {
+        icon: isDarkMode ? 'bg-purple-500/20 text-purple-100' : 'bg-purple-50 text-purple-600',
+        meta: isDarkMode ? 'text-purple-200' : 'text-purple-600',
+      },
+      slate: {
+        icon: isDarkMode ? 'bg-slate-500/30 text-slate-100' : 'bg-slate-50 text-slate-600',
+        meta: isDarkMode ? 'text-slate-200' : 'text-slate-500',
+      },
+      default: {
+        icon: isDarkMode ? 'bg-slate-700/40 text-white/80' : 'bg-slate-100 text-slate-600',
+        meta: isDarkMode ? 'text-slate-300' : 'text-slate-500',
+      },
+    }),
+    [isDarkMode],
+  );
+
   const handleRunReport = (title, payload = {}) => {
     const workbook = XLSX.utils.book_new();
     const summaryRows = [
@@ -12145,284 +11630,62 @@ const handleTestPrinter = useCallback(
         )}
 
         {activePage === 'Overview' && (
-          <>
-            <section id="overview-hero" className="overview-orchestrator mb-10 grid gap-6 lg:grid-cols-[1.4fr,1fr]">
-              <div
-                className={`overview-orchestrator__panel hero-shell relative overflow-hidden rounded-[32px] p-8 shadow-[0_30px_90px_rgba(2,6,23,0.55)] ring-1 ${
-                  isDarkMode
-                    ? 'border border-slate-900/60 bg-gradient-to-br from-slate-950 via-indigo-950/90 to-slate-900 text-white ring-white/10'
-                    : 'border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-blue-50 text-slate-900 ring-blue-100'
-                }`}
-                style={heroAccentStyle}
-              >
-                <div className="pointer-events-none absolute -left-32 top-10 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" />
-                <div className="pointer-events-none absolute -right-20 bottom-10 h-72 w-72 rounded-full bg-rose-400/15 blur-3xl" />
-                <div className="relative space-y-6">
-                  <div
-                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.35rem] shadow-sm backdrop-blur ${heroChipClass}`}
+          <section id="overview-preview" className="mb-10 space-y-6">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400 dark:text-white/50">Overview</p>
+              <h1 className={`text-3xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Workspace previews</h1>
+              <p className={`text-sm ${isDarkMode ? 'text-white/70' : 'text-slate-600'}`}>Pick a page and jump straight to the signal you need.</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {overviewPreviewCards.map((card) => {
+                const Icon = card.icon;
+                const palette = overviewToneStyles[card.tone] || overviewToneStyles.default;
+                return (
+                  <button
+                    key={card.key}
+                    type="button"
+                    onClick={() => setActivePage(card.key)}
+                    className={`group flex flex-col rounded-3xl border p-5 text-left shadow-sm transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 ${
+                      isDarkMode
+                        ? 'border-white/15 bg-white/5 text-white/80 focus-visible:ring-white/30'
+                        : 'border-slate-200 bg-gradient-to-br from-white via-slate-50 to-blue-50 text-slate-900 shadow-sm focus-visible:ring-blue-200'
+                    }`}
                   >
-                    <Sparkles className="h-4 w-4" />
-                    Unified operations plane
-                  </div>
-                  <div>
-                    <h1 className={`text-4xl font-semibold leading-tight md:text-5xl ${heroHeadingClass}`}>
-                      Orchestrate every asset decision with confidence
-                    </h1>
-                    <p className={`mt-3 max-w-2xl text-base ${heroSubtextClass}`}>
-                      Surface risk, capacity, and people context in one motion so you can brief leadership, deploy faster, and stay ahead of renewals.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      onClick={handleExport}
-                      className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition hover:-translate-y-0.5 ${
-                        isDarkMode
-                          ? 'bg-white/15 text-white shadow-lg shadow-blue-500/20'
-                          : 'bg-slate-900 text-white shadow-lg shadow-blue-200/60'
-                      }`}
-                    >
-                      <Share2 className="h-4 w-4" />
-                      Share executive brief
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleOpenHelpDeskPortal}
-                      className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold transition ${
-                        isDarkMode
-                          ? 'border-white/30 text-white/90 hover:bg-white/10'
-                          : 'border-slate-200 text-slate-800 hover:border-blue-200'
-                      }`}
-                    >
-                      <Headset className="h-4 w-4" />
-                      Route a request
-                    </button>
-                  </div>
-                  <div className="overview-pulse grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                    {overviewPulseCards.map((card) => (
-                      <div key={card.label} className={`rounded-2xl border p-4 ${isDarkMode ? 'border-white/15 bg-white/5' : 'border-slate-200 bg-white'}`}>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-400">{card.label}</p>
-                        <p className={`mt-2 text-2xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{card.value}</p>
-                        <p className={`text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-500'}`}>{card.caption}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div
-                className={`overview-orchestrator__radar hero-shell relative overflow-hidden rounded-[32px] border p-6 shadow-[0_25px_80px_rgba(2,6,23,0.5)] ring-1 ${
-                  isDarkMode
-                    ? 'border-slate-900/70 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-900 text-white ring-blue-500/15'
-                    : 'border-slate-200 bg-gradient-to-br from-white via-sky-50 to-blue-100 text-slate-900 ring-blue-100'
-                }`}
-                style={heroAccentStyle}
-              >
-                <div className="absolute inset-0 opacity-30">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.15),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(236,72,153,0.18),transparent_30%)] blur-3xl" />
-                </div>
-                <div className="relative space-y-4">
-                  <p className={`text-xs font-semibold uppercase tracking-[0.3rem] ${heroLabelClass}`}>Live telemetry</p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {overviewHeroSignals.map((signal) => {
-                      const toneWrapper =
-                        signal.tone === 'emerald'
-                          ? 'border-emerald-200/30 bg-emerald-500/5 text-emerald-50'
-                          : signal.tone === 'indigo'
-                          ? 'border-indigo-200/30 bg-indigo-500/5 text-indigo-50'
-                          : signal.tone === 'amber'
-                          ? 'border-amber-200/30 bg-amber-500/5 text-amber-50'
-                          : 'border-rose-200/30 bg-rose-500/5 text-rose-50';
-                      const toneMeta =
-                        signal.tone === 'emerald'
-                          ? 'text-emerald-200'
-                          : signal.tone === 'indigo'
-                          ? 'text-indigo-200'
-                          : signal.tone === 'amber'
-                          ? 'text-amber-100'
-                          : 'text-rose-100';
-                      return (
-                        <div key={signal.label} className={`rounded-2xl border px-4 py-3 backdrop-blur-lg ${toneWrapper}`}>
-                          <div className="flex items-center justify-between">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.3rem] opacity-80">{signal.label}</p>
-                            <span className={`text-xs font-semibold ${toneMeta}`}>{signal.meta}</span>
-                          </div>
-                          <p className="mt-2 text-2xl font-semibold">{signal.value}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="rounded-2xl border border-white/20 bg-white/5 p-4 text-sm text-white/80">
-                    <p className="text-xs font-semibold uppercase tracking-[0.3rem] text-white/60">Utilisation</p>
-                    <div className="mt-2 flex items-center justify-between">
-                      <p className="text-3xl font-semibold text-white">{utilization}%</p>
-                      <span className="text-xs text-white/70">Checked out</span>
-                    </div>
-                    <div className="mt-3 h-2 rounded-full bg-white/10">
-                      <div
-                        className="h-2 rounded-full bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-300 shadow-[0_0_0_8px_rgba(59,130,246,0.15)]"
-                        style={{ width: `${utilization}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="overview-decisions mb-8">
-              <DecisionPanels
-                stats={stats}
-                licenseInsights={licenseInsights}
-                warrantyAlerts={warrantyAlerts30}
-                softwareRenewals={softwareRenewalsDue90Days}
-                helpdeskRequests={helpdeskRequests}
-                recentHistory={recentHistory}
-                onNavigate={setActivePage}
-              />
-            </section>
-
-            <section id="overview-metrics" className="overview-beacons mb-8 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Telemetry</p>
-                  <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">Signal beacons</h2>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActivePage('Reports')}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700 dark:border-white/20 dark:text-white/80 dark:hover:border-white/40"
-                >
-                  <ArrowRight className="h-4 w-4" />
-                  Open reports gallery
-                </button>
-              </div>
-              <div className="rounded-[28px] border border-slate-100 bg-white/80 p-4 shadow-lg backdrop-blur dark:border-white/10 dark:bg-white/5">
-                <SnapshotMetricsRow metrics={snapshotMetrics} />
-              </div>
-            </section>
-
-            <section id="overview-attention" className="overview-flightdeck mb-8 grid gap-6 xl:grid-cols-[1.6fr,1fr]">
-              <div className="space-y-6">
-                <OverviewAttentionPanel
-                  overdue={overdueAlerts}
-                  dueSoon={dueSoonAlerts}
-                  maintenance={maintenanceWorkOrders}
-                  software={softwareAtRisk}
-                  reminderPreview={reminderPreview}
-                  onOpenAlerts={() => setWarrantyModalOpen(true)}
-                  onClearServiceReminder={handleClearMaintenanceAlert}
-                  onClearWarrantyReminder={handleClearWarrantyReminder}
-                />
-                {warrantyAlerts30.length > 0 && (
-                  <WarrantyAlertStrip
-                    alerts={warrantyAlerts30}
-                    onViewAll={() => setWarrantyModalOpen(true)}
-                    onClearAll={() => handleClearAllWarrantyAlerts(warrantyAlerts30)}
-                    isDarkMode={isDarkMode}
-                  />
-                )}
-              </div>
-              <OverviewActivityCard history={recentHistory} maintenance={maintenanceWorkOrders} lookupAsset={getAssetName} />
-            </section>
-
-            {softwareRenewalsDue90Days.length > 0 && (
-              <section className="overview-renewals mb-8">
-                <div className="glass-card rounded-3xl border border-slate-100 bg-gradient-to-br from-white via-purple-50/30 to-pink-50/30 p-6 shadow-lg dark:border-white/15 dark:from-white/5 dark:via-purple-500/5 dark:to-pink-500/5">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-2xl bg-gradient-to-br from-purple-50 to-pink-50 p-3 shadow-inner dark:from-white/10 dark:to-white/5">
-                        <CalendarClock className="h-6 w-6 text-purple-600 dark:text-white" />
-                      </div>
-                      <div>
-                        <p className="text-lg font-bold text-slate-900 dark:text-white">Software renewal radar</p>
-                        <p className="text-sm text-slate-600 dark:text-slate-300">
-                          {softwareRenewalsDue90Days.length} license renewal{softwareRenewalsDue90Days.length !== 1 ? 's' : ''} due within 90 days
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setActivePage('Software')}
-                      className="rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg hover:-translate-y-0.5 hover:shadow-xl transition"
-                    >
-                      View all renewals
-                    </button>
-                  </div>
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                    {softwareRenewalsDue90Days.slice(0, 2).map((software) => (
-                      <div
-                        key={software.id}
-                        className={`rounded-2xl border p-4 shadow-md ${
-                          isDarkMode ? 'border-slate-700 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-900'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <p className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{software.software}</p>
-                            <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>{software.vendor}</p>
-                          </div>
-                          <span className={`tone-chip ${getRenewalBadgeTone(software.daysUntilRenewal)} px-2.5 py-1 text-xs font-semibold`}>
-                            {software.daysUntilRenewal} days
-                          </span>
-                        </div>
-                        <div className={`mt-3 space-y-1 text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                          <div className="flex justify-between">
-                            <span>Renewal date:</span>
-                            <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                              {new Date(software.renewalDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Seats:</span>
-                            <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{software.seats}</span>
-                          </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className={`rounded-2xl p-3 ${palette.icon}`}>
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <div>
+                          <p className="text-base font-semibold">{card.title}</p>
+                          <p className={`text-xs ${isDarkMode ? 'text-white/60' : 'text-slate-500'}`}>{card.description}</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
-            )}
-
-            <section id="overview-people" className="mb-8">
-              <SpendHotspotsCard costByDepartment={costByDepartment} topLocations={sheetInsights.topLocations} />
-            </section>
-
-            <section id="overview-actions" className="overview-actions-grid mb-8 grid gap-6 xl:grid-cols-[1.6fr,1fr]">
-              <div className="space-y-4">
-                <div className="rounded-[28px] border border-slate-100 bg-white/80 p-4 shadow-lg backdrop-blur dark:border-white/15 dark:bg-white/5">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-400">Command deck</p>
-                  <div
-                    className="mt-4 grid gap-4"
-                    style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))' }}
-                  >
-                    {quickActions.map((action) => (
-                      <QuickActionCard key={action.title} {...action} />
-                    ))}
-                  </div>
-                </div>
-                <div className="rounded-[28px] border border-dashed border-slate-200 p-4 text-sm text-slate-600 dark:border-white/15 dark:text-slate-300">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.3rem] text-slate-400">Need inspiration?</p>
-                  <p className="mt-2 text-base font-semibold text-slate-900 dark:text-white">
-                    Jump to Hardware to stage devices or explore Software for licensing heatmaps.
-                  </p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <WhatsNewCard />
-                {isMobile && (
-                  <div className="rounded-3xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-700 shadow-sm dark:border-white/15 dark:bg-white/5 dark:text-white/80">
-                    <div className="flex items-center gap-3">
-                      <Navigation className="h-4 w-4 text-blue-600 dark:text-sky-300" />
-                      <div>
-                        <p className="font-semibold text-slate-900 dark:text-white">Mobile-ready dashboard</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-300">
-                          Tap the action bar to add hardware, scan QR codes, or jump to warranty alerts.
-                        </p>
-                      </div>
+                      <ArrowRight className={`h-4 w-4 ${isDarkMode ? 'text-white/50' : 'text-slate-400'}`} />
                     </div>
-                  </div>
-                )}
-              </div>
-            </section>
-          </>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {card.highlights.map((highlight) => (
+                        <div
+                          key={`${card.key}-${highlight.label}`}
+                          className={`rounded-2xl border px-3 py-2 ${
+                            isDarkMode ? 'border-white/10 bg-white/5' : 'border-white/80 bg-white/90 shadow-sm'
+                          }`}
+                        >
+                          <p className={`text-[11px] uppercase tracking-wide ${isDarkMode ? 'text-white/50' : 'text-slate-500'}`}>{highlight.label}</p>
+                          <p className="text-lg font-semibold">{highlight.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {card.meta && (
+                      <p className={`mt-4 text-xs font-semibold ${palette.meta}`}>
+                        {card.meta}
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
         )}
         {activePage === 'Hardware' && (
           <>
