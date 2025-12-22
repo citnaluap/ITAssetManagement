@@ -6171,6 +6171,7 @@ const AssetSpotlight = ({
   onRepair,
   onClearMaintenance = () => {},
   onClearMaintenanceAll = () => {},
+  isDarkMode = false,
 }) => {
   const Icon = asset ? assetTypeIcons[asset.type] || Monitor : Monitor;
   const statusLabel = asset ? getAssetDisplayStatus(asset) : 'Available';
@@ -6179,53 +6180,67 @@ const AssetSpotlight = ({
   const ready = isAssetReady(asset || {});
   const automateEligible = isComputerAsset(asset);
   const assetIdLabel = asset?.sheetId || asset?.serialNumber || asset?.assetName || (asset?.id ? `Asset-${asset.id}` : 'Asset');
+  const heroCardClass = isDarkMode
+    ? 'rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 text-white shadow-lg'
+    : 'rounded-2xl bg-gradient-to-br from-slate-50 via-white to-blue-50 p-6 text-slate-900 shadow-lg border border-slate-200/80 ring-1 ring-slate-900/5';
+  const heroIconWrapClass = isDarkMode
+    ? 'bg-white/10 text-white ring-white/20 shadow-inner'
+    : 'bg-white text-slate-700 ring-slate-200/80 shadow-sm';
+  const heroLabelClass = isDarkMode ? 'text-white/60' : 'text-slate-500';
+  const heroSubLabelClass = isDarkMode ? 'text-white/70' : 'text-slate-500';
+  const heroDividerClass = isDarkMode ? 'border-white/10' : 'border-slate-200/80';
+  const heroValueClass = isDarkMode ? 'text-white' : 'text-slate-900';
+  const heroAssignClass = isDarkMode ? 'text-emerald-100' : 'text-emerald-600';
+  const heroBadgeClass = isDarkMode
+    ? 'border-white/20 bg-white/10 text-white'
+    : 'border-slate-200/70 bg-white/80 text-slate-700';
 
   return (
     <div className="sticky top-6 rounded-3xl border border-slate-100 bg-white/80 p-6 shadow-sm">
       {asset ? (
         <>
           {/* Hero Card with Asset ID and Assigned To prominently displayed */}
-          <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 text-white shadow-lg">
+          <div className={heroCardClass}>
             <div className="mb-4 flex items-start gap-3">
-              <div className="rounded-2xl bg-white/10 p-3 ring-1 ring-white/20 shadow-inner">
-                <Icon className="h-8 w-8 text-white drop-shadow" />
+              <div className={`rounded-2xl p-3 ring-1 ${heroIconWrapClass}`}>
+                <Icon className={`h-8 w-8 drop-shadow ${isDarkMode ? 'text-white' : 'text-slate-900'}`} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs uppercase tracking-[0.25rem] text-white/60">{asset.type}</p>
-                <p className="text-sm text-white/70">{asset.model || 'Model not set'}</p>
+                <p className={`text-xs uppercase tracking-[0.25rem] ${heroLabelClass}`}>{asset.type}</p>
+                <p className={`text-sm ${heroSubLabelClass}`}>{asset.model || 'Model not set'}</p>
               </div>
             </div>
             
             {/* Most Important Info: Asset ID and Assignment */}
-            <div className="grid gap-4 sm:grid-cols-2 border-t border-white/10 pt-4">
+            <div className={`grid gap-4 border-t pt-4 sm:grid-cols-2 ${heroDividerClass}`}>
               <div>
-                <p className="text-xs uppercase tracking-widest text-white/50 mb-1">Asset ID</p>
+                <p className={`mb-1 text-xs uppercase tracking-widest ${heroLabelClass}`}>Asset ID</p>
                 <div className="flex items-center gap-2">
-                  <Tag className="h-5 w-5 text-blue-300" />
-                  <p className="text-2xl font-bold text-white">{assetIdLabel}</p>
+                  <Tag className={`h-5 w-5 ${isDarkMode ? 'text-blue-300' : 'text-blue-500'}`} />
+                  <p className={`text-xl font-bold sm:text-2xl ${heroValueClass}`}>{assetIdLabel}</p>
                 </div>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-widest text-white/50 mb-1">Assigned To</p>
+                <p className={`mb-1 text-xs uppercase tracking-widest ${heroLabelClass}`}>Assigned To</p>
                 <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-emerald-300" />
-                  <p className="text-2xl font-bold text-emerald-100">{asset.assignedTo || 'Unassigned'}</p>
+                  <Users className={`h-5 w-5 ${isDarkMode ? 'text-emerald-300' : 'text-emerald-500'}`} />
+                  <p className={`text-lg font-bold sm:text-2xl ${heroAssignClass}`}>{asset.assignedTo || 'Unassigned'}</p>
                 </div>
               </div>
             </div>
 
             {/* Status Badges */}
             <div className="mt-4 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white">
+              <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${heroBadgeClass}`}>
                 <ShieldCheck className="h-3.5 w-3.5" />
                 {statusLabel}
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white">
+              <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${heroBadgeClass}`}>
                 <MapPin className="h-3.5 w-3.5" />
                 {asset.location || 'Location not set'}
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white">
-                <DollarSign className="h-3.5 w-3.5" />
+              <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${heroBadgeClass}`}>
+                <DollarSign className={`h-3.5 w-3.5 ${isDarkMode ? '' : 'text-slate-500'}`} />
                 {formatCurrency(asset.cost)}
               </span>
             </div>
@@ -6304,23 +6319,27 @@ const AssetSpotlight = ({
           {(ownerContact?.phone || ownerContact?.email) && (
             <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Contact Owner</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 {ownerContact?.phone && (
                   <a
                     href={`tel:${ownerContact.phone}`}
-                    className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                    className="inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 sm:w-auto sm:justify-start"
                   >
                     <PhoneCall className="h-4 w-4" />
-                    {ownerContact.phone}
+                    <span className="truncate" title={ownerContact.phone}>
+                      {ownerContact.phone}
+                    </span>
                   </a>
                 )}
                 {ownerContact?.email && (
                   <a
                     href={`mailto:${ownerContact.email}`}
-                    className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                    className="inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 sm:w-auto sm:justify-start"
                   >
                     <Mail className="h-4 w-4" />
-                    {ownerContact.email}
+                    <span className="truncate" title={ownerContact.email}>
+                      {ownerContact.email}
+                    </span>
                   </a>
                 )}
               </div>
@@ -6490,6 +6509,7 @@ const AssetSpotlightModal = ({
   onRepair,
   onClearMaintenance,
   onClearMaintenanceAll,
+  isDarkMode = false,
 }) => {
   if (!asset) return null;
 
@@ -6507,6 +6527,7 @@ const AssetSpotlightModal = ({
         onRepair={onRepair}
         onClearMaintenance={onClearMaintenance}
         onClearMaintenanceAll={onClearMaintenanceAll}
+        isDarkMode={isDarkMode}
       />
     </ModalShell>
   );
@@ -13898,6 +13919,7 @@ const handleTestPrinter = useCallback(
           onRepair={handleOpenRepairTicketForAsset}
           onClearMaintenance={handleClearMaintenanceAlert}
           onClearMaintenanceAll={handleClearAllMaintenanceAlerts}
+          isDarkMode={isDarkMode}
         />
       )}
       {assetForm && (
