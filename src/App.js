@@ -2567,9 +2567,11 @@ const buildMaintenanceWorkOrders = (assets, repairTickets = []) => {
   // Convert repair tickets into work orders for the maintenance board
   return repairTickets.map((ticket) => {
     const asset = assets.find((a) => a.id === ticket.assetId || a.assetName === ticket.assetId);
+    const resolvedAssetId = asset?.id || ticket.assetId || asset?.sheetId || asset?.assetName;
     return {
       id: ticket.id,
-      assetName: ticket.assetId || 'Unknown Asset',
+      assetId: resolvedAssetId,
+      assetName: (asset?.assetName || ticket.assetId || 'Unknown Asset').toString(),
       model: ticket.model || asset?.model || '',
       status: ticket.status || 'Planned',
       severity: 'Normal',
@@ -6148,6 +6150,7 @@ const AssetSpotlight = ({
   onEdit,
   onApproveIntake,
   repairHistory = [],
+  currentRepairs = [],
   ownerHistory = [],
   onOpenAutomate,
   ownerContact,
@@ -6345,70 +6348,111 @@ const AssetSpotlight = ({
             </div>
           )}
 
-          {/* History Sections - Only show if there's data */}
-          {(repairHistory.length > 0 || ownerHistory.length > 0) && (
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              {repairHistory.length > 0 && (
-                <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Repair History</p>
-                    <button
-                      type="button"
-                      className="text-[11px] font-semibold status-warning underline underline-offset-2"
-                      onClick={() => onClearMaintenanceAll(repairHistory)}
-                    >
-                      Clear all
-                    </button>
-                  </div>
-                  <ul className="space-y-2">
-                    {repairHistory.map((item) => (
-                      <li key={item.id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <div>
-                            <p className="text-sm font-semibold text-slate-900">{item.type}</p>
-                            <p className="text-xs text-slate-500">{formatDate(item.date)}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
+          {/* History Sections */}
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Repairs & Service</p>
+                {repairHistory.length > 0 && (
+                  <button
+                    type="button"
+                    className="text-[11px] font-semibold status-warning underline underline-offset-2"
+                    onClick={() => onClearMaintenanceAll(repairHistory)}
+                  >
+                    Clear history
+                  </button>
+                )}
+              </div>
+              <div className="space-y-4 text-sm">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Current repairs</p>
+                  {currentRepairs.length > 0 ? (
+                    <ul className="mt-2 space-y-2">
+                      {currentRepairs.map((order) => (
+                        <li key={`current-repair-${order.id || order.assetName}`} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">{order.notes || 'Repair ticket'}</p>
+                              <p className="text-xs text-slate-500">
+                                {(order.vendor || 'Internal IT')} · {order.status || 'In Progress'}
+                              </p>
+                            </div>
                             <span
-                              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                                item.status === 'Completed' ? 'bg-emerald-100 status-success' : 'bg-amber-100 status-warning'
+                              className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                                order.status === 'Completed' ? 'bg-emerald-100 status-success' : 'bg-amber-100 status-warning'
                               }`}
                             >
-                              {item.status}
+                              {order.status || 'Open'}
                             </span>
-                            <button
-                              type="button"
-                              className="text-[11px] font-semibold text-slate-500 underline underline-offset-2"
-                              onClick={() => onClearMaintenance(item)}
-                            >
-                              Clear
-                            </button>
                           </div>
-                        </div>
-                        {item.description && <p className="mt-1 text-xs text-slate-600">{item.description}</p>}
-                      </li>
-                    ))}
-                  </ul>
+                          <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-slate-500">
+                            <span>Assigned: {order.assignedTo || 'Unassigned'}</span>
+                            <span>ETA: {order.eta || 'TBD'}</span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-slate-500">No active repairs for this asset.</p>
+                  )}
                 </div>
-              )}
-              {ownerHistory.length > 0 && (
-                <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Owner History</p>
-                  <ul className="space-y-2">
-                    {ownerHistory.map((entry) => (
-                      <li key={entry.id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                        <p className="text-sm font-semibold text-slate-900">
-                          {entry.action} → {entry.user || 'Unassigned'}
-                        </p>
-                        <p className="text-xs text-slate-500">{formatDate(entry.date)}</p>
-                        {entry.notes && <p className="mt-1 text-xs text-slate-600">{entry.notes}</p>}
-                      </li>
-                    ))}
-                  </ul>
+                <div className="border-t border-slate-100 pt-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Repair history</p>
+                  {repairHistory.length > 0 ? (
+                    <ul className="mt-2 space-y-2">
+                      {repairHistory.map((item) => (
+                        <li key={item.id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">{item.type}</p>
+                              <p className="text-xs text-slate-500">{formatDate(item.date)}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                  item.status === 'Completed' ? 'bg-emerald-100 status-success' : 'bg-amber-100 status-warning'
+                                }`}
+                              >
+                                {item.status}
+                              </span>
+                              <button
+                                type="button"
+                                className="text-[11px] font-semibold text-slate-500 underline underline-offset-2"
+                                onClick={() => onClearMaintenance(item)}
+                              >
+                                Clear
+                              </button>
+                            </div>
+                          </div>
+                          {item.description && <p className="mt-1 text-xs text-slate-600">{item.description}</p>}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-slate-500">No past repairs recorded.</p>
+                  )}
                 </div>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Owner History</p>
+              {ownerHistory.length > 0 ? (
+                <ul className="space-y-2">
+                  {ownerHistory.map((entry) => (
+                    <li key={entry.id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                      <p className="text-sm font-semibold text-slate-900">
+                        {entry.action} → {entry.user || 'Unassigned'}
+                      </p>
+                      <p className="text-xs text-slate-500">{formatDate(entry.date)}</p>
+                      {entry.notes && <p className="mt-1 text-xs text-slate-600">{entry.notes}</p>}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-slate-500">No ownership changes recorded.</p>
               )}
             </div>
-          )}
+          </div>
         </>
       ) : (
         <div className="mt-6 rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
@@ -6423,6 +6467,7 @@ const AssetSpotlightModal = ({
   asset,
   onClose,
   repairHistory = [],
+  currentRepairs = [],
   ownerHistory = [],
   onEdit,
   onApproveIntake,
@@ -6441,6 +6486,7 @@ const AssetSpotlightModal = ({
         onEdit={onEdit}
         onApproveIntake={onApproveIntake}
         repairHistory={repairHistory}
+        currentRepairs={currentRepairs}
         ownerHistory={ownerHistory}
         onOpenAutomate={onOpenAutomate}
         ownerContact={ownerContact}
@@ -9812,6 +9858,21 @@ const patchNetworkPrinter = useCallback(
       .slice()
       .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
   }, [maintenanceRecords, selectedAsset]);
+
+  const assetCurrentRepairs = useMemo(() => {
+    if (!selectedAsset) return [];
+    const keys = new Set(
+      [selectedAsset.id, selectedAsset.sheetId, selectedAsset.assetName, selectedAsset.deviceName, selectedAsset.serialNumber]
+        .filter(Boolean)
+        .map((v) => v.toString().toLowerCase()),
+    );
+    return maintenanceWorkOrders
+      .filter((order) => {
+        const orderKey = order.assetId || order.assetName || order.id;
+        return orderKey && keys.has(orderKey.toString().toLowerCase());
+      })
+      .slice();
+  }, [maintenanceWorkOrders, selectedAsset]);
 
   const recentHistory = useMemo(
     () =>
@@ -13762,6 +13823,7 @@ const handleTestPrinter = useCallback(
             setSelectedAssetId(null);
           }}
           repairHistory={assetRepairHistory}
+          currentRepairs={assetCurrentRepairs}
           ownerHistory={assetOwnerHistory}
           onEdit={setAssetForm}
           onApproveIntake={handleApproveIntake}
