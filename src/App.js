@@ -2679,7 +2679,18 @@ const persistRemoteStorage = async (key, value) => {
   }
 };
 
-const usePersistentState = (key, initialValue) => {
+const safeStringify = (value) => {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return '';
+  }
+};
+
+const usePersistentState = (key, initialValue, options = {}) => {
+  const { remote = true, remoteKey } = options;
+  const shouldSyncRemote = remote && Boolean(API_STORAGE_BASE);
+  const remoteStorageKey = remoteKey || key;
   const [state, setState] = useState(() => {
     if (typeof window === 'undefined') {
       return initialValue;
@@ -2695,12 +2706,12 @@ const usePersistentState = (key, initialValue) => {
   });
 
   useEffect(() => {
-    if (!API_STORAGE_BASE) {
+    if (!shouldSyncRemote) {
       return;
     }
     let cancelled = false;
     const hydrateFromApi = async () => {
-      const remoteValue = await fetchRemoteStorage(key);
+      const remoteValue = await fetchRemoteStorage(remoteStorageKey);
       if (cancelled || remoteValue === null) {
         return;
       }
@@ -2711,20 +2722,20 @@ const usePersistentState = (key, initialValue) => {
           return Boolean(prev);
         })();
         if (!hasLocalData) {
-          console.log(`[Sync] ${key}: Using remote data (no local data)`);
+          console.log(`[Sync] ${remoteStorageKey}: Using remote data (no local data)`);
           return remoteValue;
         }
         try {
           const localSnapshot = JSON.stringify(prev);
           const remoteSnapshot = JSON.stringify(remoteValue);
           if (localSnapshot === remoteSnapshot) {
-            console.log(`[Sync] ${key}: Local and remote match`);
+            console.log(`[Sync] ${remoteStorageKey}: Local and remote match`);
             return prev;
           }
-          console.log(`[Sync] ${key}: Using remote data (different from local)`);
+          console.log(`[Sync] ${remoteStorageKey}: Using remote data (different from local)`);
           return remoteValue;
         } catch {
-          console.log(`[Sync] ${key}: Using remote data (comparison failed)`);
+          console.log(`[Sync] ${remoteStorageKey}: Using remote data (comparison failed)`);
           return remoteValue;
         }
       });
@@ -2733,7 +2744,7 @@ const usePersistentState = (key, initialValue) => {
     return () => {
       cancelled = true;
     };
-  }, [key]);
+  }, [remoteStorageKey, shouldSyncRemote]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -2746,9 +2757,12 @@ const usePersistentState = (key, initialValue) => {
     } catch {
       // Ignore quota errors so the dashboard still works offline.
     }
-    console.log(`[Sync] ${key}: Saving to blob storage...`);
-    persistRemoteStorage(key, state);
-  }, [key, state]);
+    if (!shouldSyncRemote) {
+      return;
+    }
+    console.log(`[Sync] ${remoteStorageKey}: Saving to blob storage...`);
+    persistRemoteStorage(remoteStorageKey, state);
+  }, [key, state, remoteStorageKey, shouldSyncRemote]);
 
   return [state, setState];
 };
@@ -7474,7 +7488,59 @@ const buildAiReply = (text) => {
 
 const App = () => {
   const [assets, setAssets] = usePersistentState(STORAGE_KEYS.assets, BASE_ASSETS);
-  const [history, setHistory] = usePersistentState(STORAGE_KEYS.history, BASE_HISTORY);
+  const [history, setHistory] = usePersistentState(STORAGE_KEYS.history, BASE_HISTORY, { remote: false });
+  const historyRef = useRef(history);
+  useEffect(() => {
+    historyRef.current = history;
+  }, [history]);
+  const historyHydratedRef = useRef(false);
+  useEffect(() => {
+    if (!API_STORAGE_BASE || historyHydratedRef.current) {
+      return;
+    }
+    let cancelled = false;
+    const hydrateHistoryFromBlob = async () => {
+      try {
+        const remoteValue = await fetchRemoteStorage(STORAGE_KEYS.history);
+        if (cancelled) {
+          return;
+        }
+        if (Array.isArray(remoteValue) && remoteValue.length > 0) {
+          historyHydratedRef.current = true;
+          setHistory((prev) => {
+            const prevSnapshot = safeStringify(prev);
+            const remoteSnapshot = safeStringify(remoteValue);
+            if (prevSnapshot === remoteSnapshot) {
+              return prev;
+            }
+            console.log('[Sync] history: hydrated from blob storage');
+            return remoteValue;
+          });
+        } else {
+          historyHydratedRef.current = true;
+          persistRemoteStorage(STORAGE_KEYS.history, historyRef.current);
+        }
+      } catch (error) {
+        console.warn('[Sync] history: failed to hydrate from blob storage', error);
+      }
+    };
+    hydrateHistoryFromBlob();
+    return () => {
+      cancelled = true;
+    };
+  }, [setHistory]);
+  const historyPersistSnapshotRef = useRef('');
+  useEffect(() => {
+    if (!API_STORAGE_BASE) {
+      return;
+    }
+    const snapshot = safeStringify(history);
+    if (!snapshot || snapshot === historyPersistSnapshotRef.current) {
+      return;
+    }
+    historyPersistSnapshotRef.current = snapshot;
+    persistRemoteStorage(STORAGE_KEYS.history, history);
+  }, [history]);
   const [softwareSuites, setSoftwareSuites] = usePersistentState(STORAGE_KEYS.licenses, BASE_LICENSES);
   const [repairTickets, setRepairTickets] = usePersistentState(STORAGE_KEYS.laptopRepairs, []);
   const assetCount = Array.isArray(assets) ? assets.length : 0;
