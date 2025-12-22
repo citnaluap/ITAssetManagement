@@ -3262,25 +3262,30 @@ const CommandHeader = ({
   isDarkMode,
   activePage,
   onNavigate,
-}) => (
-  <header className="command-header relative mb-8 rounded-[32px] border border-slate-100 bg-white/80 p-6 shadow-[0_30px_80px_rgba(5,8,25,0.15)] backdrop-blur dark:border-white/10 dark:bg-slate-950/60">
+}) => {
+  const headerToneClass = isDarkMode
+    ? 'border-white/10 bg-slate-950/60 text-white'
+    : 'border-blue-100 bg-gradient-to-br from-white via-blue-50 to-blue-100 text-slate-900 ring-1 ring-blue-200/60';
+
+  return (
+  <header className={`command-header relative mb-8 rounded-[32px] p-6 shadow-[0_30px_80px_rgba(5,8,25,0.15)] backdrop-blur ${headerToneClass}`}>
     <div className="grid gap-4 lg:grid-cols-[1.6fr,1fr]">
       <div className="flex flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-inner dark:border-white/10 dark:bg-white/5">
+            <div className={`flex h-16 w-16 items-center justify-center rounded-2xl border shadow-inner ${isDarkMode ? 'border-white/10 bg-white/5' : 'border-blue-100 bg-white'}`}>
               <img src={UDSLogo} alt="UDS logo" className="h-10 w-10 object-contain" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">UDS digital</p>
-              <p className="text-2xl font-semibold text-slate-900 dark:text-white">Asset Control Studio</p>
+              <p className={`text-[11px] font-semibold uppercase tracking-[0.35rem] ${isDarkMode ? 'text-white/60' : 'text-slate-400'}`}>UDS digital</p>
+              <p className={`text-2xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Asset Control Studio</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onToggleTheme}
-              className="rounded-2xl border border-slate-200 p-2 text-slate-500 transition hover:border-blue-200 hover:text-blue-600 dark:border-white/20 dark:text-white/70"
+              className={`rounded-2xl border p-2 transition ${isDarkMode ? 'border-white/20 text-white/70 hover:border-white/40 hover:text-white' : 'border-slate-200 text-slate-500 hover:border-blue-200 hover:text-blue-600'}`}
               aria-label="Toggle theme"
             >
               {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -3288,7 +3293,7 @@ const CommandHeader = ({
             <button
               type="button"
               onClick={onOpenMenu}
-              className="rounded-2xl border border-slate-200 p-2 text-slate-500 transition hover:border-blue-200 hover:text-blue-600 dark:border-white/20 dark:text-white/70"
+              className={`rounded-2xl border p-2 transition ${isDarkMode ? 'border-white/20 text-white/70 hover:border-white/40 hover:text-white' : 'border-slate-200 text-slate-500 hover:border-blue-200 hover:text-blue-600'}`}
               aria-label="Open menu"
             >
               <Menu className="h-4 w-4" />
@@ -3298,41 +3303,47 @@ const CommandHeader = ({
         <div className="grid gap-3 md:grid-cols-3">
           <button
             onClick={onAdd}
-            className="inline-flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:text-blue-600 dark:border-white/10 dark:bg-white/5 dark:text-white"
+            className={`inline-flex items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm font-semibold shadow-sm transition ${
+              isDarkMode ? 'border-white/10 bg-white/5 text-white hover:border-white/30' : 'border-slate-200 bg-white text-slate-800 hover:border-blue-200 hover:text-blue-600'
+            }`}
             type="button"
           >
             <span>
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-400">Hardware</span>
+              <span className={`block text-[11px] font-semibold uppercase tracking-[0.25rem] ${isDarkMode ? 'text-white/60' : 'text-slate-400'}`}>Hardware</span>
               New asset intake
             </span>
             <Monitor className="h-4 w-4" />
           </button>
           <button
             onClick={onAddEmployee}
-            className="inline-flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:text-blue-600 dark:border-white/10 dark:bg-white/5 dark:text-white"
+            className={`inline-flex items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm font-semibold shadow-sm transition ${
+              isDarkMode ? 'border-white/10 bg-white/5 text-white hover:border-white/30' : 'border-slate-200 bg-white text-slate-800 hover:border-blue-200 hover:text-blue-600'
+            }`}
             type="button"
           >
             <span>
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.25rem] text-slate-400">People</span>
+              <span className={`block text-[11px] font-semibold uppercase tracking-[0.25rem] ${isDarkMode ? 'text-white/60' : 'text-slate-400'}`}>People</span>
               Add teammate
             </span>
             <Users className="h-4 w-4" />
           </button>
           <button
             onClick={onOpenCommandPalette}
-            className="inline-flex items-center justify-between rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-left text-sm font-semibold text-blue-800 shadow-sm transition hover:border-blue-300 hover:bg-blue-100 dark:border-white/20 dark:bg-white/5 dark:text-white"
+            className={`inline-flex items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm font-semibold shadow-sm transition ${
+              isDarkMode ? 'border-white/20 bg-white/5 text-white hover:border-white/40' : 'border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-800 hover:border-blue-300 hover:bg-blue-100'
+            }`}
             type="button"
           >
             <span>
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.25rem] text-blue-500 dark:text-white/70">Command</span>
+              <span className={`block text-[11px] font-semibold uppercase tracking-[0.25rem] ${isDarkMode ? 'text-white/70' : 'text-blue-500'}`}>Command</span>
               Quick search & actions
             </span>
             <Search className="h-4 w-4" />
           </button>
         </div>
       </div>
-      <div className="command-header__nav rounded-2xl border border-slate-100 bg-white/90 p-4 shadow-inner dark:border-white/15 dark:bg-white/5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Journeys</p>
+      <div className={`command-header__nav rounded-2xl border p-4 shadow-inner ${isDarkMode ? 'border-white/15 bg-white/5 text-white' : 'border-slate-100 bg-white/90 text-slate-900'}`}>
+        <p className={`text-[11px] font-semibold uppercase tracking-[0.35rem] ${isDarkMode ? 'text-white/60' : 'text-slate-400'}`}>Journeys</p>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {NAV_ITEMS.map(({ key, label, icon: Icon }) => (
             <button
@@ -3341,8 +3352,12 @@ const CommandHeader = ({
               type="button"
               className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-sm font-semibold transition ${
                 activePage === key
-                  ? 'border-blue-400 bg-blue-50 text-blue-700 dark:border-sky-400/60 dark:bg-white/10 dark:text-white'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:text-blue-600 dark:border-white/10 dark:bg-transparent dark:text-white/70'
+                  ? isDarkMode
+                    ? 'border-sky-400/60 bg-white/10 text-white'
+                    : 'border-blue-400 bg-blue-50 text-blue-700'
+                  : isDarkMode
+                    ? 'border-white/10 bg-transparent text-white/70 hover:border-white/30 hover:text-white'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:text-blue-600'
               }`}
               aria-current={activePage === key ? 'page' : undefined}
             >
@@ -3357,7 +3372,8 @@ const CommandHeader = ({
       </div>
     </div>
   </header>
-);
+  );
+};
 
 const DeviceSpotlightCard = ({ title, stats = [], stat, description, image, meta, onStatClick, isDarkMode = false }) => {
   const displayStats = stats.length ? stats : stat ? [{ label: stat }] : [];
@@ -6182,7 +6198,7 @@ const AssetSpotlight = ({
   const assetIdLabel = asset?.sheetId || asset?.serialNumber || asset?.assetName || (asset?.id ? `Asset-${asset.id}` : 'Asset');
   const heroCardClass = isDarkMode
     ? 'rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 text-white shadow-lg'
-    : 'rounded-2xl bg-gradient-to-br from-slate-50 via-white to-blue-50 p-6 text-slate-900 shadow-lg border border-slate-200/80 ring-1 ring-slate-900/5';
+    : 'rounded-2xl bg-gradient-to-br from-white via-blue-50 to-blue-100 p-6 text-slate-900 shadow-lg border border-blue-100 ring-1 ring-blue-200/50';
   const heroIconWrapClass = isDarkMode
     ? 'bg-white/10 text-white ring-white/20 shadow-inner'
     : 'bg-white text-slate-700 ring-slate-200/80 shadow-sm';
