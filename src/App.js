@@ -3299,7 +3299,7 @@ const sortLoaners = (collection) =>
     ? Math.round(mergedRepairs.reduce((sum, item) => sum + (item.ageMonths || 0), 0) / mergedRepairs.length)
     : 0;
   return {
-    repairs: mergedRepairs.slice(0, 6),
+    repairs: mergedRepairs,
     repairTotal: mergedRepairs.length,
     avgRepairAgeMonths,
     loanersAvailable: sortLoaners(availableLoanersRaw),
@@ -4883,7 +4883,7 @@ const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair
           {repairs.length === 0 ? (
             <p className={`mt-4 text-sm ${isDarkMode ? 'text-white/70' : 'text-slate-600'}`}>No laptops currently staged at the depot.</p>
           ) : (
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-1">
               {repairs.map((item) => (
                 <li
                   key={item.id}
