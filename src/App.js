@@ -1314,7 +1314,7 @@ const DEFAULT_SUITE_IDS = [
 ];
 const DEFAULT_SUITE_SET = new Set(DEFAULT_SUITE_IDS);
 const EXCEL_EXPORTS = {
-  assets: `${PUBLIC_URL}/tables/${encodeURIComponent('Asset List 11-18-25.xlsx')}`,
+  assets: `${PUBLIC_URL}/tables/${encodeURIComponent('IT Computers 12-23-25.xlsx')}`,
   employees: `${PUBLIC_URL}/tables/${encodeURIComponent('Employee Information Hub.xlsx')}`,
 };
 const PRINTER_VENDOR_DIRECTORY = {
@@ -2345,13 +2345,54 @@ const buildAssetsFromSheet = (assetRows = [], employeeRows = employeeSheetData) 
   return (assetRows || [])
     .filter((row) => {
       if (!row) return false;
-      const hasRawColumns = row['Device Name'] || row['Serial Num'] || row['Product Num'];
+      const hasRawColumns =
+        row['Device Name'] ||
+        row['Serial Num'] ||
+        row['Product Num'] ||
+        row['Computer Name'] ||
+        row['Friendly Name'];
       const hasNormalizedColumns = row.assetName || row.serialNumber || row.deviceName || row.sheetId;
       return hasRawColumns || hasNormalizedColumns;
     })
     .map((row, index) => {
       if (row.assetName || row.serialNumber || row.deviceName || row.sheetId) {
         return mapNormalizedAssetRow(row, index, employeeDirectory);
+      }
+      if (row['Computer Name'] || row['Friendly Name']) {
+        const computerName = row['Computer Name'] || row['ComputerName'] || `Computer-${index + 1}`;
+        const friendlyName = row['Friendly Name'] || row['FriendlyName'] || '';
+        const assignedName = friendlyName.includes(' - ')
+          ? formatRosterName(friendlyName.split(' - ')[0])
+          : '';
+        const hasAssignee = Boolean(assignedName) || normalizeKey(assignedName) === 'unassigned';
+        const person = employeeDirectory[assignedName] || null;
+        const type = row.Type || row['Device Type'] || 'Computer';
+        const assetIdentifier = computerName;
+        const inferredBrand = row.OS ? row.OS.split(' ')[0] : type;
+        const baseAsset = {
+          id: index + 1,
+          sheetId: assetIdentifier,
+          deviceName: assetIdentifier,
+          type,
+          assetName: assetIdentifier,
+          brand: inferredBrand,
+          model: row.OS || row.Type || 'Computer',
+          serialNumber: assetIdentifier,
+          assignedTo: hasAssignee ? assignedName : '',
+          department: person?.department || 'UDS',
+          location: normalizeLocationLabel(row.Site || person?.location || 'Remote'),
+          status: determineAssetStatus(row, hasAssignee),
+          purchaseDate: normalizeSheetDate(row['Purchase Date'] || row['PurchaseDate'] || ''),
+          warrantyExpiry: normalizeSheetDate(row['Warranty End Date'] || row['WarrantyEndDate'] || ''),
+          retiredDate: normalizeSheetDate(row['Retired Date'] || row['RetiredDate'] || ''),
+          cost: estimateCost(type, row.OS || row.Type, inferredBrand),
+          checkedOut: hasAssignee,
+          checkOutDate: '',
+          qrCode: assetIdentifier,
+          approvalStatus: 'Approved',
+        };
+
+        return normalizeAssetStatus(baseAsset);
       }
       const assignedName = formatRosterName(row.ContactID);
       const hasAssignee = Boolean(assignedName) || normalizeKey(assignedName) === 'unassigned';
@@ -4348,6 +4389,7 @@ const EmployeeDirectoryGrid = ({
   onEdit = () => {},
   onDelete = () => {},
   onPhoto = () => {},
+  onAssetClick = () => {},
   downloadHref,
   isDarkMode = false,
 }) => (
@@ -4547,21 +4589,55 @@ Reply to this email with your updates. Photos are welcome. Thank you!`,
                   <p className="text-xs text-slate-500">No asset assignments.</p>
                 ) : (
                   <ul className="space-y-2">
-                    {assignments.map((asset) => {
-                      const deviceLabel = asset.deviceName || asset.assetName || `Asset ${asset.id}`;
-                      const assetId = asset.sheetId || asset.assetName || `Asset-${asset.id}`;
+                    {assignments.map((asset, index) => {
+                      const deviceLabel = asset.deviceName || asset.assetName || 'Asset';
+                      const assetId =
+                        asset.sheetId ||
+                        asset.assetName ||
+                        asset.deviceName ||
+                        (asset.id ? `Asset-${asset.id}` : 'Asset');
                       const modelLabel = asset.model || 'Unknown model';
                       const serialLabel = asset.serialNumber || 'N/A';
                       const showDeviceLabel =
                         deviceLabel && deviceLabel.toLowerCase() !== (assetId || '').toLowerCase();
+                      const canOpenAsset = Boolean(onAssetClick && asset?.id);
+                      const assetLabel = deviceLabel || assetId || 'Asset';
+                      const baseAssetClasses = isDarkMode
+                        ? 'border-slate-700/70 bg-slate-900/70 shadow-inner'
+                        : 'border-blue-100 bg-white/95 shadow-sm';
+                      const interactiveClasses = canOpenAsset
+                        ? 'cursor-pointer transition hover:border-purple-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-200'
+                        : '';
+                      const handleAssetOpen = (event) => {
+                        if (!canOpenAsset) {
+                          return;
+                        }
+                        event.stopPropagation();
+                        onAssetClick(asset);
+                      };
+                      const handleAssetKeyDown = (event) => {
+                        if (!canOpenAsset) {
+                          return;
+                        }
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          handleAssetOpen(event);
+                        }
+                      };
+                      const interactiveProps = canOpenAsset
+                        ? {
+                            onClick: handleAssetOpen,
+                            onKeyDown: handleAssetKeyDown,
+                            role: 'button',
+                            tabIndex: 0,
+                            'aria-label': `View ${assetLabel} spotlight`,
+                          }
+                        : {};
                       return (
                         <li
-                          key={asset.id}
-                          className={`rounded-lg border p-3 ${
-                            isDarkMode
-                              ? 'border-slate-700/70 bg-slate-900/70 shadow-inner'
-                              : 'border-blue-100 bg-white/95 shadow-sm'
-                          }`}
+                          key={`${memberKey}-${asset.id || asset.sheetId || asset.assetName || asset.deviceName || index}`}
+                          className={`rounded-lg border p-3 ${baseAssetClasses} ${interactiveClasses}`}
+                          {...interactiveProps}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
@@ -6711,7 +6787,7 @@ const AssetFormModal = ({
             <input
               value={form.assetName}
               onChange={(event) => update('assetName', event.target.value)}
-              placeholder="Match the Asset List entry (e.g., Laptop450)"
+              placeholder="Match the IT Computers entry (e.g., Laptop450)"
               className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -8265,14 +8341,14 @@ const patchNetworkPrinter = useCallback(
       try {
         const assetSources = [
           EXCEL_EXPORTS.assets,
-          `${PUBLIC_URL}/tables/Asset List 11-18-25.xlsx`,
-          `${PUBLIC_URL}/tables/Asset%20List%2011-18-25.xlsx`,
-          '/tables/Asset List 11-18-25.xlsx',
-          '/tables/Asset%20List%2011-18-25.xlsx',
-          `${PUBLIC_URL}/Tables/Asset List 11-18-25.xlsx`,
-          `${PUBLIC_URL}/Tables/Asset%20List%2011-18-25.xlsx`,
-          '/Tables/Asset List 11-18-25.xlsx',
-          '/Tables/Asset%20List%2011-18-25.xlsx',
+          `${PUBLIC_URL}/tables/IT Computers 12-23-25.xlsx`,
+          `${PUBLIC_URL}/tables/IT%20Computers%2012-23-25.xlsx`,
+          '/tables/IT Computers 12-23-25.xlsx',
+          '/tables/IT%20Computers%2012-23-25.xlsx',
+          `${PUBLIC_URL}/Tables/IT Computers 12-23-25.xlsx`,
+          `${PUBLIC_URL}/Tables/IT%20Computers%2012-23-25.xlsx`,
+          '/Tables/IT Computers 12-23-25.xlsx',
+          '/Tables/IT%20Computers%2012-23-25.xlsx',
         ];
         let buffer = null;
         for (const url of assetSources) {
@@ -8306,7 +8382,7 @@ const patchNetworkPrinter = useCallback(
           setAssetPage(1);
         }
       } catch (error) {
-        console.error('Failed to load Asset List workbook', error);
+        console.error('Failed to load IT Computers workbook', error);
       }
     };
     loadAssetsFromWorkbook();
@@ -8493,14 +8569,14 @@ const patchNetworkPrinter = useCallback(
     const syncDatesFromWorkbook = async () => {
       const assetSources = [
         EXCEL_EXPORTS.assets,
-        `${PUBLIC_URL}/tables/Asset List 11-18-25.xlsx`,
-        `${PUBLIC_URL}/tables/Asset%20List%2011-18-25.xlsx`,
-        '/tables/Asset List 11-18-25.xlsx',
-        '/tables/Asset%20List%2011-18-25.xlsx',
-        `${PUBLIC_URL}/Tables/Asset List 11-18-25.xlsx`,
-        `${PUBLIC_URL}/Tables/Asset%20List%2011-18-25.xlsx`,
-        '/Tables/Asset List 11-18-25.xlsx',
-        '/Tables/Asset%20List%2011-18-25.xlsx',
+        `${PUBLIC_URL}/tables/IT Computers 12-23-25.xlsx`,
+        `${PUBLIC_URL}/tables/IT%20Computers%2012-23-25.xlsx`,
+        '/tables/IT Computers 12-23-25.xlsx',
+        '/tables/IT%20Computers%2012-23-25.xlsx',
+        `${PUBLIC_URL}/Tables/IT Computers 12-23-25.xlsx`,
+        `${PUBLIC_URL}/Tables/IT%20Computers%2012-23-25.xlsx`,
+        '/Tables/IT Computers 12-23-25.xlsx',
+        '/Tables/IT%20Computers%2012-23-25.xlsx',
       ];
       let dateLookup = null;
       for (const url of assetSources) {
@@ -9268,73 +9344,124 @@ const patchNetworkPrinter = useCallback(
     [orderedEmployees, employeePage],
   );
   const employeeAssignments = useMemo(() => {
-    // Build lookup from asset.assignedTo field
-    const lookup = assets.reduce((acc, asset) => {
-      const key = normalizeKey(asset.assignedTo || '');
-      if (!key) {
-        return acc;
-      }
-      if (!acc[key]) {
-        acc[key] = [];
-      }
-      acc[key].push(asset);
-      return acc;
-    }, {});
-    
-    // Also check Employee Hub data for assigned assets
+    const lookup = {};
+
     employeeGallery.forEach((member) => {
       const memberKey = member.lookupKey || normalizeKey(member.name || '');
       if (!memberKey) return;
-      
-      // Get asset IDs from Employee Hub columns
+
       const hubAssets = [
-        member.computer,
-        member.printer,
-        member.monitor,
-        member.dock,
-        member.keyFob
-      ].filter(Boolean);
-      
-      // Match these to actual assets
-      hubAssets.forEach((assetId) => {
+        { value: member.computer, type: 'Computer' },
+        { value: member.printer, type: 'Printer' },
+        { value: member.monitor, type: 'Monitor' },
+        { value: member.dock, type: 'Dock' },
+        { value: member.keyFob, type: 'Key Fob' },
+      ].filter(({ value }) => Boolean(value));
+
+      if (hubAssets.length === 0) {
+        return;
+      }
+
+      const items = [];
+      const seen = new Set();
+
+      hubAssets.forEach(({ value, type }) => {
+        const assetId = String(value || '').trim();
         const normalized = normalizeKey(assetId);
-        if (!normalized) return;
-        
-        // Find matching asset by various fields
+        if (!normalized || seen.has(normalized)) return;
+        seen.add(normalized);
+
         const matchingAsset = assets.find((asset) => {
           const assetKeys = [
             normalizeKey(asset.assetName || ''),
             normalizeKey(asset.deviceName || ''),
             normalizeKey(asset.sheetId || ''),
-            normalizeKey(asset.serialNumber || '')
+            normalizeKey(asset.serialNumber || ''),
           ].filter(Boolean);
           return assetKeys.includes(normalized);
         });
-        
+
         if (matchingAsset) {
-          if (!lookup[memberKey]) {
-            lookup[memberKey] = [];
-          }
-          // Avoid duplicates
-          if (!lookup[memberKey].some((a) => a.id === matchingAsset.id)) {
-            lookup[memberKey].push(matchingAsset);
-          }
+          items.push(matchingAsset);
+          return;
         }
+
+        items.push({
+          assetName: assetId,
+          deviceName: assetId,
+          sheetId: assetId,
+          type,
+        });
       });
+
+      if (items.length > 0) {
+        lookup[memberKey] = items;
+      }
     });
-    
+
     Object.values(lookup).forEach((list) =>
       list.sort((a, b) => {
         const nameA = (a.deviceName || a.assetName || '').toLowerCase();
         const nameB = (b.deviceName || b.assetName || '').toLowerCase();
         if (nameA === nameB) {
-          return String(a.id).localeCompare(String(b.id));
+          return String(a.id || a.sheetId || '').localeCompare(String(b.id || b.sheetId || ''));
         }
         return nameA.localeCompare(nameB);
       }),
     );
+
     return lookup;
   }, [assets, employeeGallery]);
+  useEffect(() => {
+    if (!employeeGallery.length || !assets.length) {
+      return;
+    }
+    const assignmentLookup = new Map();
+    employeeGallery.forEach((member) => {
+      const name = member?.name || '';
+      if (!name) return;
+      [member.computer, member.printer, member.monitor, member.dock, member.keyFob]
+        .filter(Boolean)
+        .forEach((assetId) => {
+          const key = normalizeKey(assetId);
+          if (key && !assignmentLookup.has(key)) {
+            assignmentLookup.set(key, name);
+          }
+        });
+    });
+
+    if (!assignmentLookup.size) {
+      return;
+    }
+
+    setAssets((prev) => {
+      let changed = false;
+      const next = prev.map((asset) => {
+        const assetKeys = [
+          normalizeKey(asset.assetName || ''),
+          normalizeKey(asset.deviceName || ''),
+          normalizeKey(asset.sheetId || ''),
+          normalizeKey(asset.serialNumber || ''),
+        ].filter(Boolean);
+        const matchKey = assetKeys.find((key) => assignmentLookup.has(key));
+        if (!matchKey) {
+          return asset;
+        }
+        const assignedTo = assignmentLookup.get(matchKey) || '';
+        if (!assignedTo || assignedTo === asset.assignedTo) {
+          return asset;
+        }
+        changed = true;
+        return {
+          ...asset,
+          assignedTo,
+          status: 'Checked Out',
+          checkedOut: true,
+        };
+      });
+      return changed ? next : prev;
+    });
+  }, [assets, employeeGallery, setAssets]);
   const getEmployeeAssignments = useCallback(
     (member) => {
       if (!member) {
@@ -12228,6 +12355,7 @@ const handleTestPrinter = useCallback(
                   onEdit={(member) => setEmployeeForm({ ...member })}
                   onDelete={handleDeleteEmployee}
                   onPhoto={handleOpenPhoto}
+                  onAssetClick={handleRowSelect}
                   downloadHref={EXCEL_EXPORTS.employees}
                   isDarkMode={isDarkMode}
                 />

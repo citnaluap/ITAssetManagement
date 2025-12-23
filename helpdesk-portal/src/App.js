@@ -482,7 +482,7 @@ function App() {
         </header>
 
         <main className="grid" style={{ marginTop: 24, gap: 18 }}>
-          <section className="grid" style={{ gridTemplateColumns: '1.35fr 1fr', gap: 16 }}>
+          <section className="grid grid-split-hero" style={{ gap: 16 }}>
             <div className="card">
               <div className="section-title">Self help</div>
               <div style={{ marginTop: 8, display: 'grid', gap: 10 }}>
@@ -495,7 +495,7 @@ function App() {
                     onChange={(event) => setSearch(event.target.value)}
                   />
                 </label>
-                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+                <div className="grid grid-auto-240">
                   {filteredArticles.map((article) => (
                     <ArticleCard key={article.id} article={article} />
                   ))}
@@ -526,7 +526,7 @@ function App() {
             </div>
           </section>
 
-          <section className="grid" style={{ gridTemplateColumns: '1fr 0.9fr', gap: 16 }}>
+          <section className="grid grid-split-form" style={{ gap: 16 }}>
             <div className="card">
               <div className="section-title">Start a request</div>
               <h2 style={{ margin: '6px 0 8px' }}>Tell IT what you need</h2>
@@ -548,7 +548,7 @@ function App() {
                 </div>
               )}
               <form id="request-form" onSubmit={handleFormSubmit} className="grid" style={{ gap: 12 }}>
-                <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div className="grid grid-two" style={{ gap: 10 }}>
                   <label className="label">
                     Name
                     <input className="input" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required />
@@ -558,7 +558,7 @@ function App() {
                     <input className="input" type="email" value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} required />
                   </label>
                 </div>
-                <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div className="grid grid-two" style={{ gap: 10 }}>
                   <label className="label">
                     Department / Location
                     <input className="input" value={form.department} onChange={(e) => setForm((p) => ({ ...p, department: e.target.value }))} placeholder="Finance, Lancaster" />
@@ -667,10 +667,10 @@ function App() {
             </div>
           </section>
 
-          <section className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <section className="grid grid-two" style={{ gap: 16 }}>
             <div className="card">
               <div className="section-title">Service catalog</div>
-              <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="grid grid-two" style={{ gap: 10 }}>
                 {serviceCatalog.map((item) => (
                   <ServiceCard key={item.id} item={item} />
                 ))}
@@ -707,7 +707,7 @@ function App() {
                   </button>
                 </div>
               )}
-              <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginTop: 12 }}>
+              <div className="grid grid-auto-160" style={{ gap: 10, marginTop: 12 }}>
                 <div className="card" style={{ background: '#0f172a', color: 'white' }}>
                   <div className="list-inline">
                     <InlineTag>
@@ -734,7 +734,7 @@ function App() {
 
           <section className="card">
             <div className="section-title">What to expect</div>
-            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginTop: 10 }}>
+            <div className="grid grid-auto-220" style={{ gap: 12, marginTop: 10 }}>
               <div className="card" style={{ background: '#f8fafc' }}>
                 <div className="list-inline">
                   <InlineTag>
