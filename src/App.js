@@ -13532,10 +13532,6 @@ const handleTestPrinter = useCallback(
                       <Send size={18} />
                       Submit a request
                     </button>
-                    <a className="btn btn-ghost" href={`mailto:${HELP_DESK_EMAIL}?subject=${encodeURIComponent('Open Help Desk Ticket')}`} style={{ background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)' }}>
-                      <Mail size={18} />
-                      Email IT
-                    </a>
                     <a className="btn btn-ghost" href="tel:+17175553000" style={{ background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)' }}>
                       <PhoneCall size={18} />
                       Call for urgent issues
