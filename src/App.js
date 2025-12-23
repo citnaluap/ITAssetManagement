@@ -1099,6 +1099,17 @@ const generateQrDataUrl = async (text, size = 400) => {
   });
 };
 
+const normalizeScanValue = (value) => {
+  if (value === null || value === undefined) return '';
+  return String(value).trim().toLowerCase();
+};
+
+const assetMatchesScanValue = (asset, normalizedValue) => {
+  if (!asset || !normalizedValue) return false;
+  const candidates = [asset.qrCode, asset.serialNumber, asset.assetName, asset.sheetId];
+  return candidates.some((candidate) => normalizeScanValue(candidate) === normalizedValue);
+};
+
 const isComputerAsset = (asset = {}) => {
   const type = (asset.type || '').toLowerCase();
   if (['computer', 'laptop', 'desktop', 'server'].includes(type)) {
@@ -9832,14 +9843,8 @@ const patchNetworkPrinter = useCallback(
     const value = scanResult.trim();
     if (!value) return;
 
-    const normalized = value.toLowerCase();
-    const matchedAsset = assets.find(
-      (asset) =>
-        (asset.qrCode && asset.qrCode.toLowerCase() === normalized) ||
-        (asset.serialNumber && asset.serialNumber.toLowerCase() === normalized) ||
-        (asset.assetName && asset.assetName.toLowerCase() === normalized) ||
-        (asset.sheetId && asset.sheetId.toLowerCase() === normalized),
-    );
+    const normalized = normalizeScanValue(value);
+    const matchedAsset = assets.find((asset) => assetMatchesScanValue(asset, normalized));
 
     setActivePage('Hardware');
 
@@ -10564,15 +10569,8 @@ const handleTestPrinter = useCallback(
       return;
     }
     setScanResult(value);
-    const normalized = value.toLowerCase();
-    const matchedAsset =
-      assets.find(
-        (asset) =>
-          (asset.qrCode && asset.qrCode.toLowerCase() === normalized) ||
-          (asset.serialNumber && asset.serialNumber.toLowerCase() === normalized) ||
-          (asset.assetName && asset.assetName.toLowerCase() === normalized) ||
-          (asset.sheetId && asset.sheetId.toLowerCase() === normalized),
-      ) || null;
+    const normalized = normalizeScanValue(value);
+    const matchedAsset = assets.find((asset) => assetMatchesScanValue(asset, normalized)) || null;
     setFilters((prev) => ({ ...prev, search: value }));
     setActivePage('Hardware');
     if (matchedAsset) {
