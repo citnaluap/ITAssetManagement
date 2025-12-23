@@ -10014,16 +10014,15 @@ const patchNetworkPrinter = useCallback(
   }, [scanResult, assets]);
 
   useEffect(() => {
-    if (!filteredAssets.length) {
-      setSelectedAssetId(null);
-      setSpotlightOpen(false);
+    if (!selectedAssetId) {
       return;
     }
-    if (selectedAssetId && !filteredAssets.some((asset) => asset.id === selectedAssetId)) {
+    const exists = assets.some((asset) => asset.id === selectedAssetId);
+    if (!exists) {
       setSelectedAssetId(null);
       setSpotlightOpen(false);
     }
-  }, [filteredAssets, selectedAssetId]);
+  }, [assets, selectedAssetId]);
 
   const stats = useMemo(() => {
     const totalValue = assets.reduce((sum, asset) => sum + Number(asset.cost || 0), 0);
