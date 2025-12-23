@@ -1047,6 +1047,17 @@ const resolveApiBaseUrl = () => {
   return normalized.endsWith('/api') ? normalized : `${normalized}/api`;
 };
 const API_STORAGE_BASE = resolveApiBaseUrl();
+const shouldIncludeCredentials = () => {
+  if (typeof window === 'undefined' || !API_STORAGE_BASE) {
+    return true;
+  }
+  try {
+    const apiUrl = new URL(API_STORAGE_BASE);
+    return apiUrl.origin === window.location.origin;
+  } catch {
+    return false;
+  }
+};
 const remoteStorageState = { enabled: true, warned: false };
 const LOANER_PAGE_SIZE = 6;
 const FILTERS_STORAGE_KEY = 'uds_asset_filters';
@@ -1102,6 +1113,11 @@ const generateQrDataUrl = async (text, size = 400) => {
 const normalizeScanValue = (value) => {
   if (value === null || value === undefined) return '';
   return String(value).trim().toLowerCase();
+};
+
+const safeLower = (value) => {
+  if (value === null || value === undefined) return '';
+  return String(value).toLowerCase();
 };
 
 const assetMatchesScanValue = (asset, normalizedValue) => {
@@ -2645,8 +2661,9 @@ const fetchRemoteStorage = async (key) => {
     return null;
   }
   try {
+    const credentialsMode = shouldIncludeCredentials() ? 'include' : 'omit';
     const response = await fetch(`${API_STORAGE_BASE}/storage/${encodeURIComponent(key)}`, {
-      credentials: 'include',
+      credentials: credentialsMode,
     });
     const tokenPresent = response.headers?.get('x-blob-token-present');
     if (tokenPresent === 'false' || response.status === 503) {
@@ -2671,10 +2688,11 @@ const persistRemoteStorage = async (key, value) => {
     return;
   }
   try {
+    const credentialsMode = shouldIncludeCredentials() ? 'include' : 'omit';
     const response = await fetch(`${API_STORAGE_BASE}/storage/${encodeURIComponent(key)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      credentials: credentialsMode,
       body: JSON.stringify(value),
     });
     const tokenPresent = response.headers?.get('x-blob-token-present');
@@ -8216,6 +8234,13 @@ const patchNetworkPrinter = useCallback(
   const departmentSuggestionListId = 'asset-department-suggestions';
   const locationSuggestionListId = 'asset-location-suggestions';
   const jobTitleSuggestionListId = 'job-title-suggestions';
+  const resetMultiFormatReader = () => {
+    const reader = multiFormatReaderRef.current;
+    if (reader && typeof reader.reset === 'function') {
+      reader.reset();
+    }
+    multiFormatReaderRef.current = null;
+  };
   useEffect(() => {
     let cancelled = false;
     const loadAssetsFromWorkbook = async () => {
@@ -9133,7 +9158,7 @@ const patchNetworkPrinter = useCallback(
   }, [baseEmployeeLocationMap, setAssets, setEmployeeGallery]);
 
   const filteredAssets = useMemo(() => {
-    const query = filters.search.toLowerCase();
+    const query = safeLower(filters.search);
 
     const filtered = assets.filter((asset) => {
       const statusLabel = getAssetDisplayStatus(asset);
@@ -9150,11 +9175,11 @@ const patchNetworkPrinter = useCallback(
       }
       const matchesSearch =
         !query ||
-        asset.assetName.toLowerCase().includes(query) ||
-        asset.brand.toLowerCase().includes(query) ||
-        asset.model.toLowerCase().includes(query) ||
-        asset.serialNumber.toLowerCase().includes(query) ||
-        asset.assignedTo.toLowerCase().includes(query);
+        safeLower(asset.assetName).includes(query) ||
+        safeLower(asset.brand).includes(query) ||
+        safeLower(asset.model).includes(query) ||
+        safeLower(asset.serialNumber).includes(query) ||
+        safeLower(asset.assignedTo).includes(query);
       const matchesType = filters.type === 'all' || asset.type === filters.type;
       const matchesStatus = filters.status === 'all' || statusLabel === filters.status;
 
@@ -9487,13 +9512,6 @@ const patchNetworkPrinter = useCallback(
         terminationEmployee,
         terminationAssets,
       );
-      console.log('Termination supervisor mailto:', {
-        supervisorEmail: terminationProfile?.supervisorEmail,
-        supervisor: terminationProfile?.supervisor,
-        employee: terminationEmployee,
-        assets: terminationAssets?.length,
-        mailto,
-      });
       return mailto;
     },
     [terminationProfile, terminationEmployee, terminationAssets],
@@ -9731,7 +9749,8 @@ const patchNetworkPrinter = useCallback(
           if (!multiFormatReaderRef.current) {
             multiFormatReaderRef.current = new BrowserMultiFormatReader();
           } else {
-            multiFormatReaderRef.current.reset();
+            resetMultiFormatReader();
+            multiFormatReaderRef.current = new BrowserMultiFormatReader();
           }
         }
         const finishDetection = (value, message) => {
@@ -9748,7 +9767,7 @@ const patchNetworkPrinter = useCallback(
             streamRef.current = null;
           }
           if (multiFormatReaderRef.current) {
-            multiFormatReaderRef.current.reset();
+            resetMultiFormatReader();
           }
         };
 
@@ -9832,7 +9851,7 @@ const patchNetworkPrinter = useCallback(
         streamRef.current = null;
       }
       if (multiFormatReaderRef.current) {
-        multiFormatReaderRef.current.reset();
+        resetMultiFormatReader();
       }
     };
   }, [scannerActive]);
