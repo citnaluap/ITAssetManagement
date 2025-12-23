@@ -13452,6 +13452,68 @@ const handleTestPrinter = useCallback(
                 cursor: pointer;
                 transition: all 0.2s;
               }
+              @media (max-width: 1100px) {
+                .helpdesk-app .hero {
+                  padding: 28px;
+                }
+                .helpdesk-app .helpdesk-split,
+                .helpdesk-app .helpdesk-form-chat,
+                .helpdesk-app .helpdesk-services {
+                  grid-template-columns: 1fr !important;
+                }
+                .helpdesk-app .helpdesk-article-grid,
+                .helpdesk-app .helpdesk-service-grid {
+                  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                }
+                .helpdesk-app .cta-strip {
+                  grid-template-columns: 1fr;
+                }
+                .helpdesk-app .cta-row {
+                  flex-direction: column;
+                  align-items: stretch;
+                }
+                .helpdesk-app .cta-row .btn,
+                .helpdesk-app .cta-row .btn-ghost {
+                  justify-content: center;
+                  width: 100%;
+                }
+                .helpdesk-app .card.request-row {
+                  grid-template-columns: 1fr !important;
+                  align-items: start;
+                  gap: 10px;
+                }
+                .helpdesk-app .list-inline {
+                  flex-wrap: wrap;
+                }
+                .helpdesk-app .chat-panel {
+                  height: auto;
+                  min-height: 420px;
+                }
+              }
+              @media (max-width: 720px) {
+                .helpdesk-app .hero {
+                  padding: 22px;
+                }
+                .helpdesk-app .card {
+                  padding: 16px;
+                }
+                .helpdesk-app .btn {
+                  width: 100%;
+                  justify-content: center;
+                }
+                .helpdesk-app .helpdesk-article-grid,
+                .helpdesk-app .helpdesk-service-grid {
+                  grid-template-columns: 1fr !important;
+                }
+                .helpdesk-app .input,
+                .helpdesk-app .textarea,
+                .helpdesk-app .select {
+                  font-size: 15px;
+                }
+                .helpdesk-app .chat-panel {
+                  min-height: 360px;
+                }
+              }
             `}</style>
             
             <div className="helpdesk-app">
@@ -13516,7 +13578,7 @@ const handleTestPrinter = useCallback(
               </header>
 
               <main className="grid" style={{ marginTop: 24, gap: 18 }}>
-                <section className="grid" style={{ gridTemplateColumns: '1.35fr 1fr', gap: 16 }}>
+                <section className="grid helpdesk-split" style={{ gridTemplateColumns: '1.35fr 1fr', gap: 16 }}>
                   <div className="card">
                     <div className="section-title">Self help</div>
                     <div style={{ marginTop: 8, display: 'grid', gap: 10 }}>
@@ -13529,7 +13591,7 @@ const handleTestPrinter = useCallback(
                           onChange={(event) => setHelpdeskSearch(event.target.value)}
                         />
                       </label>
-                      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+                      <div className="grid helpdesk-article-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
                         {filteredArticles.map((article) => (
                           <div key={article.id} className="card article-card">
                             <div className="list-inline" style={{ marginBottom: 6 }}>
@@ -13578,7 +13640,7 @@ const handleTestPrinter = useCallback(
                   </div>
                 </section>
 
-                <section className="grid" style={{ gridTemplateColumns: '1fr 0.9fr', gap: 16 }}>
+                <section className="grid helpdesk-form-chat" style={{ gridTemplateColumns: '1fr 0.9fr', gap: 16 }}>
                   <div className="card">
                     <div className="section-title">Start a request</div>
                     <h2 style={{ margin: '6px 0 8px', fontSize: 20, color: isDarkMode ? '#e7edff' : '#0e1117' }}>Tell IT what you need</h2>
@@ -13731,10 +13793,10 @@ const handleTestPrinter = useCallback(
                   </div>
                 </section>
 
-                <section className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <section className="grid helpdesk-services" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div className="card">
                     <div className="section-title">Service catalog</div>
-                    <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
+                    <div className="grid helpdesk-service-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
                       {serviceCatalog.map((item) => {
                         const Icon = item.icon;
                         return (
