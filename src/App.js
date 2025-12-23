@@ -1122,7 +1122,7 @@ const safeLower = (value) => {
 
 const assetMatchesScanValue = (asset, normalizedValue) => {
   if (!asset || !normalizedValue) return false;
-  const candidates = [asset.qrCode, asset.serialNumber, asset.assetName, asset.sheetId];
+  const candidates = [asset.qrCode, asset.sheetId, asset.assetId, asset.id];
   return candidates.some((candidate) => normalizeScanValue(candidate) === normalizedValue);
 };
 
@@ -9176,9 +9176,9 @@ const patchNetworkPrinter = useCallback(
       const matchesSearch =
         !query ||
         safeLower(asset.assetName).includes(query) ||
+        safeLower(asset.sheetId).includes(query) ||
         safeLower(asset.brand).includes(query) ||
         safeLower(asset.model).includes(query) ||
-        safeLower(asset.serialNumber).includes(query) ||
         safeLower(asset.assignedTo).includes(query);
       const matchesType = filters.type === 'all' || asset.type === filters.type;
       const matchesStatus = filters.status === 'all' || statusLabel === filters.status;
@@ -9877,7 +9877,7 @@ const patchNetworkPrinter = useCallback(
       setAssetForm({
         ...defaultAsset,
         qrCode: value,
-        serialNumber: value,
+        sheetId: value,
       });
       setScanMessage(`No match found. Creating new asset with ID: ${value}`);
     }
