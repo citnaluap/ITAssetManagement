@@ -4600,7 +4600,7 @@ Reply to this email with your updates. Photos are welcome. Thank you!`,
                       const serialLabel = asset.serialNumber || 'N/A';
                       const showDeviceLabel =
                         deviceLabel && deviceLabel.toLowerCase() !== (assetId || '').toLowerCase();
-                      const canOpenAsset = Boolean(onAssetClick && asset?.id);
+                      const canOpenAsset = Boolean(onAssetClick);
                       const assetLabel = deviceLabel || assetId || 'Asset';
                       const baseAssetClasses = isDarkMode
                         ? 'border-slate-700/70 bg-slate-900/70 shadow-inner'
@@ -10274,9 +10274,50 @@ const patchNetworkPrinter = useCallback(
     }
   };
 
+  const resolveSelectedAsset = useCallback(
+    (asset) => {
+      if (!asset) {
+        return null;
+      }
+      if (asset.id) {
+        return assets.find((item) => item.id === asset.id) || asset;
+      }
+      const matchKeys = [
+        asset.assetName,
+        asset.deviceName,
+        asset.sheetId,
+        asset.serialNumber,
+      ]
+        .filter(Boolean)
+        .map(normalizeKey);
+      if (matchKeys.length === 0) {
+        return null;
+      }
+      return (
+        assets.find((item) => {
+          const itemKeys = [
+            item.assetName,
+            item.deviceName,
+            item.sheetId,
+            item.serialNumber,
+            item.id,
+          ]
+            .filter(Boolean)
+            .map(normalizeKey);
+          return matchKeys.some((key) => itemKeys.includes(key));
+        }) || null
+      );
+    },
+    [assets],
+  );
+
   const handleRowSelect = (asset) => {
-    if (!asset) return;
-    setSelectedAssetId(asset.id);
+    const resolved = resolveSelectedAsset(asset);
+    if (!resolved?.id) {
+      setFlashMessage('Asset not found in inventory yet.');
+      return;
+    }
+    setSelectedAssetId(resolved.id);
     setSpotlightOpen(true);
   };
 
