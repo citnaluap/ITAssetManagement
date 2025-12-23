@@ -810,6 +810,16 @@ html.theme-dark .status-success {
 html.theme-dark .status-success-muted {
   color: #86efac;
 }
+.status-chip-available {
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+}
+html.theme-dark .status-chip-available {
+  background: rgba(6, 78, 59, 0.45);
+  border-color: #065f46;
+  color: #bbf7d0;
+}
 .status-info {
   color: #0369a1;
 }

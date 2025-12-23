@@ -3004,7 +3004,7 @@ const isAssetReady = (asset = {}) => {
 };
 
 const statusClasses = {
-  Available: 'bg-emerald-50 status-success',
+  Available: 'status-chip-available',
   'Checked Out': 'bg-blue-50 status-info',
   Maintenance: 'bg-amber-50 status-warning',
   Retired: 'bg-slate-100 text-slate-500',
