@@ -3879,7 +3879,7 @@ const NetworkPrinterBoard = ({
   );
 };
 
-const SoftwareSuiteCard = ({ suite, onEdit, onDelete }) => {
+const SoftwareSuiteCard = ({ suite, onEdit, onDelete, onSeatsClick }) => {
   const { status, delta } = getLicenseHealth(suite.seats, suite.used);
   const badgeStyle =
     status === 'Overused'
@@ -3969,10 +3969,17 @@ const SoftwareSuiteCard = ({ suite, onEdit, onDelete }) => {
           <div className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
             <div>
               <p className="text-xs uppercase tracking-widest text-slate-400">Seats in use</p>
-              <p className="software-metric-value mt-1 text-2xl font-semibold text-slate-900">
-                {suite.used} / {suite.seats}
-              </p>
-              <p className="text-xs text-slate-500">{spareLabel}</p>
+              <button
+                type="button"
+                onClick={() => onSeatsClick?.(suite)}
+                className="text-left"
+                title="Manage license assignments"
+              >
+                <p className="software-metric-value mt-1 text-2xl font-semibold text-slate-900">
+                  {suite.used} / {suite.seats}
+                </p>
+                <p className="text-xs text-slate-500">{spareLabel}</p>
+              </button>
             </div>
             <div>
               <p className="text-xs uppercase tracking-widest text-slate-400">Renewal</p>
@@ -3999,6 +4006,120 @@ const SoftwareSuiteCard = ({ suite, onEdit, onDelete }) => {
         )}
       </div>
     </div>
+  );
+};
+
+const LicenseAssignmentModal = ({ suite, employeeNames = [], focusEmployeeName = '', onClose, onSave }) => {
+  const [selectedEmployee, setSelectedEmployee] = useState('');
+  const assignedUsers = useMemo(() => {
+    if (!suite) return [];
+    if (Array.isArray(suite.assignedUsers)) return suite.assignedUsers.filter(Boolean);
+    if (Array.isArray(suite.assignees)) return suite.assignees.filter(Boolean);
+    if (Array.isArray(suite.users)) return suite.users.filter(Boolean);
+    return [];
+  }, [suite]);
+  const normalizedAssigned = useMemo(
+    () => new Set(assignedUsers.map((name) => normalizeKey(name))),
+    [assignedUsers],
+  );
+  const normalizedFocusName = normalizeKey(focusEmployeeName || '');
+  const availableSeats = Math.max(0, (suite?.seats || 0) - assignedUsers.length);
+  const canAdd = Boolean(selectedEmployee) && (suite?.seats || 0) > 0 && availableSeats > 0;
+
+  useEffect(() => {
+    if (!focusEmployeeName) {
+      return;
+    }
+    setSelectedEmployee(focusEmployeeName);
+  }, [focusEmployeeName, suite?.id]);
+
+  const handleAdd = () => {
+    if (!suite || !selectedEmployee) return;
+    if (normalizedAssigned.has(normalizeKey(selectedEmployee))) return;
+    if (!canAdd) return;
+    onSave([...assignedUsers, selectedEmployee]);
+    setSelectedEmployee('');
+  };
+
+  const handleRemove = (name) => {
+    const next = assignedUsers.filter((item) => normalizeKey(item) !== normalizeKey(name));
+    onSave(next);
+  };
+
+  return (
+    <ModalShell title={`Assign licenses - ${suite?.software || 'Suite'}`} onClose={onClose}>
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-700">
+          <p className="font-semibold text-slate-900">{suite?.software}</p>
+          <p className="text-xs text-slate-500">
+            {assignedUsers.length} assigned • {suite?.seats || 0} seats • {availableSeats} available
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Assigned employees</p>
+          {assignedUsers.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-500">
+              No employees assigned yet.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {assignedUsers.map((name) => (
+                <div
+                  key={`license-${suite?.id || suite?.software}-${name}`}
+                  className={`flex items-center justify-between rounded-2xl border px-4 py-2 text-sm ${
+                    normalizedFocusName && normalizeKey(name) === normalizedFocusName
+                      ? 'border-blue-200 bg-blue-50 text-slate-800'
+                      : 'border-slate-200 bg-white text-slate-700'
+                  }`}
+                >
+                  <span className="font-semibold text-slate-900">{name}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(name)}
+                    className="rounded-xl border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-600 hover:border-rose-300"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Assign a seat</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input
+              list="license-employee-options"
+              value={selectedEmployee}
+              onChange={(event) => setSelectedEmployee(event.target.value)}
+              placeholder="Search employee"
+              className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+            <datalist id="license-employee-options">
+              {employeeNames.map((name) => (
+                <option key={`license-employee-${name}`} value={name} />
+              ))}
+            </datalist>
+            <button
+              type="button"
+              onClick={handleAdd}
+              disabled={!canAdd}
+              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+            >
+              Assign
+            </button>
+          </div>
+          {(suite?.seats || 0) === 0 && (
+            <p className="mt-2 text-xs text-slate-500">Add seats to enable assignments.</p>
+          )}
+          {selectedEmployee && normalizedAssigned.has(normalizeKey(selectedEmployee)) && (
+            <p className="mt-2 text-xs text-slate-500">Employee already assigned to this suite.</p>
+          )}
+        </div>
+      </div>
+    </ModalShell>
   );
 };
 
@@ -4383,6 +4504,7 @@ const EmployeeDirectoryGrid = ({
   onToggle = () => {},
   getAssignments = () => [],
   getLicenses = () => [],
+  onLicenseClick = () => {},
   onEdit = () => {},
   onDelete = () => {},
   onPhoto = () => {},
@@ -4589,6 +4711,7 @@ Reply to this email with your updates. Photos are welcome. Thank you!`,
                     {assignments.map((asset, index) => {
                       const deviceLabel = asset.deviceName || asset.assetName || 'Asset';
                       const assetId =
+                        asset.displayId ||
                         asset.sheetId ||
                         asset.assetName ||
                         asset.deviceName ||
@@ -4610,7 +4733,7 @@ Reply to this email with your updates. Photos are welcome. Thank you!`,
                           return;
                         }
                         event.stopPropagation();
-                        onAssetClick(asset);
+                        onAssetClick(asset.sourceAsset || asset);
                       };
                       const handleAssetKeyDown = (event) => {
                         if (!canOpenAsset) {
@@ -4675,16 +4798,29 @@ Reply to this email with your updates. Photos are welcome. Thank you!`,
                 ) : (
                   <ul className="space-y-2">
                     {licenses.map((suite) => (
-                      <li key={`${suite.suiteId || suite.name}-${suite.licenseKey || ''}-${member.id}`} className="rounded-lg border border-emerald-100 bg-white p-3">
-                        <p className="text-sm font-semibold text-slate-900">{suite.name}</p>
-                        <p className="text-[11px] text-slate-600">
-                          <span className="font-semibold">Vendor:</span> {suite.vendor || 'N/A'}
-                        </p>
-                        {suite.licenseKey && (
+                      <li
+                        key={`${suite.suiteId || suite.name}-${suite.licenseKey || ''}-${member.id}`}
+                        className="rounded-lg border border-emerald-100 bg-white p-3"
+                      >
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onLicenseClick(member, suite);
+                          }}
+                          className="w-full text-left"
+                          title="Manage license assignments"
+                        >
+                          <p className="text-sm font-semibold text-slate-900">{suite.name}</p>
                           <p className="text-[11px] text-slate-600">
-                            <span className="font-semibold">Key:</span> {suite.licenseKey}
+                            <span className="font-semibold">Vendor:</span> {suite.vendor || 'N/A'}
                           </p>
-                        )}
+                          {suite.licenseKey && (
+                            <p className="text-[11px] text-slate-600">
+                              <span className="font-semibold">Key:</span> {suite.licenseKey}
+                            </p>
+                          )}
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -7695,6 +7831,8 @@ const App = () => {
   const [activePage, setActivePage] = useState('Overview');
   const reminderPrefs = useMemo(() => ({ email: true, zoom: true }), []);
   const [softwareForm, setSoftwareForm] = useState(null);
+  const [licenseSeatSuiteId, setLicenseSeatSuiteId] = useState(null);
+  const [licenseSeatFocusEmployee, setLicenseSeatFocusEmployee] = useState('');
   const [warrantyModalOpen, setWarrantyModalOpen] = useState(false);
   const [laptopRefreshDate, setLaptopRefreshDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [authUser, setAuthUser] = useState(null);
@@ -7720,6 +7858,30 @@ const App = () => {
   const helpdeskTypingTimeoutRef = useRef(null);
   
   const apiBaseUrl = resolveApiBaseUrl();
+  const getSuiteIdentifier = useCallback(
+    (suite) => suite?.id || normalizeKey(suite?.software || ''),
+    [],
+  );
+  const licenseSeatSuite = useMemo(() => {
+    if (!licenseSeatSuiteId) return null;
+    return softwareSuites.find((suite) => getSuiteIdentifier(suite) === licenseSeatSuiteId) || null;
+  }, [softwareSuites, licenseSeatSuiteId, getSuiteIdentifier]);
+  const handleUpdateSuiteAssignments = useCallback(
+    (suiteId, nextUsers) => {
+      setSoftwareSuites((prev) =>
+        prev.map((suite) =>
+          getSuiteIdentifier(suite) === suiteId
+            ? {
+                ...suite,
+                assignedUsers: nextUsers,
+                used: nextUsers.length,
+              }
+            : suite,
+        ),
+      );
+    },
+    [getSuiteIdentifier, setSoftwareSuites],
+  );
   const buildApiUrl = useCallback(
     (path) => {
       if (!apiBaseUrl) return path;
@@ -7852,6 +8014,37 @@ const patchNetworkPrinter = useCallback(
       }),
     [networkPrinters],
   );
+  const [employeeGallery, setEmployeeGallery] = usePersistentState(STORAGE_KEYS.employees, BASE_EMPLOYEE_GALLERY);
+  useEffect(() => {
+    if (!employeeGallery.length) {
+      return;
+    }
+    const employeeNamesAll = employeeGallery
+      .map((member) => member.name)
+      .filter(Boolean)
+      .sort((a, b) => safeLocaleCompare(a, b));
+    setSoftwareSuites((prev) => {
+      let changed = false;
+      const next = prev.map((suite) => {
+        if (!DEFAULT_SUITE_SET.has(suite.id)) {
+          return suite;
+        }
+        const current = Array.isArray(suite.assignedUsers) ? suite.assignedUsers : [];
+        const currentNormalized = new Set(current.map((name) => normalizeKey(name)));
+        const nextUsers = employeeNamesAll.filter((name) => !currentNormalized.has(normalizeKey(name)));
+        if (nextUsers.length === 0 && current.length === employeeNamesAll.length) {
+          return suite;
+        }
+        changed = true;
+        return {
+          ...suite,
+          assignedUsers: employeeNamesAll,
+          used: employeeNamesAll.length,
+        };
+      });
+      return changed ? next : prev;
+    });
+  }, [employeeGallery, setSoftwareSuites]);
   const printerCoverageStats = useMemo(() => {
     const brandEntries = [
       { brand: 'Canon', title: 'Canon copiers', note: 'Colony Products support' },
@@ -7913,7 +8106,6 @@ const patchNetworkPrinter = useCallback(
         };
       });
   }, [networkPrinters, repairTickets]);
-  const [employeeGallery, setEmployeeGallery] = usePersistentState(STORAGE_KEYS.employees, BASE_EMPLOYEE_GALLERY);
   useEffect(() => {
     const loadOrgChart = async () => {
       try {
@@ -9101,20 +9293,7 @@ const patchNetworkPrinter = useCallback(
     }, {});
   }, [employeeGallery]);
   const employeeLicenseMap = useMemo(() => {
-    const normalizedEmployees = employeeGallery
-      .map((member) => ({
-        name: member.name,
-        key: normalizeKey(member.lookupKey || member.name || ''),
-        department: normalizeKey(member.department || ''),
-        role: normalizeKey(member.title || ''),
-      }))
-      .filter((item) => item.name && item.key);
-    const suiteById = softwareSuites.reduce((acc, suite) => {
-      if (suite?.id) {
-        acc[suite.id] = suite;
-      }
-      return acc;
-    }, {});
+    // Removed unused normalizedEmployees variable to fix lint warning.
     const seededAssignments = softwareSuites.reduce((acc, suite, index) => {
       const assignedUsers = Array.isArray(suite.assignedUsers)
         ? suite.assignedUsers
@@ -9123,17 +9302,7 @@ const patchNetworkPrinter = useCallback(
           : Array.isArray(suite.users)
             ? suite.users
             : [];
-      let names = assignedUsers.filter(Boolean);
-      if (names.length === 0 && normalizedEmployees.length > 0) {
-        const desired = Math.min(Math.max(Math.min(suite.used || 0, 8), 1), normalizedEmployees.length);
-        const seed = String(suite.id || suite.software || index)
-          .split('')
-          .reduce((accSeed, ch) => accSeed + ch.charCodeAt(0), 0);
-        for (let i = 0; i < desired; i += 1) {
-          const person = normalizedEmployees[(seed + i * 7) % normalizedEmployees.length];
-          names.push(person.name);
-        }
-      }
+      const names = assignedUsers.filter(Boolean);
       names.forEach((name) => {
         const key = normalizeKey(name);
         if (!key) return;
@@ -9147,60 +9316,8 @@ const patchNetworkPrinter = useCallback(
       });
       return acc;
     }, {});
-    const defaultSuiteIds = DEFAULT_SUITE_IDS;
-    normalizedEmployees.forEach((employee) => {
-      const isUpmc = employee.department === 'upmc' || employee.department === 'hcbsupmc';
-      if (isUpmc) {
-        return;
-      }
-      const hrmsSuite = suiteById.hrms;
-      const isHr = employee.department === 'humanresources';
-      const isFin = employee.department === 'financialservices';
-      if ((isHr || isFin) && hrmsSuite) {
-        if (!seededAssignments[employee.key]) seededAssignments[employee.key] = [];
-        const alreadyHasHrms = seededAssignments[employee.key].some((entry) => entry.suiteId === 'hrms');
-        if (!alreadyHasHrms) {
-          seededAssignments[employee.key].push({
-            suiteId: 'hrms',
-            name: hrmsSuite.software || 'HRMS',
-            vendor: hrmsSuite.vendor,
-            licenseKey: hrmsSuite.licenseKey,
-            expiryDate: hrmsSuite.expiryDate || hrmsSuite.renewal || '',
-          });
-        }
-      }
-      if (employee.role === 'accessibilitydesigner') {
-        const autocadSuite = suiteById.autocad;
-        if (autocadSuite) {
-          if (!seededAssignments[employee.key]) seededAssignments[employee.key] = [];
-          const alreadyAssigned = seededAssignments[employee.key].some((entry) => entry.suiteId === 'autocad');
-          if (!alreadyAssigned) {
-            seededAssignments[employee.key].push({
-              suiteId: 'autocad',
-              name: autocadSuite.software || 'AutoCAD',
-              vendor: autocadSuite.vendor,
-              licenseKey: autocadSuite.licenseKey,
-            });
-          }
-        }
-      }
-      defaultSuiteIds.forEach((suiteId) => {
-        const suite = suiteById[suiteId];
-        if (!suite || !employee.key) return;
-        if (!seededAssignments[employee.key]) seededAssignments[employee.key] = [];
-        const alreadyAssigned = seededAssignments[employee.key].some((entry) => entry.suiteId === suiteId);
-        if (alreadyAssigned) return;
-        seededAssignments[employee.key].push({
-          suiteId: suite.id,
-          name: suite.software || suite.id,
-          vendor: suite.vendor,
-          licenseKey: suite.licenseKey,
-          expiryDate: suite.expiryDate || suite.renewal || '',
-        });
-      });
-    });
     return seededAssignments;
-  }, [employeeGallery, softwareSuites]);
+  }, [softwareSuites]);
   useEffect(() => {
     if (!terminationEmployee && employeeNames.length > 0) {
       setTerminationEmployee(employeeNames[0]);
@@ -9347,7 +9464,7 @@ const patchNetworkPrinter = useCallback(
         .filter(Boolean);
     const extractAssetTokens = (value) =>
       String(value || '')
-        .match(/[A-Za-z]+-?\d+/g)
+        .match(/[A-Za-z]+-?\d{2,}|\d{6,}/g)
         ?.map((item) => item.trim())
         .filter(Boolean) || [];
     const parseAssetIds = (value) => {
@@ -9365,6 +9482,24 @@ const patchNetworkPrinter = useCallback(
     };
     const getAssetKey = (asset) =>
       normalizeKey(asset.sheetId || asset.assetName || asset.deviceName || asset.serialNumber || asset.id || '');
+    const buildDisplayEntries = (asset) => {
+      const sourceAsset = asset?.sourceAsset || asset;
+      const label = `${asset.sheetId || ''} ${asset.assetName || ''} ${asset.deviceName || ''}`.trim();
+      const tokens = extractAssetTokens(label);
+      if (tokens.length > 1) {
+        return tokens.map((token) => ({
+          ...asset,
+          id: asset.id ? `${asset.id}-${token}` : asset.id,
+          sheetId: token,
+          assetName: token,
+          deviceName: token,
+          serialNumber: asset.serialNumber || token,
+          displayId: token,
+          sourceAsset,
+        }));
+      }
+      return asset ? [{ ...asset, sourceAsset, displayId: asset.displayId }] : [];
+    };
     const isLaptopAsset = (asset) => {
       const typeKey = normalizeKey(asset.type || '');
       const nameKey = normalizeKey(`${asset.sheetId || ''} ${asset.assetName || ''} ${asset.deviceName || ''}`);
@@ -9425,7 +9560,7 @@ const patchNetworkPrinter = useCallback(
           });
 
           if (matchingAsset) {
-            addAsset(matchingAsset);
+            buildDisplayEntries(matchingAsset).forEach(addAsset);
             return;
           }
 
@@ -9444,16 +9579,27 @@ const patchNetworkPrinter = useCallback(
           return assignedKey === memberKey || (nameKey && assignedKey === nameKey);
         })
         .forEach((asset) => {
-          const tokenMatches = extractAssetTokens(
-            `${asset.sheetId || ''} ${asset.assetName || ''} ${asset.deviceName || ''}`.trim(),
-          );
+          const label = `${asset.sheetId || ''} ${asset.assetName || ''} ${asset.deviceName || ''}`.trim();
+          const tokenMatches = extractAssetTokens(label);
           if (tokenMatches.length > 1) {
-            const hubMatches = tokenMatches.filter((token) => hubIdSet.has(normalizeKey(token))).length;
-            if (hubMatches >= 2) {
+            const tokensToAdd = tokenMatches.filter((token) => !hubIdSet.has(normalizeKey(token)));
+            if (tokensToAdd.length === 0) {
               return;
             }
+            tokensToAdd
+              .flatMap((token) =>
+                buildDisplayEntries({
+                  ...asset,
+                  sheetId: token,
+                  assetName: token,
+                  deviceName: token,
+                  displayId: token,
+                }),
+              )
+              .forEach(addAsset);
+            return;
           }
-          addAsset(asset);
+          buildDisplayEntries(asset).forEach(addAsset);
         });
 
       if (items.length > 0) {
@@ -9561,6 +9707,16 @@ const patchNetworkPrinter = useCallback(
       return licenses.filter((suite) => suite?.suiteId && !DEFAULT_SUITE_SET.has(suite.suiteId));
     },
     [employeeLicenseMap],
+  );
+  const handleEmployeeLicenseClick = useCallback(
+    (member, suite) => {
+      if (!suite?.suiteId) {
+        return;
+      }
+      setLicenseSeatSuiteId(suite.suiteId);
+      setLicenseSeatFocusEmployee(member?.name || '');
+    },
+    [],
   );
   const availableByType = useMemo(() => {
     return assets.reduce((acc, asset) => {
@@ -12466,6 +12622,7 @@ const handleTestPrinter = useCallback(
                   onToggle={handleEmployeeCardToggle}
                   getAssignments={getEmployeeAssignments}
                   getLicenses={getEmployeeLicenses}
+                  onLicenseClick={handleEmployeeLicenseClick}
                   onEdit={(member) => setEmployeeForm({ ...member })}
                   onDelete={handleDeleteEmployee}
                   onPhoto={handleOpenPhoto}
@@ -14013,6 +14170,10 @@ const handleTestPrinter = useCallback(
                   suite={suite}
                   onEdit={() => setSoftwareForm(suite)}
                   onDelete={handleDeleteSoftware}
+                  onSeatsClick={(selectedSuite) => {
+                    setLicenseSeatSuiteId(getSuiteIdentifier(selectedSuite));
+                    setLicenseSeatFocusEmployee('');
+                  }}
                 />
               ))}
             </section>
@@ -14086,6 +14247,18 @@ const handleTestPrinter = useCallback(
           onSubmit={handleSaveSoftware}
           onCancel={() => setSoftwareForm(null)}
           suggestionListId={employeeSuggestionListId}
+        />
+      )}
+      {licenseSeatSuite && (
+        <LicenseAssignmentModal
+          suite={licenseSeatSuite}
+          employeeNames={employeeNameOptions}
+          focusEmployeeName={licenseSeatFocusEmployee}
+          onClose={() => {
+            setLicenseSeatSuiteId(null);
+            setLicenseSeatFocusEmployee('');
+          }}
+          onSave={(nextUsers) => handleUpdateSuiteAssignments(licenseSeatSuiteId, nextUsers)}
         />
       )}
       {warrantyModalOpen && (
