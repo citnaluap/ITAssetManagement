@@ -9335,9 +9335,30 @@ const patchNetworkPrinter = useCallback(
   );
   const employeeAssignments = useMemo(() => {
     const lookup = {};
+    const splitAssetList = (value) =>
+      String(value || '')
+        .split(/[\r\n,;/|]+/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    const getAssetKey = (asset) =>
+      normalizeKey(asset.sheetId || asset.assetName || asset.deviceName || asset.serialNumber || asset.id || '');
+    const isLaptopAsset = (asset) => {
+      const typeKey = normalizeKey(asset.type || '');
+      const nameKey = normalizeKey(`${asset.sheetId || ''} ${asset.assetName || ''} ${asset.deviceName || ''}`);
+      return typeKey.includes('laptop') || nameKey.includes('laptop');
+    };
+    const getLaptopNumber = (asset) => {
+      const label = `${asset.sheetId || ''} ${asset.assetName || ''} ${asset.deviceName || ''}`;
+      const matches = label.match(/(\d+)/g);
+      if (!matches || matches.length === 0) return -1;
+      const last = matches[matches.length - 1];
+      const parsed = Number.parseInt(last, 10);
+      return Number.isNaN(parsed) ? -1 : parsed;
+    };
 
     employeeGallery.forEach((member) => {
       const memberKey = member.lookupKey || normalizeKey(member.name || '');
+      const nameKey = normalizeKey(member.name || '');
       if (!memberKey) return;
 
       const hubAssets = [
@@ -9348,44 +9369,72 @@ const patchNetworkPrinter = useCallback(
         { value: member.keyFob, type: 'Key Fob' },
       ].filter(({ value }) => Boolean(value));
 
-      if (hubAssets.length === 0) {
-        return;
-      }
-
       const items = [];
       const seen = new Set();
 
-      hubAssets.forEach(({ value, type }) => {
-        const assetId = String(value || '').trim();
-        const normalized = normalizeKey(assetId);
-        if (!normalized || seen.has(normalized)) return;
-        seen.add(normalized);
-
-        const matchingAsset = assets.find((asset) => {
-          const assetKeys = [
-            normalizeKey(asset.assetName || ''),
-            normalizeKey(asset.deviceName || ''),
-            normalizeKey(asset.sheetId || ''),
-            normalizeKey(asset.serialNumber || ''),
-          ].filter(Boolean);
-          return assetKeys.includes(normalized);
-        });
-
-        if (matchingAsset) {
-          items.push(matchingAsset);
+      const addAsset = (asset) => {
+        const key = getAssetKey(asset);
+        if (key && seen.has(key)) {
           return;
         }
+        if (key) {
+          seen.add(key);
+        }
+        items.push(asset);
+      };
 
-        items.push({
-          assetName: assetId,
-          deviceName: assetId,
-          sheetId: assetId,
-          type,
+      hubAssets.forEach(({ value, type }) => {
+        const assetIds = splitAssetList(value);
+        assetIds.forEach((assetId) => {
+          const normalized = normalizeKey(assetId);
+          const matchingAsset = assets.find((asset) => {
+            const assetKeys = [
+              normalizeKey(asset.assetName || ''),
+              normalizeKey(asset.deviceName || ''),
+              normalizeKey(asset.sheetId || ''),
+              normalizeKey(asset.serialNumber || ''),
+            ].filter(Boolean);
+            return assetKeys.includes(normalized);
+          });
+
+          if (matchingAsset) {
+            addAsset(matchingAsset);
+            return;
+          }
+
+          addAsset({
+            assetName: assetId,
+            deviceName: assetId,
+            sheetId: assetId,
+            type,
+          });
         });
       });
 
+      assets
+        .filter((asset) => {
+          const assignedKey = normalizeKey(asset.assignedTo || '');
+          return assignedKey === memberKey || (nameKey && assignedKey === nameKey);
+        })
+        .forEach((asset) => addAsset(asset));
+
       if (items.length > 0) {
-        lookup[memberKey] = items;
+        const laptops = items.filter((asset) => isLaptopAsset(asset));
+        const nonLaptops = items.filter((asset) => !isLaptopAsset(asset));
+        if (laptops.length > 1) {
+          let best = laptops[0];
+          let bestNumber = getLaptopNumber(best);
+          laptops.slice(1).forEach((asset) => {
+            const currentNumber = getLaptopNumber(asset);
+            if (currentNumber > bestNumber) {
+              best = asset;
+              bestNumber = currentNumber;
+            }
+          });
+          lookup[memberKey] = [...nonLaptops, best];
+        } else {
+          lookup[memberKey] = items;
+        }
       }
     });
 
