@@ -9337,9 +9337,27 @@ const patchNetworkPrinter = useCallback(
     const lookup = {};
     const splitAssetList = (value) =>
       String(value || '')
-        .split(/[\r\n,;/|]+/)
+        .split(/[\r\n,;/|&]+/)
         .map((item) => item.trim())
         .filter(Boolean);
+    const extractAssetTokens = (value) =>
+      String(value || '')
+        .match(/[A-Za-z]+-?\d+/g)
+        ?.map((item) => item.trim())
+        .filter(Boolean) || [];
+    const parseAssetIds = (value) => {
+      const entries = splitAssetList(value);
+      const parsed = [];
+      entries.forEach((entry) => {
+        const tokens = extractAssetTokens(entry);
+        if (tokens.length > 1) {
+          tokens.forEach((token) => parsed.push(token));
+        } else {
+          parsed.push(entry);
+        }
+      });
+      return parsed;
+    };
     const getAssetKey = (asset) =>
       normalizeKey(asset.sheetId || asset.assetName || asset.deviceName || asset.serialNumber || asset.id || '');
     const isLaptopAsset = (asset) => {
@@ -9371,6 +9389,7 @@ const patchNetworkPrinter = useCallback(
 
       const items = [];
       const seen = new Set();
+      const hubIdSet = new Set();
 
       const addAsset = (asset) => {
         const key = getAssetKey(asset);
@@ -9384,9 +9403,12 @@ const patchNetworkPrinter = useCallback(
       };
 
       hubAssets.forEach(({ value, type }) => {
-        const assetIds = splitAssetList(value);
+        const assetIds = parseAssetIds(value);
         assetIds.forEach((assetId) => {
           const normalized = normalizeKey(assetId);
+          if (normalized) {
+            hubIdSet.add(normalized);
+          }
           const matchingAsset = assets.find((asset) => {
             const assetKeys = [
               normalizeKey(asset.assetName || ''),
@@ -9416,7 +9438,18 @@ const patchNetworkPrinter = useCallback(
           const assignedKey = normalizeKey(asset.assignedTo || '');
           return assignedKey === memberKey || (nameKey && assignedKey === nameKey);
         })
-        .forEach((asset) => addAsset(asset));
+        .forEach((asset) => {
+          const tokenMatches = extractAssetTokens(
+            `${asset.sheetId || ''} ${asset.assetName || ''} ${asset.deviceName || ''}`.trim(),
+          );
+          if (tokenMatches.length > 1) {
+            const hubMatches = tokenMatches.filter((token) => hubIdSet.has(normalizeKey(token))).length;
+            if (hubMatches >= 2) {
+              return;
+            }
+          }
+          addAsset(asset);
+        });
 
       if (items.length > 0) {
         const laptops = items.filter((asset) => isLaptopAsset(asset));
