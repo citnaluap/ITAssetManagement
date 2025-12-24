@@ -4,6 +4,8 @@ import jsQR from 'jsqr';
 import QRCode from 'qrcode';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import * as XLSX from 'xlsx';
+import DarkModeLogo from './assets/Dark Mode Transparent.png';
+import LightModeLogo from './assets/Light Mode Transparent.png';
 import UDSLogo from './assets/uds-logo.png';
 import {
   Laptop,
@@ -3338,10 +3340,6 @@ const CommandHeader = ({
             <div className={`flex h-16 w-16 items-center justify-center rounded-2xl border shadow-inner ${isDarkMode ? 'border-white/10 bg-white/5' : 'border-blue-100 bg-white'}`}>
               <img src={UDSLogo} alt="UDS logo" className="h-10 w-10 object-contain" />
             </div>
-            <div>
-              <p className={`text-[11px] font-semibold uppercase tracking-[0.35rem] ${isDarkMode ? 'text-white/60' : 'text-slate-400'}`}>UDS digital</p>
-              <p className={`text-2xl font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Asset Control Studio</p>
-            </div>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -3361,6 +3359,13 @@ const CommandHeader = ({
               <Menu className="h-4 w-4" />
             </button>
           </div>
+        </div>
+        <div className="flex items-start justify-center -mt-6">
+          <img
+            src={isDarkMode ? DarkModeLogo : LightModeLogo}
+            alt="IT Asset Control Studio logo"
+            className="h-40 w-auto object-contain"
+          />
         </div>
         <div className="grid gap-3 md:grid-cols-3">
           <button
