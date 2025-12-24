@@ -251,12 +251,14 @@ const DARK_MODE_STYLES = `
   html.theme-dark .rounded-3xl:nth-child(6n+1) .text-base.font-semibold,
   html.theme-dark .rounded-3xl:nth-child(6n+1) .text-lg.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n+1) .text-lg.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n+1) .software-metric-value,
   html.theme-dark .glass-card:nth-child(6n+1) .text-sm.font-bold,
   html.theme-dark .glass-card:nth-child(6n+1) .text-sm.font-semibold,
   html.theme-dark .glass-card:nth-child(6n+1) .text-base.font-bold,
   html.theme-dark .glass-card:nth-child(6n+1) .text-base.font-semibold,
   html.theme-dark .glass-card:nth-child(6n+1) .text-lg.font-bold,
-  html.theme-dark .glass-card:nth-child(6n+1) .text-lg.font-semibold {
+  html.theme-dark .glass-card:nth-child(6n+1) .text-lg.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+1) .software-metric-value {
     color: #7dd3fc !important;
     text-shadow: 0 0 8px rgba(56, 189, 248, 0.25), 0 2px 6px rgba(125, 211, 252, 0.13), 0 0 12px rgba(56, 189, 248, 0.08) !important;
     font-weight: 800 !important;
@@ -279,12 +281,14 @@ const DARK_MODE_STYLES = `
   html.theme-dark .rounded-3xl:nth-child(6n+2) .text-base.font-semibold,
   html.theme-dark .rounded-3xl:nth-child(6n+2) .text-lg.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n+2) .text-lg.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n+2) .software-metric-value,
   html.theme-dark .glass-card:nth-child(6n+2) .text-sm.font-bold,
   html.theme-dark .glass-card:nth-child(6n+2) .text-sm.font-semibold,
   html.theme-dark .glass-card:nth-child(6n+2) .text-base.font-bold,
   html.theme-dark .glass-card:nth-child(6n+2) .text-base.font-semibold,
   html.theme-dark .glass-card:nth-child(6n+2) .text-lg.font-bold,
-  html.theme-dark .glass-card:nth-child(6n+2) .text-lg.font-semibold {
+  html.theme-dark .glass-card:nth-child(6n+2) .text-lg.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+2) .software-metric-value {
     color: #86efac !important;
     text-shadow: 0 0 8px rgba(74, 222, 128, 0.35), 0 2px 6px rgba(134, 239, 172, 0.25), 0 0 14px rgba(74, 222, 128, 0.15) !important;
     font-weight: 800 !important;
@@ -307,12 +311,14 @@ const DARK_MODE_STYLES = `
   html.theme-dark .rounded-3xl:nth-child(6n+3) .text-base.font-semibold,
   html.theme-dark .rounded-3xl:nth-child(6n+3) .text-lg.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n+3) .text-lg.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n+3) .software-metric-value,
   html.theme-dark .glass-card:nth-child(6n+3) .text-sm.font-bold,
   html.theme-dark .glass-card:nth-child(6n+3) .text-sm.font-semibold,
   html.theme-dark .glass-card:nth-child(6n+3) .text-base.font-bold,
   html.theme-dark .glass-card:nth-child(6n+3) .text-base.font-semibold,
   html.theme-dark .glass-card:nth-child(6n+3) .text-lg.font-bold,
-  html.theme-dark .glass-card:nth-child(6n+3) .text-lg.font-semibold {
+  html.theme-dark .glass-card:nth-child(6n+3) .text-lg.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+3) .software-metric-value {
     color: #d8b4fe !important;
     text-shadow: 0 0 8px rgba(192, 132, 252, 0.35), 0 2px 6px rgba(216, 180, 254, 0.25), 0 0 14px rgba(192, 132, 252, 0.15) !important;
     font-weight: 800 !important;
@@ -335,12 +341,14 @@ const DARK_MODE_STYLES = `
   html.theme-dark .rounded-3xl:nth-child(6n+4) .text-base.font-semibold,
   html.theme-dark .rounded-3xl:nth-child(6n+4) .text-lg.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n+4) .text-lg.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n+4) .software-metric-value,
   html.theme-dark .glass-card:nth-child(6n+4) .text-sm.font-bold,
   html.theme-dark .glass-card:nth-child(6n+4) .text-sm.font-semibold,
   html.theme-dark .glass-card:nth-child(6n+4) .text-base.font-bold,
   html.theme-dark .glass-card:nth-child(6n+4) .text-base.font-semibold,
   html.theme-dark .glass-card:nth-child(6n+4) .text-lg.font-bold,
-  html.theme-dark .glass-card:nth-child(6n+4) .text-lg.font-semibold {
+  html.theme-dark .glass-card:nth-child(6n+4) .text-lg.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+4) .software-metric-value {
     color: #f9a8d4 !important;
     text-shadow: 0 0 8px rgba(244, 114, 182, 0.35), 0 2px 6px rgba(249, 168, 212, 0.25), 0 0 14px rgba(244, 114, 182, 0.15) !important;
     font-weight: 800 !important;
@@ -363,12 +371,14 @@ const DARK_MODE_STYLES = `
   html.theme-dark .rounded-3xl:nth-child(6n+5) .text-base.font-semibold,
   html.theme-dark .rounded-3xl:nth-child(6n+5) .text-lg.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n+5) .text-lg.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n+5) .software-metric-value,
   html.theme-dark .glass-card:nth-child(6n+5) .text-sm.font-bold,
   html.theme-dark .glass-card:nth-child(6n+5) .text-sm.font-semibold,
   html.theme-dark .glass-card:nth-child(6n+5) .text-base.font-bold,
   html.theme-dark .glass-card:nth-child(6n+5) .text-base.font-semibold,
   html.theme-dark .glass-card:nth-child(6n+5) .text-lg.font-bold,
-  html.theme-dark .glass-card:nth-child(6n+5) .text-lg.font-semibold {
+  html.theme-dark .glass-card:nth-child(6n+5) .text-lg.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n+5) .software-metric-value {
     color: #fda4af !important;
     text-shadow: 0 0 8px rgba(251, 113, 133, 0.35), 0 2px 6px rgba(253, 164, 175, 0.25), 0 0 14px rgba(251, 113, 133, 0.15) !important;
     font-weight: 800 !important;
@@ -391,12 +401,14 @@ const DARK_MODE_STYLES = `
   html.theme-dark .rounded-3xl:nth-child(6n) .text-base.font-semibold,
   html.theme-dark .rounded-3xl:nth-child(6n) .text-lg.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n) .text-lg.font-semibold,
+  html.theme-dark .rounded-3xl:nth-child(6n) .software-metric-value,
   html.theme-dark .glass-card:nth-child(6n) .text-sm.font-bold,
   html.theme-dark .glass-card:nth-child(6n) .text-sm.font-semibold,
   html.theme-dark .glass-card:nth-child(6n) .text-base.font-bold,
   html.theme-dark .glass-card:nth-child(6n) .text-base.font-semibold,
   html.theme-dark .glass-card:nth-child(6n) .text-lg.font-bold,
-  html.theme-dark .glass-card:nth-child(6n) .text-lg.font-semibold {
+  html.theme-dark .glass-card:nth-child(6n) .text-lg.font-semibold,
+  html.theme-dark .glass-card:nth-child(6n) .software-metric-value {
     color: #fdba74 !important;
     text-shadow: 0 0 8px rgba(251, 146, 60, 0.35), 0 2px 6px rgba(253, 186, 116, 0.25), 0 0 14px rgba(251, 146, 60, 0.15) !important;
     font-weight: 800 !important;
@@ -656,12 +668,14 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .rounded-3xl:nth-child(6n+1) .text-base.font-semibold,
   html.theme-light .rounded-3xl:nth-child(6n+1) .text-lg.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n+1) .text-lg.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n+1) .software-metric-value,
   html.theme-light .glass-card:nth-child(6n+1) .text-sm.font-bold,
   html.theme-light .glass-card:nth-child(6n+1) .text-sm.font-semibold,
   html.theme-light .glass-card:nth-child(6n+1) .text-base.font-bold,
   html.theme-light .glass-card:nth-child(6n+1) .text-base.font-semibold,
   html.theme-light .glass-card:nth-child(6n+1) .text-lg.font-bold,
-  html.theme-light .glass-card:nth-child(6n+1) .text-lg.font-semibold {
+  html.theme-light .glass-card:nth-child(6n+1) .text-lg.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+1) .software-metric-value {
     color: #0369a1 !important;
     text-shadow: 0 0 8px rgba(14, 165, 233, 0.3), 0 2px 4px rgba(3, 105, 161, 0.2) !important;
   }
@@ -683,12 +697,14 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .rounded-3xl:nth-child(6n+2) .text-base.font-semibold,
   html.theme-light .rounded-3xl:nth-child(6n+2) .text-lg.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n+2) .text-lg.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n+2) .software-metric-value,
   html.theme-light .glass-card:nth-child(6n+2) .text-sm.font-bold,
   html.theme-light .glass-card:nth-child(6n+2) .text-sm.font-semibold,
   html.theme-light .glass-card:nth-child(6n+2) .text-base.font-bold,
   html.theme-light .glass-card:nth-child(6n+2) .text-base.font-semibold,
   html.theme-light .glass-card:nth-child(6n+2) .text-lg.font-bold,
-  html.theme-light .glass-card:nth-child(6n+2) .text-lg.font-semibold {
+  html.theme-light .glass-card:nth-child(6n+2) .text-lg.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+2) .software-metric-value {
     color: #047857 !important;
     text-shadow: 0 0 8px rgba(16, 185, 129, 0.3), 0 2px 4px rgba(4, 120, 87, 0.2) !important;
   }
@@ -710,12 +726,14 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .rounded-3xl:nth-child(6n+3) .text-base.font-semibold,
   html.theme-light .rounded-3xl:nth-child(6n+3) .text-lg.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n+3) .text-lg.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n+3) .software-metric-value,
   html.theme-light .glass-card:nth-child(6n+3) .text-sm.font-bold,
   html.theme-light .glass-card:nth-child(6n+3) .text-sm.font-semibold,
   html.theme-light .glass-card:nth-child(6n+3) .text-base.font-bold,
   html.theme-light .glass-card:nth-child(6n+3) .text-base.font-semibold,
   html.theme-light .glass-card:nth-child(6n+3) .text-lg.font-bold,
-  html.theme-light .glass-card:nth-child(6n+3) .text-lg.font-semibold {
+  html.theme-light .glass-card:nth-child(6n+3) .text-lg.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+3) .software-metric-value {
     color: #6d28d9 !important;
     text-shadow: 0 0 8px rgba(139, 92, 246, 0.3), 0 2px 4px rgba(109, 40, 217, 0.2) !important;
   }
@@ -737,12 +755,14 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .rounded-3xl:nth-child(6n+4) .text-base.font-semibold,
   html.theme-light .rounded-3xl:nth-child(6n+4) .text-lg.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n+4) .text-lg.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n+4) .software-metric-value,
   html.theme-light .glass-card:nth-child(6n+4) .text-sm.font-bold,
   html.theme-light .glass-card:nth-child(6n+4) .text-sm.font-semibold,
   html.theme-light .glass-card:nth-child(6n+4) .text-base.font-bold,
   html.theme-light .glass-card:nth-child(6n+4) .text-base.font-semibold,
   html.theme-light .glass-card:nth-child(6n+4) .text-lg.font-bold,
-  html.theme-light .glass-card:nth-child(6n+4) .text-lg.font-semibold {
+  html.theme-light .glass-card:nth-child(6n+4) .text-lg.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+4) .software-metric-value {
     color: #be185d !important;
     text-shadow: 0 0 8px rgba(236, 72, 153, 0.3), 0 2px 4px rgba(190, 24, 93, 0.2) !important;
   }
@@ -764,12 +784,14 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .rounded-3xl:nth-child(6n+5) .text-base.font-semibold,
   html.theme-light .rounded-3xl:nth-child(6n+5) .text-lg.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n+5) .text-lg.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n+5) .software-metric-value,
   html.theme-light .glass-card:nth-child(6n+5) .text-sm.font-bold,
   html.theme-light .glass-card:nth-child(6n+5) .text-sm.font-semibold,
   html.theme-light .glass-card:nth-child(6n+5) .text-base.font-bold,
   html.theme-light .glass-card:nth-child(6n+5) .text-base.font-semibold,
   html.theme-light .glass-card:nth-child(6n+5) .text-lg.font-bold,
-  html.theme-light .glass-card:nth-child(6n+5) .text-lg.font-semibold {
+  html.theme-light .glass-card:nth-child(6n+5) .text-lg.font-semibold,
+  html.theme-light .glass-card:nth-child(6n+5) .software-metric-value {
     color: #b91c1c !important;
     text-shadow: 0 0 8px rgba(239, 68, 68, 0.3), 0 2px 4px rgba(185, 28, 28, 0.2) !important;
   }
@@ -791,12 +813,14 @@ const LIGHT_MODE_STYLES = `
   html.theme-light .rounded-3xl:nth-child(6n) .text-base.font-semibold,
   html.theme-light .rounded-3xl:nth-child(6n) .text-lg.font-bold,
   html.theme-light .rounded-3xl:nth-child(6n) .text-lg.font-semibold,
+  html.theme-light .rounded-3xl:nth-child(6n) .software-metric-value,
   html.theme-light .glass-card:nth-child(6n) .text-sm.font-bold,
   html.theme-light .glass-card:nth-child(6n) .text-sm.font-semibold,
   html.theme-light .glass-card:nth-child(6n) .text-base.font-bold,
   html.theme-light .glass-card:nth-child(6n) .text-base.font-semibold,
   html.theme-light .glass-card:nth-child(6n) .text-lg.font-bold,
-  html.theme-light .glass-card:nth-child(6n) .text-lg.font-semibold {
+  html.theme-light .glass-card:nth-child(6n) .text-lg.font-semibold,
+  html.theme-light .glass-card:nth-child(6n) .software-metric-value {
     color: #c2410c !important;
     text-shadow: 0 0 8px rgba(249, 115, 22, 0.3), 0 2px 4px rgba(194, 65, 12, 0.2) !important;
   }
@@ -3514,7 +3538,7 @@ const VendorCard = ({ vendor }) => {
 
   return (
     <div className="glass-card flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/50 bg-white shadow-2xl ring-1 ring-slate-100 hover-lift transition-all duration-500 hover:ring-2 hover:ring-blue-300/50">
-      <div className="relative h-48 w-full overflow-hidden">
+      <div className="relative h-56 w-full overflow-hidden sm:h-48">
         <img src={imageSrc} alt={`${vendor.name} visual`} className="h-full w-full object-cover" loading="lazy" />
         <div className="absolute inset-0" style={{ backgroundImage: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`, opacity: 0.75 }} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-slate-900/40 to-transparent" />
@@ -3710,8 +3734,8 @@ const NetworkPrinterBoard = ({
           </div>
         </div>
       </div>
-      <div className="overflow-hidden">
-        <table className="w-full table-auto divide-y divide-slate-100 text-left text-sm">
+      <div className="overflow-x-auto">
+        <table className="min-w-[900px] w-full table-auto divide-y divide-slate-100 text-left text-sm">
           <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-widest text-slate-500">
             <tr>
               <th className="px-5 py-3">
@@ -3940,7 +3964,7 @@ const SoftwareSuiteCard = ({ suite, onEdit, onDelete }) => {
           <div className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
             <div>
               <p className="text-xs uppercase tracking-widest text-slate-400">Seats in use</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">
+              <p className="software-metric-value mt-1 text-2xl font-semibold text-slate-900">
                 {suite.used} / {suite.seats}
               </p>
               <p className="text-xs text-slate-500">{spareLabel}</p>
