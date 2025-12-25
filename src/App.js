@@ -4,9 +4,9 @@ import jsQR from 'jsqr';
 import QRCode from 'qrcode';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import * as XLSX from 'xlsx';
-import DarkModeLogo from './assets/Dark Mode Transparent.png';
-import LightModeLogo from './assets/Light Mode Transparent.png';
-import UDSLogo from './assets/uds-logo.png';
+import DarkModeLogo from './assets/New Logo Dark Mode.PNG';
+import LightModeLogo from './assets/New Logo Light Mode.PNG';
+import UDSLogo from './assets/UDS Logo.svg';
 import {
   Laptop,
   Server,
@@ -1206,7 +1206,7 @@ const ZOOM_WEBHOOK_TOKEN = process.env.REACT_APP_ZOOM_WEBHOOK_TOKEN || '';
 const ZOOM_ALERT_ENDPOINT = API_STORAGE_BASE ? `${API_STORAGE_BASE}/zoom-alert` : '';
 const MEDIA = {
   hero: `${PUBLIC_URL}/assets/hero.png`,
-  logo: `${PUBLIC_URL}/assets/uds-logo.png`,
+  logo: UDSLogo,
   devices: {
     computer: `${PUBLIC_URL}/assets/devices/dell-latitude-5450.jpg`,
     monitor: `${PUBLIC_URL}/assets/devices/dell-monitor-p2419h.jpg`,
@@ -3334,13 +3334,9 @@ const CommandHeader = ({
   return (
   <header className={`command-header relative mb-8 rounded-[32px] p-6 shadow-[0_30px_80px_rgba(5,8,25,0.15)] backdrop-blur ${headerToneClass}`}>
     <div className="grid gap-4 lg:grid-cols-[1.6fr,1fr]">
-      <div className="flex flex-col gap-6">
+      <div className="relative flex flex-col justify-between gap-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className={`flex h-16 w-16 items-center justify-center rounded-2xl border shadow-inner ${isDarkMode ? 'border-white/10 bg-white/5' : 'border-blue-100 bg-white'}`}>
-              <img src={UDSLogo} alt="UDS logo" className="h-10 w-10 object-contain" />
-            </div>
-          </div>
+          <div className="flex items-center gap-4" />
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -3360,11 +3356,16 @@ const CommandHeader = ({
             </button>
           </div>
         </div>
-        <div className="flex items-start justify-center -mt-6">
+        <div className="pointer-events-none absolute left-1/2 -top-[126px] -translate-x-1/2 overflow-visible">
           <img
             src={isDarkMode ? DarkModeLogo : LightModeLogo}
             alt="IT Asset Control Studio logo"
-            className="h-40 w-auto object-contain"
+            className="h-40 w-auto origin-top scale-[2.548584] object-contain"
+            style={{
+              filter: isDarkMode
+                ? 'drop-shadow(0 8px 22px rgba(56, 189, 248, 0.35)) drop-shadow(0 6px 14px rgba(0, 0, 0, 0.4))'
+                : 'drop-shadow(0 6px 16px rgba(15, 23, 42, 0.2))',
+            }}
           />
         </div>
         <div className="grid gap-3 md:grid-cols-3">
