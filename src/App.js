@@ -933,7 +933,7 @@ const STORAGE_KEYS = {
   helpdeskChat: 'uds-helpdesk-chat',
 };
 const STORAGE_VERSION_KEY = 'uds_storage_version';
-const STORAGE_VERSION = '2025-11-20-zoom-refresh';
+const STORAGE_VERSION = '2025-12-26-hardware-refresh';
 
 // HelpDesk Portal Constants
 const HELP_DESK_EMAIL = 'ITHelpDesk@udservices.org';
@@ -8525,6 +8525,31 @@ const patchNetworkPrinter = useCallback(
   };
   useEffect(() => {
     let cancelled = false;
+    const fetchSheetRows = async (sources = []) => {
+      for (const url of sources) {
+        try {
+          const response = await fetch(url);
+          const contentType = (response.headers.get('content-type') || '').toLowerCase();
+          if (isSpreadsheetResponse(response)) {
+            const buffer = await response.arrayBuffer();
+            const workbook = XLSX.read(buffer, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            if (!sheet) {
+              continue;
+            }
+            return XLSX.utils.sheet_to_json(sheet, { defval: '' });
+          }
+          if (response.ok) {
+            console.warn('Asset workbook fetch returned non-spreadsheet content for', url, contentType);
+          }
+        } catch (error) {
+          console.warn('Asset workbook fetch failed for', url, error);
+        }
+      }
+      return null;
+    };
+
     const loadAssetsFromWorkbook = async () => {
       const hasExistingAssets = (() => {
         if (assetCount > 0) {
@@ -8541,11 +8566,9 @@ const patchNetworkPrinter = useCallback(
           return false;
         }
       })();
-      if (hasExistingAssets) {
-        return;
-      }
+
       try {
-        const assetSources = [
+        const computerSources = [
           EXCEL_EXPORTS.assets,
           `${PUBLIC_URL}/tables/IT Computers 12-23-25.xlsx`,
           `${PUBLIC_URL}/tables/IT%20Computers%2012-23-25.xlsx`,
@@ -8556,37 +8579,65 @@ const patchNetworkPrinter = useCallback(
           '/Tables/IT Computers 12-23-25.xlsx',
           '/Tables/IT%20Computers%2012-23-25.xlsx',
         ];
-        let buffer = null;
-        for (const url of assetSources) {
-          try {
-            const response = await fetch(url);
-            const contentType = (response.headers.get('content-type') || '').toLowerCase();
-            if (isSpreadsheetResponse(response)) {
-              buffer = await response.arrayBuffer();
-              break;
-            }
-            if (response.ok) {
-              console.warn('Asset workbook fetch returned non-spreadsheet content for', url, contentType);
-            }
-          } catch (error) {
-            console.warn('Asset workbook fetch failed for', url, error);
+        const assetListSources = [
+          `${PUBLIC_URL}/tables/Asset List 11-18-25.xlsx`,
+          `${PUBLIC_URL}/tables/Asset%20List%2011-18-25.xlsx`,
+          '/tables/Asset List 11-18-25.xlsx',
+          '/tables/Asset%20List%2011-18-25.xlsx',
+          `${PUBLIC_URL}/Tables/Asset List 11-18-25.xlsx`,
+          `${PUBLIC_URL}/Tables/Asset%20List%2011-18-25.xlsx`,
+          '/Tables/Asset List 11-18-25.xlsx',
+          '/Tables/Asset%20List%2011-18-25.xlsx',
+        ];
+
+        const [computerRows, assetRows] = await Promise.all([fetchSheetRows(computerSources), fetchSheetRows(assetListSources)]);
+
+        const normalizedAssetList = Array.isArray(assetRows) && assetRows.length > 0 ? buildAssetsFromSheet(assetRows, employeeSheetData) : [];
+        const normalizedComputers =
+          Array.isArray(computerRows) && computerRows.length > 0 ? buildAssetsFromSheet(computerRows, employeeSheetData) : [];
+
+        if (normalizedAssetList.length === 0 && normalizedComputers.length === 0) {
+          return;
+        }
+
+        const assetCanonical = buildCanonicalMap(normalizedAssetList);
+        const computerAdditions = normalizedComputers.filter(
+          (asset) => !getCanonicalAssetName(asset, assetCanonical),
+        );
+        const normalizedAssets = normalizedAssetList.length > 0 ? [...normalizedAssetList, ...computerAdditions] : normalizedComputers;
+
+        if (!Array.isArray(normalizedAssets) || normalizedAssets.length === 0) {
+          return;
+        }
+
+        const mergeAssets = (currentAssets = []) => {
+          const canonicalMap = buildCanonicalMap(currentAssets);
+          const additions = normalizedAssets.filter(
+            (asset) => !getCanonicalAssetName(asset, canonicalMap),
+          );
+          if (additions.length === 0) {
+            return currentAssets;
           }
-        }
-        if (!buffer) {
+          return [...currentAssets, ...additions];
+        };
+
+        if (cancelled) {
           return;
         }
-        const workbook = XLSX.read(buffer, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        if (!sheet) {
-          return;
-        }
-        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-        const normalizedAssets = buildAssetsFromSheet(rows, employeeSheetData);
-        if (!cancelled && Array.isArray(normalizedAssets) && normalizedAssets.length > 0) {
+
+        if (!hasExistingAssets) {
           setAssets(normalizedAssets);
           setAssetPage(1);
+          return;
         }
+
+        setAssets((prevAssets) => {
+          const nextAssets = mergeAssets(prevAssets);
+          if (nextAssets === prevAssets) {
+            return prevAssets;
+          }
+          return nextAssets;
+        });
       } catch (error) {
         console.error('Failed to load IT Computers workbook', error);
       }
@@ -8595,7 +8646,7 @@ const patchNetworkPrinter = useCallback(
     return () => {
       cancelled = true;
     };
-  }, [assetCount, setAssets, setAssetPage]);
+  }, [assetCount, assets, setAssets, setAssetPage]);
 
   useEffect(() => {
     if (phoneMergeRef.current) return;
@@ -11037,6 +11088,27 @@ const handleTestPrinter = useCallback(
     setIsDarkMode((prev) => !prev);
   }, []);
 
+  const handleClearLocalData = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      Object.values(STORAGE_KEYS).forEach((storageKey) => window.localStorage.removeItem(storageKey));
+      window.localStorage.removeItem(FILTERS_STORAGE_KEY);
+      window.localStorage.removeItem('uds_asset_page_size');
+      window.localStorage.removeItem('uds_theme_dark');
+      window.localStorage.removeItem(STORAGE_VERSION_KEY);
+      setAssets([]);
+      setAssetPage(1);
+      setFlashMessage('Cache cleared — reloading data...');
+      setTimeout(() => window.location.reload(), 150);
+    } catch (error) {
+      console.error('Failed to clear local data', error);
+      setFlashMessage('Could not clear local cache');
+      setTimeout(() => setFlashMessage(''), 2500);
+    }
+  }, [setAssets]);
+
   const handleAddEmployee = useCallback(() => {
     setEmployeeForm({ ...defaultEmployeeProfile });
     setActivePage('Employees');
@@ -11553,6 +11625,14 @@ const handleTestPrinter = useCallback(
         handleToggleTheme();
       },
       icon: isDarkMode ? Sun : Moon,
+    },
+    {
+      label: 'Reset data (clear cache)',
+      onClick: () => {
+        setMenuOpen(false);
+        handleClearLocalData();
+      },
+      icon: Trash2,
     },
   ];
   useEffect(() => {
