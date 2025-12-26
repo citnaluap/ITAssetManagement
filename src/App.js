@@ -1,4 +1,5 @@
-﻿import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
+﻿
+import React, { useState, useMemo, useEffect, useLayoutEffect, Fragment, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import jsQR from 'jsqr';
 import QRCode from 'qrcode';
@@ -75,23 +76,112 @@ const DARK_MODE_STYLES = `
     color: #38bdf8 !important;
     text-shadow: 0 0 6px rgba(56, 189, 248, 0.65), 0 0 14px rgba(56, 189, 248, 0.35);
   }
+
+  /* Global dark canvas */
+  html.theme-dark .app-canvas {
+    background: radial-gradient(circle at 20% 20%, rgba(59,130,246,0.18), transparent 28%),
+                radial-gradient(circle at 80% 10%, rgba(147,51,234,0.14), transparent 26%),
+                radial-gradient(circle at 15% 80%, rgba(79,70,229,0.16), transparent 30%),
+                linear-gradient(180deg, #050814 0%, #0a1226 42%, #0e1735 100%);
+    color: #e7edff !important;
+  }
+  html.theme-dark .app-canvas * {
+    color: inherit;
+  }
+
+  /* Employee directory emphasis */
+  .employee-name {
+    color: #6366f1 !important; /* Indigo */
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    font-size: 1.1rem;
+    transition: color 0.2s;
+  }
+  html.theme-dark .employee-name {
+    color: #a5b4fc !important; /* Lighter indigo */
+    text-shadow: 0 0 10px rgba(99, 102, 241, 0.18);
+  }
+    html.theme-light .employee-name {
+      color: #6366f1 !important; /* Indigo */
+      text-shadow: 0 0 6px rgba(99, 102, 241, 0.08);
+    }
+
+  /* Employee form card - dark gradient */
+  html.theme-dark .employee-form-card {
+    background: linear-gradient(135deg, #0b1b36 0%, #0c2347 48%, #0e2c58 100%) !important;
+    border: 1px solid #1e3a8a !important;
+    color: #e5edff !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(99,102,241,0.25) !important;
+  }
+  html.theme-dark .employee-form-card label,
+  html.theme-dark .employee-form-card p,
+  html.theme-dark .employee-form-card span {
+    color: #e5edff !important;
+  }
+  html.theme-dark .employee-form-card input,
+  html.theme-dark .employee-form-card select,
+  html.theme-dark .employee-form-card textarea {
+    background-color: #0f1b33 !important;
+    border-color: #1f2f52 !important;
+    color: #e5edff !important;
+  }
+  html.theme-dark .employee-form-card input::placeholder,
+  html.theme-dark .employee-form-card textarea::placeholder {
+    color: #9fb2d8 !important;
+  }
+
+  html.theme-dark .employee-form-card .required-pill {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(99,102,241,0.18) !important;
+  }
+  html.theme-dark .employee-form-card .upload-btn {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+  }
+  html.theme-dark .employee-form-card .upload-btn:hover {
+    border-color: #94a3b8 !important;
+    color: #0b1224 !important;
+  }
   
   html.theme-dark body {
     background:
-      radial-gradient(circle at 18% 18%, rgba(100, 240, 255, 0.14), transparent 32%),
-      radial-gradient(circle at 82% 12%, rgba(255, 122, 195, 0.12), transparent 30%),
-      linear-gradient(160deg, #020510 0%, #060b1c 45%, #0c1634 100%);
+      radial-gradient(circle at 18% 18%, rgba(59, 130, 246, 0.10), transparent 32%), /* blue */
+      radial-gradient(circle at 82% 12%, rgba(192, 132, 252, 0.10), transparent 30%), /* purple */
+      linear-gradient(160deg, #0a101e 0%, #1e293b 45%, #312e81 100%); /* slate-indigo */
     color: #e7edff;
   }
+  html.theme-light body {
+    background:
+      radial-gradient(circle at 18% 18%, rgba(59, 130, 246, 0.08), transparent 32%), /* blue */
+      radial-gradient(circle at 82% 12%, rgba(192, 132, 252, 0.08), transparent 30%), /* purple */
+      linear-gradient(160deg, #f3f4f6 0%, #e0e7ff 45%, #ede9fe 100%); /* slate-indigo light */
+    color: #312e81;
+  }
   html.theme-dark .bg-white,
+    html.theme-light .bg-white,
+    html.theme-light .bg-white/50,
+    html.theme-light .bg-white/60,
+    html.theme-light .bg-white/70,
+    html.theme-light .bg-white/80,
+    html.theme-light .bg-white/90 {
+      background: linear-gradient(135deg, #f3f4f6 0%, #ede9fe 100%) !important; /* slate-indigo light */
+      border: 1px solid #6366f1 !important; /* indigo */
+      box-shadow: 0 2px 12px rgba(59, 130, 246, 0.08), 0 0 0 1px rgba(192, 132, 252, 0.04) !important; /* blue/purple */
+      backdrop-filter: blur(20px) saturate(180%) !important;
+      -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+      transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base) !important;
+    }
   html.theme-dark .bg-white\\/50,
   html.theme-dark .bg-white\\/60,
   html.theme-dark .bg-white\\/70,
   html.theme-dark .bg-white\\/80,
   html.theme-dark .bg-white\\/90 {
-    background: linear-gradient(135deg, #101827 0%, #1a2332 100%) !important;
-    border: 1px solid #1d4ed8 !important;
-    box-shadow: 0 2px 12px rgba(37, 99, 235, 0.12), 0 0 0 1px rgba(59, 130, 246, 0.08) !important;
+    background: linear-gradient(135deg, #18181b 0%, #312e81 100%) !important; /* slate-indigo */
+    border: 1px solid #6366f1 !important; /* indigo */
+    box-shadow: 0 2px 12px rgba(59, 130, 246, 0.12), 0 0 0 1px rgba(192, 132, 252, 0.08) !important; /* blue/purple */
     backdrop-filter: blur(20px) saturate(180%) !important;
     -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
     transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base) !important;
@@ -160,12 +250,24 @@ const DARK_MODE_STYLES = `
     overflow-x: clip !important;
   }
   html.theme-dark .glass-card {
-    background: linear-gradient(145deg, rgba(12, 16, 32, 0.96), rgba(11, 18, 36, 0.9)) !important;
+      html.theme-light .glass-card {
+        background: linear-gradient(145deg, rgba(236, 233, 254, 0.96), rgba(224, 231, 255, 0.92)) !important; /* indigo/slate light */
+        box-shadow:
+          0 16px 40px rgba(59, 130, 246, 0.08),
+          0 4px 18px rgba(192, 132, 252, 0.06),
+          0 0 0 1px rgba(236, 72, 153, 0.05) !important; /* pink accent */
+        border: 1px solid #6366f1 !important;
+        backdrop-filter: blur(24px) saturate(200%) !important;
+        -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
+        transition: all var(--transition-base) !important;
+        will-change: transform, box-shadow !important;
+      }
+    background: linear-gradient(145deg, rgba(49, 46, 129, 0.96), rgba(30, 41, 59, 0.92)) !important; /* indigo/slate */
     box-shadow:
-      0 16px 40px rgba(0, 0, 0, 0.45),
-      0 4px 18px rgba(37, 99, 235, 0.15),
-      0 0 0 1px rgba(92, 224, 255, 0.12) !important;
-    border: 1px solid rgba(37, 99, 235, 0.35) !important;
+      0 16px 40px rgba(59, 130, 246, 0.18),
+      0 4px 18px rgba(192, 132, 252, 0.12),
+      0 0 0 1px rgba(236, 72, 153, 0.10) !important; /* pink accent */
+    border: 1px solid #6366f1 !important;
     backdrop-filter: blur(24px) saturate(200%) !important;
     -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
     transition: all var(--transition-base) !important;
@@ -266,16 +368,17 @@ const DARK_MODE_STYLES = `
     font-weight: 800 !important;
   }
   
+  /* No green variant: use purple/blue for best-practice design */
   html.theme-dark .rounded-3xl:nth-child(6n+2),
   html.theme-dark .glass-card:nth-child(6n+2) {
-    border: 1px solid #4ade80 !important;
-    box-shadow: 0 0 8px rgba(74, 222, 128, 0.25), 0 3px 8px rgba(74, 222, 128, 0.15) !important;
+    border: 1px solid #c084fc !important; /* purple */
+    box-shadow: 0 0 8px rgba(192, 132, 252, 0.18), 0 3px 8px rgba(192, 132, 252, 0.10) !important;
     transition: all var(--transition-base) !important;
   }
   html.theme-dark .rounded-3xl:nth-child(6n+2):hover,
   html.theme-dark .glass-card:nth-child(6n+2):hover {
-    border-color: #86efac !important;
-    box-shadow: 0 0 16px rgba(74, 222, 128, 0.3), 0 6px 16px rgba(74, 222, 128, 0.2) !important;
+    border-color: #a5b4fc !important;
+    box-shadow: 0 0 16px rgba(192, 132, 252, 0.18), 0 6px 16px rgba(192, 132, 252, 0.10) !important;
   }
   html.theme-dark .rounded-3xl:nth-child(6n+2) .text-sm.font-bold,
   html.theme-dark .rounded-3xl:nth-child(6n+2) .text-sm.font-semibold,
@@ -291,8 +394,8 @@ const DARK_MODE_STYLES = `
   html.theme-dark .glass-card:nth-child(6n+2) .text-lg.font-bold,
   html.theme-dark .glass-card:nth-child(6n+2) .text-lg.font-semibold,
   html.theme-dark .glass-card:nth-child(6n+2) .software-metric-value {
-    color: #86efac !important;
-    text-shadow: 0 0 8px rgba(74, 222, 128, 0.35), 0 2px 6px rgba(134, 239, 172, 0.25), 0 0 14px rgba(74, 222, 128, 0.15) !important;
+    color: #a5b4fc !important;
+    text-shadow: 0 0 8px rgba(192, 132, 252, 0.18), 0 2px 6px rgba(216, 180, 254, 0.08), 0 0 14px rgba(192, 132, 252, 0.04) !important;
     font-weight: 800 !important;
   }
   
@@ -468,6 +571,26 @@ const DARK_MODE_STYLES = `
   }
 `;
 
+const THEME_KEY = 'theme-preference';
+function getSystemTheme() {
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  return 'light';
+}
+function getStoredTheme() {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem(THEME_KEY);
+    if (stored === 'dark' || stored === 'light') return stored;
+  }
+  return null;
+}
+function setHtmlThemeClass(theme) {
+  if (typeof document !== 'undefined') {
+    document.documentElement.classList.remove('theme-dark', 'theme-light');
+    document.documentElement.classList.add('theme-' + theme);
+  }
+}
 const LIGHT_MODE_STYLES = `
   html.theme-light body {
     background:
@@ -3555,22 +3678,48 @@ const PaginationControls = ({ page, totalPages, onPageChange, align = 'between' 
   );
 };
 
-const VendorCard = ({ vendor }) => {
+const VendorCard = ({ vendor, isDarkMode = false }) => {
   const accentFrom = vendor.accent?.from || '#0f172a';
   const accentTo = vendor.accent?.to || '#475569';
   const imageSrc = vendor.image || VENDOR_IMAGES[vendor.id] || MEDIA.devices.computer;
+  const shellClass = isDarkMode
+    ? 'border-slate-800/70 bg-slate-900/70 text-slate-100 shadow-[0_20px_70px_rgba(0,0,0,0.45)] ring-1 ring-slate-800/60'
+    : 'border-slate-200 bg-white text-slate-900 shadow-[0_18px_60px_rgba(15,23,42,0.08)] ring-1 ring-slate-100';
+  const statCardClass = isDarkMode
+    ? 'bg-slate-800/70 text-slate-100 border-slate-700'
+    : 'bg-white text-slate-900 border-slate-200 shadow-inner shadow-slate-100';
+  const chipClass = isDarkMode
+    ? 'bg-slate-800/60 border-slate-700 text-slate-100 shadow-inner'
+    : 'bg-slate-50 border-slate-200 text-slate-800 shadow-inner';
+  const contactCardClass = isDarkMode
+    ? 'border-slate-800 bg-slate-900/70 text-slate-100'
+    : 'border-slate-200 bg-slate-50 text-slate-700';
+  const overlayPanelClass = isDarkMode
+    ? 'bg-black/60 text-white'
+    : 'bg-slate-900/70 text-white shadow-[0_12px_32px_rgba(15,23,42,0.35)] border border-white/15';
+  const overlayGradientClass = isDarkMode
+    ? 'bg-gradient-to-t from-black/65 via-slate-900/30 to-transparent'
+    : 'bg-gradient-to-t from-black/18 via-slate-900/08 to-transparent';
 
   return (
-    <div className="glass-card flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/50 bg-white shadow-2xl ring-1 ring-slate-100 hover-lift transition-all duration-500 hover:ring-2 hover:ring-blue-300/50">
+    <div
+      className={`glass-card flex h-full flex-col overflow-hidden rounded-3xl border transition-all duration-500 hover:-translate-y-1 hover:ring-2 hover:ring-blue-300/50 ${shellClass}`}
+    >
       <div className="relative h-56 w-full overflow-hidden sm:h-48">
         <img src={imageSrc} alt={`${vendor.name} visual`} className="h-full w-full object-cover" loading="lazy" />
-        <div className="absolute inset-0" style={{ backgroundImage: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`, opacity: 0.75 }} />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-slate-900/40 to-transparent" />
+        <div className="absolute inset-0" style={{ backgroundImage: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`, opacity: 0.22 }} />
+        <div className={`absolute inset-0 ${overlayGradientClass}`} />
+        <div className="absolute -right-6 -top-10 h-40 w-40 rounded-full bg-white/20 blur-3xl" />
         <div className="absolute bottom-4 left-4 right-4">
-          <div className="rounded-2xl bg-slate-950/65 p-4 text-white shadow-lg shadow-black/30 backdrop-blur">
+          <div className={`rounded-2xl p-4 shadow-lg shadow-black/30 backdrop-blur ${overlayPanelClass}`}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-white/80">Vendor partner</p>
-            <p className="mt-1 text-2xl font-semibold drop-shadow">{vendor.name}</p>
-            <p className="text-xs text-white/85">{vendor.description}</p>
+            <p
+              className="mt-1 text-2xl font-extrabold leading-tight text-white drop-shadow-[0_3px_14px_rgba(0,0,0,0.6)]"
+              style={{ textShadow: '0 4px 14px rgba(0,0,0,0.55)' }}
+            >
+              {vendor.name}
+            </p>
+            <p className="text-xs text-slate-100 drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]">{vendor.description}</p>
           </div>
         </div>
       </div>
@@ -3578,36 +3727,36 @@ const VendorCard = ({ vendor }) => {
         {vendor.coverage?.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {vendor.coverage.map((capability) => (
-              <span
-                key={capability}
-                className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 shadow-inner"
-              >
+              <span key={capability} className={`rounded-full border px-3 py-1 text-xs font-semibold ${chipClass}`}>
                 {capability}
               </span>
             ))}
           </div>
         )}
-        <div className="mt-6 grid grid-cols-3 gap-3 text-sm font-semibold text-slate-900">
-          <div className="rounded-2xl bg-slate-50/80 p-3 text-center">
-            <p className="text-xs uppercase tracking-widest text-slate-400">Devices</p>
+        <div className="mt-6 grid grid-cols-3 gap-3 text-sm font-semibold">
+          <div className={`rounded-2xl border p-3 text-center ${statCardClass}`}>
+            <p className="text-xs uppercase tracking-widest opacity-80">Devices</p>
             <p className="mt-1 text-xl">{vendor.assetCount}</p>
           </div>
-          <div className="tone-panel tone-success p-3 text-center">
+          <div className="tone-panel tone-success p-3 text-center shadow-sm">
             <p className="text-xs uppercase tracking-widest opacity-80">Active</p>
             <p className="mt-1 text-xl">{vendor.activeCount}</p>
           </div>
-          <div className="tone-panel tone-warning p-3 text-center">
+          <div className="tone-panel tone-warning p-3 text-center shadow-sm">
             <p className="text-xs uppercase tracking-widest opacity-80">Maintenance</p>
             <p className="mt-1 text-xl">{vendor.maintenanceCount}</p>
           </div>
         </div>
         {vendor.contact && (
-          <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 text-sm text-slate-600">
-            <p className="text-xs font-semibold uppercase tracking-[0.35rem] text-slate-400">Primary contact</p>
-            <p className="mt-1 font-semibold text-slate-900">{vendor.contact.name}</p>
-            {vendor.contact.org && <p>{vendor.contact.org}</p>}
+          <div className={`mt-6 rounded-2xl border p-4 text-sm ${contactCardClass}`}>
+            <p className="text-xs font-semibold uppercase tracking-[0.35rem] opacity-70">Primary contact</p>
+            <p className="mt-1 font-semibold">{vendor.contact.name}</p>
+            {vendor.contact.org && <p className={isDarkMode ? 'text-slate-300' : 'text-slate-600'}>{vendor.contact.org}</p>}
             {vendor.contact.email && (
-              <a href={`mailto:${vendor.contact.email}`} className="text-blue-600 hover:underline">
+              <a
+                href={`mailto:${vendor.contact.email}`}
+                className={isDarkMode ? 'text-blue-200 hover:text-blue-100' : 'text-blue-700 hover:text-blue-600'}
+              >
                 {vendor.contact.email}
               </a>
             )}
@@ -3621,7 +3770,9 @@ const VendorCard = ({ vendor }) => {
                 href={cta.href}
                 target={cta.external ? '_blank' : undefined}
                 rel={cta.external ? 'noreferrer' : undefined}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600"
+                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition hover:border-blue-300 hover:text-blue-600 ${
+                  isDarkMode ? 'border-slate-700 text-slate-100 hover:text-blue-200' : 'border-slate-200 text-slate-700'
+                }`}
               >
                 {cta.label}
                 {cta.external && <ExternalLink className="h-3.5 w-3.5" />}
@@ -3833,7 +3984,7 @@ const NetworkPrinterBoard = ({
                       <button
                         type="button"
                         onClick={() => onEdit(printer)}
-                        className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-blue-200 hover:text-blue-700"
+                        className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-blue-200 hover:text-slate-900"
                         title="Edit machine"
                       >
                         Edit
@@ -4409,7 +4560,7 @@ const MaintenanceWorkflowBoard = ({ workOrders = [], isDarkMode = false }) => {
   const columns = [
     { label: 'Planned', key: 'Planned', color: 'from-sky-100 to-white', chip: 'bg-sky-500/10 text-sky-700' },
     { label: 'In Progress', key: 'In Progress', color: 'from-amber-100 to-white', chip: 'bg-amber-500/10 status-warning' },
-    { label: 'Awaiting Parts', key: 'Awaiting Parts', color: 'from-indigo-100 to-white', chip: 'bg-indigo-500/10 text-indigo-700' },
+    { label: 'Awaiting Parts', key: 'Awaiting Parts', color: 'from-indigo-100 to-white', chip: 'bg-indigo-500/10 text-slate-800' },
     { label: 'Completed', key: 'Completed', color: 'from-emerald-100 to-white', chip: 'bg-emerald-500/10 status-success' },
   ];
 
@@ -4530,28 +4681,107 @@ const EmployeeDirectoryGrid = ({
   onAssetClick = () => {},
   downloadHref,
   isDarkMode = false,
-}) => (
-  <div className="rounded-3xl border border-slate-100 bg-white shadow-sm">
-    <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-6 py-5">
-      <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">People ops</p>
-        <p className="text-lg font-semibold text-slate-900">Employee directory</p>
-        <p className="text-sm text-slate-500">
-          Displaying {members.length} of {totalCount} team members with photos and contact info
-        </p>
+}) => {
+  const letterAnchors = {};
+  members.forEach((member) => {
+    const firstLetter = (member.name || '').trim().charAt(0).toUpperCase();
+    if (firstLetter && !letterAnchors[firstLetter]) {
+      letterAnchors[firstLetter] = member.id || normalizeKey(member.name || '');
+    }
+  });
+  const indexLetters = Object.keys(letterAnchors).sort();
+  const photoCount = members.reduce((total, member) => (member.avatar ? total + 1 : total), 0);
+  const shellClass = isDarkMode
+    ? 'relative overflow-hidden border-slate-800 bg-gradient-to-br from-[#0c1229] via-[#0b1021] to-[#0f172a] text-white shadow-[0_26px_85px_rgba(0,0,0,0.55)] ring-1 ring-indigo-500/35'
+    : 'relative overflow-hidden border-indigo-100 bg-gradient-to-br from-[#f9fbff] via-[#eef2ff] to-[#e3ecff] text-slate-900 shadow-[0_22px_70px_rgba(79,70,229,0.12)] ring-1 ring-indigo-200/70';
+  const headerBorder = isDarkMode ? 'border-white/10' : 'border-indigo-100';
+  const subtitleClass = isDarkMode ? 'text-slate-300' : 'text-slate-600';
+
+  return (
+    <div className={`rounded-3xl border shadow-sm ${shellClass}`}>
+      <div className="pointer-events-none absolute inset-0 opacity-90">
+        <div className="absolute -left-16 -top-24 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl" />
+        <div className="absolute right-6 top-10 h-56 w-56 rounded-full bg-blue-500/15 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-40 w-40 rounded-full bg-indigo-300/10 blur-3xl" />
       </div>
-      {downloadHref && (
-        <a
-          href={downloadHref}
-          download
-          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300"
-        >
-          <Download className="h-4 w-4" />
-          Roster
-        </a>
-      )}
-    </div>
-    <div className="grid gap-6 p-6 sm:grid-cols-2 lg:grid-cols-3 place-items-center">
+      <div className={`relative flex flex-col gap-4 border-b px-6 py-5 ${headerBorder}`}>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-indigo-400">People ops</p>
+            <p
+              className={`text-xl font-extrabold tracking-tight drop-shadow-sm lg:text-2xl ${
+                isDarkMode ? 'text-indigo-100' : 'text-slate-900'
+              }`}
+            >
+              Employee directory
+            </p>
+            <p className={`text-sm ${subtitleClass}`}>
+              Displaying {members.length} of {totalCount} team members with photos, contact, and ownership data
+            </p>
+          </div>
+          {downloadHref && (
+            <a
+              href={downloadHref}
+              download
+              className={`inline-flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-semibold backdrop-blur transition ${
+                isDarkMode
+                  ? 'border-white/15 bg-white/10 text-white hover:border-indigo-300/60 hover:text-indigo-100'
+                  : 'border-indigo-100 bg-white text-indigo-700 shadow-sm hover:border-indigo-300 hover:text-indigo-800'
+              }`}
+            >
+              <Download className="h-4 w-4" />
+              Roster
+            </a>
+          )}
+        </div>
+        <div className="grid grid-cols-1 gap-3 text-xs font-semibold sm:grid-cols-3">
+          <div
+            className={`rounded-2xl border px-4 py-3 shadow-sm backdrop-blur ${
+              isDarkMode ? 'border-white/10 bg-white/5 text-indigo-100' : 'border-indigo-100 bg-white text-indigo-800'
+            }`}
+          >
+            <p className="text-[10px] uppercase tracking-[0.25rem] opacity-70">Visible now</p>
+            <p className="text-lg font-extrabold">{members.length}</p>
+          </div>
+          <div
+            className={`rounded-2xl border px-4 py-3 shadow-sm backdrop-blur ${
+              isDarkMode ? 'border-white/10 bg-white/5 text-indigo-100' : 'border-indigo-100 bg-white text-indigo-800'
+            }`}
+          >
+            <p className="text-[10px] uppercase tracking-[0.25rem] opacity-70">Total roster</p>
+            <p className="text-lg font-extrabold">{totalCount}</p>
+          </div>
+          <div
+            className={`rounded-2xl border px-4 py-3 shadow-sm backdrop-blur ${
+              isDarkMode ? 'border-white/10 bg-white/5 text-indigo-100' : 'border-indigo-100 bg-white text-indigo-800'
+            }`}
+          >
+            <p className="text-[10px] uppercase tracking-[0.25rem] opacity-70">With photos</p>
+            <p className="text-lg font-extrabold">{photoCount}</p>
+          </div>
+        </div>
+        {indexLetters.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.25rem] text-indigo-400">Jump to</span>
+            <div className="flex flex-wrap gap-1.5">
+              {indexLetters.map((letter) => (
+                <a
+                  key={`employee-jump-${letter}`}
+                  href={`#employee-card-${letterAnchors[letter]}`}
+                  className={`inline-flex items-center justify-center rounded-xl border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                    isDarkMode
+                      ? 'border-indigo-800/70 bg-indigo-900/60 text-indigo-100 hover:border-indigo-500 hover:text-indigo-50'
+                      : 'border-indigo-100 bg-white/90 text-indigo-700 shadow-sm hover:border-indigo-300 hover:text-indigo-900'
+                  }`}
+                >
+                  {letter}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    <div className="grid gap-6 p-6 sm:grid-cols-2 xl:grid-cols-3 place-items-center">
       {members.map((member) => {
         const memberKey = member.id || normalizeKey(member.name || '');
         const isExpanded = expandedId === memberKey;
@@ -4561,12 +4791,12 @@ const EmployeeDirectoryGrid = ({
         const licenseCount = licenses.length;
         const supervisorLabel = member.supervisor ? normalizeNameCase(member.supervisor) : 'Not set';
         const cardClasses = [
-          'w-full max-w-md rounded-xl border p-4 shadow-sm transition-all duration-200',
+          'group relative w-full max-w-md overflow-hidden rounded-2xl border px-4 py-5 backdrop-blur-sm transition-all duration-300',
           isDarkMode
-            ? 'border-slate-700/70 bg-slate-900/70 backdrop-blur-sm hover:border-purple-400/80 hover:shadow-lg'
-            : 'border-slate-200 bg-white hover:border-purple-300 hover:shadow-md',
+            ? 'border-indigo-900/60 bg-gradient-to-br from-[#0f172a]/90 via-[#111827]/75 to-[#0b1224]/80 shadow-[0_18px_55px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:border-indigo-400/70 hover:shadow-[0_28px_70px_rgba(79,70,229,0.25)]'
+            : 'border-indigo-100 bg-gradient-to-br from-white via-[#f3f4ff] to-[#eaf2ff] shadow-[0_14px_45px_rgba(79,70,229,0.12)] hover:-translate-y-1 hover:border-indigo-300 hover:shadow-[0_22px_60px_rgba(79,70,229,0.2)]',
           'cursor-pointer select-none',
-          isExpanded ? 'ring-2 ring-purple-400 border-purple-400' : '',
+          isExpanded ? 'ring-2 ring-indigo-400 border-indigo-400' : 'ring-1 ring-transparent',
         ].join(' ');
         const handleKeyDown = (event) => {
           if (event.key === 'Enter' || event.key === ' ') {
@@ -4586,32 +4816,43 @@ const EmployeeDirectoryGrid = ({
             onClick={() => onToggle(memberKey)}
             onKeyDown={handleKeyDown}
           >
+            <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-indigo-400/15 blur-2xl transition-opacity duration-300 group-hover:opacity-100" />
+            <div className="pointer-events-none absolute bottom-0 left-6 h-28 w-28 rounded-full bg-blue-400/10 blur-2xl transition-opacity duration-300 group-hover:opacity-90" />
             <div className="flex items-start gap-3">
                 {member.avatar ? (
                   <img
                     src={member.avatar}
                     alt={member.name}
                     loading="lazy"
-                    className="h-16 w-16 rounded-xl object-cover cursor-zoom-in flex-shrink-0 border-2 border-purple-200"
+                    className="h-16 w-16 rounded-xl object-cover cursor-zoom-in flex-shrink-0 border-2 border-indigo-200 shadow-[0_10px_25px_rgba(79,70,229,0.25)]"
                     onClick={(event) => {
                       event.stopPropagation();
                       onPhoto(member);
                     }}
                   />
                 ) : (
-                  <div className="h-16 w-16 flex items-center justify-center rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 text-sm font-bold text-purple-700 flex-shrink-0 border-2 border-purple-200">
+                  <div className={`h-16 w-16 flex items-center justify-center rounded-xl text-sm font-bold flex-shrink-0 border-2 shadow-[0_10px_25px_rgba(79,70,229,0.18)] ${
+                    isDarkMode
+                      ? 'bg-gradient-to-br from-slate-800 via-indigo-900 to-blue-900 text-indigo-100 border-indigo-800/70'
+                      : 'bg-gradient-to-br from-indigo-50 via-white to-blue-50 text-indigo-700 border-indigo-300'
+                  }`}>
                     {getInitials(member.name)}
                   </div>
                 )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-900 truncate">{member.name}</p>
-                <p className="text-xs text-purple-600 font-medium truncate">{member.title}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className={`employee-name text-base font-semibold truncate ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{member.name}</p>
+                    <p className={`text-xs font-semibold uppercase tracking-wide ${isDarkMode ? 'text-indigo-200' : 'text-indigo-700'}`}>{member.title}</p>
+                  </div>
+
+                </div>
                 {member.phone && (
                   <p className="mt-1 text-[11px]">
                     <a
                       href={`tel:${member.phone}`}
                       onClick={(event) => event.stopPropagation()}
-                      className="text-blue-600 hover:text-purple-600 transition-colors"
+                      className={isDarkMode ? 'text-indigo-200 hover:text-indigo-100 transition-colors' : 'text-indigo-700 hover:text-indigo-600 transition-colors'}
                     >
                       {member.phone}
                     </a>
@@ -4622,7 +4863,7 @@ const EmployeeDirectoryGrid = ({
                     <a
                       href={`mailto:${member.email}`}
                       onClick={(event) => event.stopPropagation()}
-                      className="text-xs text-blue-600 hover:text-purple-600 transition-colors"
+                      className={`text-xs transition-colors ${isDarkMode ? 'text-indigo-200 hover:text-indigo-100' : 'text-indigo-700 hover:text-indigo-600'}`}
                     >
                       {member.email}
                     </a>
@@ -4663,7 +4904,7 @@ Reply to this email with your updates. Photos are welcome. Thank you!`,
                         );
                         window.location.href = `mailto:${member.email}?subject=${subject}&body=${body}`;
                       }}
-                      className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-700"
+                      className={`inline-flex items-center gap-1 rounded-xl border px-2 py-1 text-[11px] font-semibold transition ${isDarkMode ? 'border-slate-300/70 bg-slate-100 text-slate-900 hover:border-slate-200' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:text-blue-700'}`}
                     >
                       <Mail className="h-3.5 w-3.5" />
                       Audit Email
@@ -4673,17 +4914,29 @@ Reply to this email with your updates. Photos are welcome. Thank you!`,
                   <p className="mt-1.5 text-xs text-slate-400">No email on file</p>
                 )}
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 text-[11px] font-medium border border-purple-200">
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border ${
+                      isDarkMode
+                        ? 'bg-indigo-900/35 text-indigo-100 border-indigo-700/60'
+                        : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                    }`}
+                  >
                     <MapPin className="h-3 w-3" />
                     {member.location}
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[11px] font-medium border border-blue-200">
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border ${
+                      isDarkMode
+                        ? 'bg-blue-900/35 text-blue-100 border-blue-700/60'
+                        : 'bg-blue-50 text-blue-700 border-blue-200'
+                    }`}
+                  >
                     <Users className="h-3 w-3" />
                     {member.department}
                   </span>
                 </div>
-                <p className="mt-2 text-[11px] text-slate-600">
-                  <span className="font-semibold">Supervisor:</span> {supervisorLabel}
+                <p className={`mt-2 text-[11px] ${isDarkMode ? 'text-indigo-100/80' : 'text-slate-800'}`}>
+                  <span className={`font-semibold ${isDarkMode ? 'text-indigo-200' : 'text-black'}`}>Supervisor:</span> {supervisorLabel}
                 </p>
               </div>
               <div className="flex flex-col gap-1">
@@ -4715,13 +4968,13 @@ Reply to this email with your updates. Photos are welcome. Thank you!`,
               <div
                 className={`mt-4 rounded-xl border p-4 ${
                   isDarkMode
-                    ? 'border-slate-700/70 bg-gradient-to-br from-slate-900/80 via-slate-900/70 to-purple-900/50 shadow-inner'
-                    : 'border-purple-100 bg-gradient-to-br from-purple-50/70 via-white to-blue-50/70'
+                    ? 'border-slate-700/70 bg-gradient-to-br from-slate-900/80 via-slate-900/70 to-indigo-900/50 shadow-inner'
+                    : 'border-indigo-100 bg-gradient-to-br from-indigo-50/80 via-white to-blue-50/80'
                 }`}
               >
-                <div className="mb-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-purple-700">
+                <div className="mb-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-indigo-700">
                   <span>Assigned assets</span>
-                  <span className="rounded-full bg-purple-100 px-2 py-0.5">{assignmentCount}</span>
+                  <span className={`rounded-full px-2 py-0.5 ${isDarkMode ? 'bg-indigo-900/70 text-indigo-100' : 'bg-indigo-100 text-indigo-800'}`}>{assignmentCount}</span>
                 </div>
                 {assignmentCount === 0 ? (
                   <p className="text-xs text-slate-500">No asset assignments.</p>
@@ -4745,7 +4998,7 @@ Reply to this email with your updates. Photos are welcome. Thank you!`,
                         ? 'border-slate-700/70 bg-slate-900/70 shadow-inner'
                         : 'border-blue-100 bg-white/95 shadow-sm';
                       const interactiveClasses = canOpenAsset
-                        ? 'cursor-pointer transition hover:border-purple-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-200'
+                        ? 'cursor-pointer transition hover:border-indigo-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-200'
                         : '';
                       const handleAssetOpen = (event) => {
                         if (!canOpenAsset) {
@@ -4796,8 +5049,8 @@ Reply to this email with your updates. Photos are welcome. Thank you!`,
                             <span
                               className={`inline-flex flex-shrink-0 items-center rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${
                                 isDarkMode
-                                  ? 'bg-purple-900/50 text-purple-100 border border-purple-500/40'
-                                  : 'bg-purple-50 text-purple-700 border border-purple-200'
+                                  ? 'bg-indigo-900/50 text-indigo-100 border border-indigo-500/40'
+                                  : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                               }`}
                             >
                               {asset.type || 'Asset'}
@@ -4808,9 +5061,9 @@ Reply to this email with your updates. Photos are welcome. Thank you!`,
                     })}
                   </ul>
                 )}
-                <div className="mt-4 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-purple-700 mb-3">
+                <div className="mt-4 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-indigo-700 mb-3">
                   <span>Assigned software</span>
-                  <span className="rounded-full bg-purple-100 px-2 py-0.5">{licenseCount}</span>
+                  <span className="rounded-full bg-indigo-100 px-2 py-0.5">{licenseCount}</span>
                 </div>
                 {licenseCount === 0 ? (
                   <p className="text-xs text-slate-500">No software licenses.</p>
@@ -4819,7 +5072,11 @@ Reply to this email with your updates. Photos are welcome. Thank you!`,
                     {licenses.map((suite) => (
                       <li
                         key={`${suite.suiteId || suite.name}-${suite.licenseKey || ''}-${member.id}`}
-                        className="rounded-lg border border-emerald-100 bg-white p-3"
+                        className={`rounded-lg border p-3 ${
+                          isDarkMode
+                            ? 'border-slate-800/70 bg-slate-900/70'
+                            : 'border-indigo-100 bg-white'
+                        }`}
                       >
                         <button
                           type="button"
@@ -4851,7 +5108,8 @@ Reply to this email with your updates. Photos are welcome. Thank you!`,
       })}
     </div>
   </div>
-);
+  );
+};
 
 const EmployeeFilters = ({
   search = '',
@@ -4862,76 +5120,95 @@ const EmployeeFilters = ({
   onSearchChange = () => {},
   onFilterChange = () => {},
   onReset = () => {},
-}) => (
-  <div className="rounded-3xl border border-slate-100 bg-white shadow-sm px-6 py-5">
-    <div className="flex flex-wrap items-center gap-3">
-      <div className="flex-1 min-w-[220px]">
-        <label className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">Search</label>
-        <input
-          value={search}
-          onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Search by name, department, or device"
-          className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-        />
-      </div>
-      <div className="flex-1 min-w-[180px]">
-        <label className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">Department</label>
-        <select
-          value={filters.department}
-          onChange={(event) => onFilterChange('department', event.target.value)}
-          className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-        >
-          <option value="all">All departments</option>
-          {departments.map((dept) => (
-            <option key={`dept-${dept}`} value={dept}>
-              {dept}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="flex-1 min-w-[180px]">
-        <label className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">Location</label>
-        <select
-          value={filters.location}
-          onChange={(event) => onFilterChange('location', event.target.value)}
-          className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-        >
-          <option value="all">All locations</option>
-          {locations.map((loc) => (
-            <option key={`loc-${loc}`} value={loc}>
-              {loc}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="flex-1 min-w-[180px]">
-        <label className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">Role</label>
-        <select
-          value={filters.jobTitle}
-          onChange={(event) => onFilterChange('jobTitle', event.target.value)}
-          className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-        >
-          <option value="all">All roles</option>
-          {jobTitles.map((title) => (
-            <option key={`role-${title}`} value={title}>
-              {title}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="min-w-[120px]">
-        <label className="text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400">Reset</label>
-        <button
-          type="button"
-          onClick={onReset}
-          className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-        >
-          Clear filters
-        </button>
+  isDarkMode = false,
+}) => {
+  const containerClasses = isDarkMode
+    ? 'rounded-3xl border border-slate-800/70 bg-gradient-to-br from-[#0b1b36] via-[#0c2347] to-[#0e2c58] px-6 py-5 shadow-[0_20px_60px_rgba(0,0,0,0.55)]'
+    : 'rounded-3xl border border-slate-100 bg-white shadow-sm px-6 py-5';
+  const labelClass = isDarkMode
+    ? 'text-xs font-semibold uppercase tracking-[0.3rem] text-slate-200'
+    : 'text-xs font-semibold uppercase tracking-[0.3rem] text-slate-400';
+  const inputClass = isDarkMode
+    ? 'mt-1 w-full rounded-2xl border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm text-slate-100 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-300/30'
+    : 'mt-1 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
+
+  return (
+    <div className={containerClasses}>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex-1 min-w-[220px]">
+          <label className={labelClass}>Search</label>
+          <input
+            value={search}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="Search by name, department, or device"
+            className={inputClass}
+          />
+        </div>
+        <div className="flex-1 min-w-[180px]">
+          <label className={labelClass}>Department</label>
+          <select
+            value={filters.department}
+            onChange={(event) => onFilterChange('department', event.target.value)}
+            className={inputClass}
+          >
+            <option value="all">All departments</option>
+            {departments.map((dept) => (
+              <option key={`dept-${dept}`} value={dept}>
+                {dept}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex-1 min-w-[180px]">
+          <label className={labelClass}>Location</label>
+          <select
+            value={filters.location}
+            onChange={(event) => onFilterChange('location', event.target.value)}
+            className={inputClass}
+          >
+            <option value="all">All locations</option>
+            {locations.map((loc) => (
+              <option key={`loc-${loc}`} value={loc}>
+                {loc}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex-1 min-w-[180px]">
+          <label className={labelClass}>Role</label>
+          <select
+            value={filters.jobTitle}
+            onChange={(event) => onFilterChange('jobTitle', event.target.value)}
+            className={inputClass}
+          >
+            <option value="all">All roles</option>
+            {jobTitles.map((title) => (
+              <option key={`role-${title}`} value={title}>
+                {title}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="min-w-[120px]">
+          <label className={labelClass}>Reset</label>
+          <button
+            type="button"
+            onClick={onReset}
+            className={`mt-1 w-full rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
+              isDarkMode
+                ? 'border-slate-700 bg-slate-900/60 text-slate-100 hover:border-slate-500 hover:bg-slate-800'
+                : 'border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            Clear filters
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
+
+
 
 const LaptopRepairCard = ({ data, onLoanerCheckout, onLoanerCheckin, onAddRepair, onEditRepair, isDarkMode = false }) => {
   const {
@@ -6268,7 +6545,7 @@ const CommandPalette = ({ open, query, onQuery, results, onSelect, onClose }) =>
   );
 };
 
-const PrinterFormModal = ({ printer, onSubmit, onCancel }) => {
+const PrinterFormModal = ({ printer, onSubmit, onCancel, isDarkMode = false }) => {
   const [form, setForm] = useState(
     printer || {
       id: null,
@@ -6376,7 +6653,9 @@ const PrinterFormModal = ({ printer, onSubmit, onCancel }) => {
         <button
           type="button"
           onClick={() => onSubmit(form)}
-          className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+          className={`rounded-2xl px-4 py-2 text-sm font-semibold shadow-sm transition ${
+            isDarkMode ? 'bg-blue-600 text-blue-100 hover:bg-blue-500' : 'bg-blue-50 text-blue-800 ring-1 ring-blue-100 hover:bg-blue-100'
+          }`}
         >
           Save
         </button>
@@ -6453,23 +6732,30 @@ const AssetSpotlight = ({
   const ready = isAssetReady(asset || {});
   const automateEligible = isComputerAsset(asset);
   const assetIdLabel = asset?.sheetId || asset?.serialNumber || asset?.assetName || (asset?.id ? `Asset-${asset.id}` : 'Asset');
+  const panelClass = isDarkMode
+    ? 'sticky top-6 rounded-3xl border border-slate-800 bg-slate-950/80 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.55)] backdrop-blur-xl'
+    : 'sticky top-6 rounded-3xl border border-slate-100 bg-white/80 p-6 shadow-sm';
   const heroCardClass = isDarkMode
-    ? 'rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 text-white shadow-lg'
+    ? 'rounded-2xl border border-indigo-800/70 bg-gradient-to-br from-[#0b1226] via-[#0f172a] to-[#0f1c3a] p-6 text-white shadow-[0_20px_60px_rgba(0,0,0,0.55)] ring-1 ring-indigo-500/40'
     : 'rounded-2xl bg-gradient-to-br from-white via-blue-50 to-blue-100 p-6 text-slate-900 shadow-lg border border-blue-100 ring-1 ring-blue-200/50';
-  const heroIconWrapClass = isDarkMode
-    ? 'bg-white/10 text-white ring-white/20 shadow-inner'
-    : 'bg-white text-slate-700 ring-slate-200/80 shadow-sm';
-  const heroLabelClass = isDarkMode ? 'text-white/60' : 'text-slate-500';
-  const heroSubLabelClass = isDarkMode ? 'text-white/70' : 'text-slate-500';
+  const heroIconWrapClass = isDarkMode ? 'bg-white/10 text-white ring-white/20 shadow-inner' : 'bg-white text-slate-700 ring-slate-200/80 shadow-sm';
+  const heroLabelClass = isDarkMode ? 'text-slate-200/80' : 'text-slate-500';
+  const heroSubLabelClass = isDarkMode ? 'text-slate-100' : 'text-slate-500';
   const heroDividerClass = isDarkMode ? 'border-white/10' : 'border-slate-200/80';
   const heroValueClass = isDarkMode ? 'text-white' : 'text-slate-900';
-  const heroAssignClass = isDarkMode ? 'text-emerald-100' : 'text-emerald-600';
+  const heroAssignClass = isDarkMode ? 'text-indigo-100' : 'text-indigo-700';
   const heroBadgeClass = isDarkMode
-    ? 'border-white/20 bg-white/10 text-white'
+    ? 'border-indigo-500/30 bg-indigo-900/40 text-indigo-100'
     : 'border-slate-200/70 bg-white/80 text-slate-700';
+  const sectionCardClass = isDarkMode
+    ? 'rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-inner'
+    : 'rounded-2xl border border-slate-200 bg-white p-4';
+  const sectionTitleClass = isDarkMode ? 'text-xs font-bold uppercase tracking-wider text-slate-200 mb-3' : 'text-xs font-bold uppercase tracking-wider text-slate-500 mb-3';
+  const detailLabelClass = isDarkMode ? 'text-slate-300' : 'text-slate-600';
+  const detailValueClass = isDarkMode ? 'text-slate-100' : 'text-slate-900';
 
   return (
-    <div className="sticky top-6 rounded-3xl border border-slate-100 bg-white/80 p-6 shadow-sm">
+    <div className={panelClass}>
       {asset ? (
         <>
           {/* Hero Card with Asset ID and Assigned To prominently displayed */}
@@ -6496,7 +6782,7 @@ const AssetSpotlight = ({
               <div>
                 <p className={`mb-1 text-xs uppercase tracking-widest ${heroLabelClass}`}>Assigned To</p>
                 <div className="flex items-center gap-2">
-                  <Users className={`h-5 w-5 ${isDarkMode ? 'text-emerald-300' : 'text-emerald-500'}`} />
+                  <Users className={`h-5 w-5 ${isDarkMode ? 'text-indigo-200' : 'text-indigo-500'}`} />
                   <p className={`text-lg font-bold sm:text-2xl ${heroAssignClass}`}>{asset.assignedTo || 'Unassigned'}</p>
                 </div>
               </div>
@@ -6524,7 +6810,11 @@ const AssetSpotlight = ({
             <button
               type="button"
               onClick={() => onEdit?.(asset)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
+              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold shadow-sm transition ${
+                isDarkMode
+                  ? 'bg-blue-600 text-blue-200 hover:bg-blue-500'
+                  : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+              }`}
             >
               <Edit2 className="h-4 w-4" />
               Edit Asset
@@ -6562,41 +6852,45 @@ const AssetSpotlight = ({
           </div>
 
           {/* Asset Details */}
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Details</p>
+          <div className={`mt-4 ${sectionCardClass}`}>
+            <p className={sectionTitleClass}>Details</p>
             <dl className="space-y-3 text-sm">
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                <span className="text-slate-600">Serial Number</span>
-                <span className="font-semibold text-slate-900">{asset.serialNumber || 'Not set'}</span>
+              <div className={`flex items-center justify-between py-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                <span className={detailLabelClass}>Serial Number</span>
+                <span className={`font-semibold ${detailValueClass}`}>{asset.serialNumber || 'Not set'}</span>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                <span className="text-slate-600">Department</span>
-                <span className="font-semibold text-slate-900">{asset.department || 'Not set'}</span>
+              <div className={`flex items-center justify-between py-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                <span className={detailLabelClass}>Department</span>
+                <span className={`font-semibold ${detailValueClass}`}>{asset.department || 'Not set'}</span>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                <span className="text-slate-600">QR Code</span>
-                <span className="font-semibold text-slate-900">{asset.qrCode || 'Not generated'}</span>
+              <div className={`flex items-center justify-between py-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                <span className={detailLabelClass}>QR Code</span>
+                <span className={`font-semibold ${detailValueClass}`}>{asset.qrCode || 'Not generated'}</span>
               </div>
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                <span className="text-slate-600">Purchase Date</span>
-                <span className="font-semibold text-slate-900">{formatDate(asset.purchaseDate)}</span>
+              <div className={`flex items-center justify-between py-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                <span className={detailLabelClass}>Purchase Date</span>
+                <span className={`font-semibold ${detailValueClass}`}>{formatDate(asset.purchaseDate)}</span>
               </div>
               <div className="flex items-center justify-between py-2">
-                <span className="text-slate-600">Warranty Expires</span>
-                <span className="font-semibold text-slate-900">{formatDate(asset.warrantyExpiry)}</span>
+                <span className={detailLabelClass}>Warranty Expires</span>
+                <span className={`font-semibold ${detailValueClass}`}>{formatDate(asset.warrantyExpiry)}</span>
               </div>
             </dl>
           </div>
 
           {/* Owner Contact */}
           {(ownerContact?.phone || ownerContact?.email) && (
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Contact Owner</p>
+            <div className={`mt-4 ${sectionCardClass}`}>
+              <p className={sectionTitleClass}>Contact Owner</p>
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 {ownerContact?.phone && (
                   <a
                     href={`tel:${ownerContact.phone}`}
-                    className="inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 sm:w-auto sm:justify-start"
+                    className={`inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold sm:w-auto sm:justify-start ${
+                      isDarkMode
+                        ? 'border-blue-500/40 bg-blue-900/40 text-blue-100 hover:border-blue-300/50'
+                        : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                    }`}
                   >
                     <PhoneCall className="h-4 w-4" />
                     <span className="truncate" title={ownerContact.phone}>
@@ -6607,7 +6901,11 @@ const AssetSpotlight = ({
                 {ownerContact?.email && (
                   <a
                     href={`mailto:${ownerContact.email}`}
-                    className="inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 sm:w-auto sm:justify-start"
+                    className={`inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold sm:w-auto sm:justify-start ${
+                      isDarkMode
+                        ? 'border-blue-500/40 bg-blue-900/40 text-blue-100 hover:border-blue-300/50'
+                        : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                    }`}
                   >
                     <Mail className="h-4 w-4" />
                     <span className="truncate" title={ownerContact.email}>
@@ -6621,18 +6919,26 @@ const AssetSpotlight = ({
 
           {/* Quality Check for Unapproved Assets */}
           {!ready && (
-            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <div
+              className={`mt-4 rounded-2xl border p-4 ${
+                isDarkMode ? 'border-amber-500/30 bg-amber-900/30 text-amber-100' : 'border-amber-200 bg-amber-50'
+              }`}
+            >
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-bold uppercase tracking-wider status-warning">Intake Readiness</p>
-                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold status-warning">
+                <p className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-amber-100' : 'status-warning'}`}>Intake Readiness</p>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    isDarkMode ? 'bg-amber-800/70 text-amber-50' : 'bg-amber-100 status-warning'
+                  }`}
+                >
                   {qualityScore}% Complete
                 </span>
               </div>
               {qualityIssues.length > 0 && (
-                <ul className="space-y-1 text-xs status-warning">
+                <ul className={`space-y-1 text-xs ${isDarkMode ? 'text-amber-100' : 'status-warning'}`}>
                   {qualityIssues.map((issue) => (
                     <li key={issue} className="flex items-start gap-2">
-                      <span className="status-warning-muted mt-0.5">•</span>
+                      <span className={`${isDarkMode ? 'text-amber-200' : 'status-warning-muted'} mt-0.5`}>�</span>
                       <span>{issue}</span>
                     </li>
                   ))}
@@ -6640,7 +6946,6 @@ const AssetSpotlight = ({
               )}
             </div>
           )}
-
           {/* Printer-Specific Info */}
           {asset.type === 'Printer' && (
             <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50 p-4">
@@ -6808,6 +7113,7 @@ const AssetSpotlightModal = ({
 
 const ModalShell = ({ title, onClose, children }) => {
   const dialogRef = useRef(null);
+  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('theme-dark');
 
   useEffect(() => {
     const node = dialogRef.current;
@@ -6819,28 +7125,54 @@ const ModalShell = ({ title, onClose, children }) => {
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/70 px-4 py-8"
+      className={`fixed inset-0 z-30 flex items-center justify-center px-4 py-8 ${
+        isDark
+          ? 'bg-gradient-to-br from-[#041025]/92 via-[#081a35]/94 to-[#0d2345]/95 backdrop-blur-xl'
+          : 'bg-slate-900/70'
+      }`}
       onClick={(event) => {
         if (event.target === event.currentTarget && typeof onClose === 'function') {
           onClose();
         }
       }}
     >
-      <div ref={dialogRef} className="w-full max-w-3xl rounded-3xl bg-white shadow-2xl" role="dialog" aria-modal="true">
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-          <p className="text-lg font-semibold text-slate-900">{title}</p>
-          <button onClick={onClose} className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+      <div
+        ref={dialogRef}
+        className={`w-full max-w-3xl rounded-3xl shadow-2xl ${
+          isDark
+            ? 'border border-indigo-900/50 bg-gradient-to-br from-[#0b1b36] via-[#0c2347] to-[#0e2c58] text-slate-100 ring-1 ring-indigo-500/35'
+            : 'bg-white text-slate-900'
+        }`}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div
+          className={`flex items-center justify-between border-b px-6 py-4 ${
+            isDark ? 'border-white/10' : 'border-slate-100'
+          }`}
+        >
+          <p className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</p>
+          <button
+            onClick={onClose}
+            className={`rounded-full p-2 transition ${
+              isDark
+                ? 'text-slate-300 hover:bg-white/10 hover:text-white'
+                : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+            }`}
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-4">{children}</div>
+        <div
+          className={`max-h-[70vh] overflow-y-auto px-6 py-4 ${
+            isDark ? 'text-slate-100' : ''
+          }`}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
-
-  if (typeof document === 'undefined') {
-    return null;
-  }
 
   return createPortal(modalContent, document.body);
 };
@@ -7383,6 +7715,7 @@ const EmployeeFormModal = ({
   departmentSuggestionOptions,
   locationSuggestionOptions,
   jobTitleSuggestionOptions,
+  isDarkMode = false,
 }) => {
   const [form, setForm] = useState(employee || defaultEmployeeProfile);
   const [photoPreview, setPhotoPreview] = useState(employee?.avatar || '');
@@ -7494,188 +7827,174 @@ const EmployeeFormModal = ({
   return (
     <ModalShell title={form?.id ? 'Edit employee' : 'New employee'} onClose={onCancel}>
       <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <label className="text-sm font-medium text-slate-700">
-            Full name
-            <input
-              value={form.name}
-              onChange={(event) => update('name', event.target.value)}
-              placeholder="e.g., Jamie Rivera"
-              list={employeeSuggestionListId}
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              required
-            />
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Role or title
-            <input
-              value={form.title}
-              onChange={(event) => update('title', event.target.value)}
-              list={jobTitleSuggestionListId}
-              placeholder="Select or type a role..."
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Department
-            <select
-              value={form.department}
-              onChange={(event) => update('department', event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            >
-              <option value="">Select a department...</option>
-              {departmentSuggestionOptions.map((dept) => (
-                <option key={`dept-option-${dept}`} value={dept}>
-                  {dept}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Location
-            <select
-              value={form.location}
-              onChange={(event) => update('location', event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            >
-              <option value="">Select a location...</option>
-              {locationSuggestionOptions.map((location) => (
-                <option key={`location-option-${location}`} value={location}>
-                  {location}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Email
-            <input
-              type="email"
-              value={form.email}
-              onChange={(event) => update('email', event.target.value)}
-              placeholder="name@udservices.org"
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Start date
-            <input
-              type="date"
-              value={form.startDate}
-              onChange={(event) => update('startDate', event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Phone
-            <input
-              type="tel"
-              value={form.phone}
-              onChange={(event) => update('phone', event.target.value)}
-              placeholder="(717) 555-1212"
-              autoComplete="tel"
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Laptop / computer
-            <input
-              value={form.computer}
-              onChange={(event) => update('computer', event.target.value)}
-              name="employee-computer"
-              autoComplete="new-password"
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Printer
-            <input
-              value={form.printer}
-              onChange={(event) => update('printer', event.target.value)}
-              name="employee-printer"
-              autoComplete="new-password"
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Monitor
-            <input
-              value={form.monitor}
-              onChange={(event) => update('monitor', event.target.value)}
-              name="employee-monitor"
-              autoComplete="new-password"
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Dock
-            <input
-              value={form.dock}
-              onChange={(event) => update('dock', event.target.value)}
-              name="employee-dock"
-              autoComplete="new-password"
-              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </label>
-        </div>
-        <div className="rounded-3xl border border-dashed border-slate-300 p-4 text-center">
-          <p className="text-sm font-semibold text-slate-700">Profile photo</p>
-          <p className="text-xs text-slate-500">Upload a headshot now or update it later.</p>
-          <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row">
-            <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
-              {photoPreview ? (
-                <img src={photoPreview} alt="Employee preview" className="h-full w-full object-cover" />
-              ) : (
-                <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-                  {getInitials(form.name || 'UDS')}
-                </span>
-              )}
+        <div className="employee-form-card rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-indigo-50/40 to-blue-50/40 p-4 shadow-sm sm:p-5 md:p-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-indigo-500">Employee info</p>
+              <p className="text-sm text-slate-600">Key details for the directory and asset ownership.</p>
             </div>
-            <div className="flex flex-1 flex-col items-center gap-3 sm:items-start">
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:border-blue-300">
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoUpload}
-                  disabled={uploadingPhoto}
-                />
-                {uploadingPhoto ? 'Uploading...' : 'Upload photo'}
-              </label>
-              {photoPreview && (
-                <button
-                  type="button"
-                  onClick={handleRemovePhoto}
-                  className="text-xs font-semibold status-alert-muted hover:opacity-80"
-                  disabled={uploadingPhoto}
-                >
-                  Remove photo
-                </button>
-              )}
-              {photoError && <p className="text-xs status-alert-muted">{photoError}</p>}
-              {!photoError && uploadingPhoto && <p className="text-xs text-slate-500">Uploading to secure storage...</p>}
+            <span className="required-pill rounded-full border border-indigo-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-800 shadow-sm">
+              Required fields marked
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <label className="text-sm font-semibold text-slate-800">
+              Full name <span className="text-rose-500">*</span>
+              <input
+                value={form.name}
+                onChange={(event) => update('name', event.target.value)}
+                placeholder="e.g., Jamie Rivera"
+                list={employeeSuggestionListId}
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none ring-2 ring-transparent transition focus:border-indigo-400 focus:ring-indigo-200"
+                required
+              />
+            </label>
+            <label className="text-sm font-semibold text-slate-800">
+              Role or title
+              <input
+                value={form.title}
+                onChange={(event) => update('title', event.target.value)}
+                list={jobTitleSuggestionListId}
+                placeholder="Select or type a role..."
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none ring-2 ring-transparent transition focus:border-indigo-400 focus:ring-indigo-200"
+              />
+            </label>
+            <label className="text-sm font-semibold text-slate-800">
+              Department
+              <select
+                value={form.department}
+                onChange={(event) => update('department', event.target.value)}
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none ring-2 ring-transparent transition focus:border-indigo-400 focus:ring-indigo-200"
+              >
+                <option value="">Select a department...</option>
+                {departmentSuggestionOptions.map((dept) => (
+                  <option key={`dept-option-${dept}`} value={dept}>
+                    {dept}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm font-semibold text-slate-800">
+              Location
+              <select
+                value={form.location}
+                onChange={(event) => update('location', event.target.value)}
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none ring-2 ring-transparent transition focus:border-indigo-400 focus:ring-indigo-200"
+              >
+                <option value="">Select a location...</option>
+                {locationSuggestionOptions.map((location) => (
+                  <option key={`location-option-${location}`} value={location}>
+                    {location}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm font-semibold text-slate-800">
+              Email
+              <input
+                type="email"
+                value={form.email}
+                onChange={(event) => update('email', event.target.value)}
+                placeholder="name@udservices.org"
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none ring-2 ring-transparent transition focus:border-indigo-400 focus:ring-indigo-200"
+              />
+            </label>
+            <label className="text-sm font-semibold text-slate-800">
+              Start date
+              <input
+                type="date"
+                value={form.startDate}
+                onChange={(event) => update('startDate', event.target.value)}
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none ring-2 ring-transparent transition focus:border-indigo-400 focus:ring-indigo-200"
+              />
+            </label>
+            <label className="text-sm font-semibold text-slate-800">
+              Phone
+              <input
+                type="tel"
+                value={form.phone}
+                onChange={(event) => update('phone', event.target.value)}
+                placeholder="(555) 555-1234"
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none ring-2 ring-transparent transition focus:border-indigo-400 focus:ring-indigo-200"
+              />
+            </label>
+            <label className="text-sm font-semibold text-slate-800">
+              Supervisor
+              <input
+                value={form.supervisor}
+                onChange={(event) => update('supervisor', event.target.value)}
+                placeholder="Supervisor name"
+                list={employeeSuggestionListId}
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none ring-2 ring-transparent transition focus:border-indigo-400 focus:ring-indigo-200"
+              />
+            </label>
+            <label className="text-sm font-semibold text-slate-800 md:col-span-2">
+              Notes
+              <textarea
+                value={form.notes}
+                onChange={(event) => update('notes', event.target.value)}
+                placeholder="Add context, seating, preferences, etc."
+                className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-800 outline-none ring-2 ring-transparent transition focus:border-indigo-400 focus:ring-indigo-200"
+                rows={3}
+              />
+            </label>
+            <div className="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50/60 p-3 text-sm text-slate-700">
+              <p className="text-xs font-semibold uppercase tracking-[0.25rem] text-slate-500">Photo</p>
+              <div className="mt-3 flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-14 w-14 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                    {photoPreview ? (
+                      <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">No photo</div>
+                    )}
+                  </div>
+                  <div className="space-y-1 text-xs text-slate-500">
+                    <p>Square images work best. Max 2MB recommended.</p>
+                    {photoError && <p className="text-rose-500">{photoError}</p>}
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 text-sm font-semibold">
+                  <label className="upload-btn inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm transition hover:border-slate-300 hover:text-slate-900">
+                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                    Upload
+                  </label>
+                  {photoPreview && (
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-rose-600 shadow-sm transition hover:border-rose-300"
+                    >
+                      Remove
+                    </button>
+                  )}
+                  {uploadingPhoto && <span className="text-xs font-semibold text-slate-500">Uploading...</span>}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        <div className="flex justify-end gap-3">
+        <div className="flex items-center justify-end gap-2">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300"
+            className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50"
           >
             Cancel
           </button>
           <button
             type="submit"
-            disabled={uploadingPhoto}
-            className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
           >
-            {form?.id ? 'Save changes' : 'Add employee'}
+            Save
           </button>
         </div>
       </form>
     </ModalShell>
   );
 };
+
 const WarrantyAlertModal = ({ alerts = [], onClose, onClear, onClearAll }) => {
   const canClear = typeof onClear === 'function';
   const handleClearAll = () => {
@@ -8472,16 +8791,33 @@ const patchNetworkPrinter = useCallback(
   const [scanMessage, setScanMessage] = useState('');
   const [scannerError, setScannerError] = useState('');
   const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window === 'undefined') {
-      return true;
+
+
+  // --- THEME STATE (must be before any use) ---
+  const [theme, setTheme] = useState(() => getStoredTheme() || getSystemTheme());
+  const isDarkMode = theme === 'dark';
+  useLayoutEffect(() => {
+    setHtmlThemeClass(theme);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(THEME_KEY, theme);
     }
-    const saved = window.localStorage.getItem('uds_theme_dark');
-    if (saved === null) {
-      return true;
-    }
-    return saved === 'true';
-  });
+  }, [theme]);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e) => {
+      if (!getStoredTheme()) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    };
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  const handleToggleTheme = useCallback(() => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  }, []);
+  const activeThemeStyles = isDarkMode ? `${DARK_MODE_STYLES}` : `${LIGHT_MODE_STYLES}`;
+
   const pageAccent = useMemo(() => PAGE_ACCENTS[activePage] || PAGE_ACCENTS.default, [activePage]);
   const heroAccentStyle = useMemo(
     () => ({
@@ -10042,9 +10378,9 @@ const patchNetworkPrinter = useCallback(
     if (!styleEl) {
       styleEl = document.createElement('style');
       styleEl.id = styleId;
-      styleEl.innerHTML = `${LIGHT_MODE_STYLES}${DARK_MODE_STYLES}`;
       document.head.appendChild(styleEl);
     }
+    styleEl.innerHTML = `${LIGHT_MODE_STYLES}${DARK_MODE_STYLES}`;
     document.documentElement.classList.toggle('theme-dark', isDarkMode);
     document.documentElement.classList.toggle('theme-light', !isDarkMode);
     window.localStorage.setItem('uds_theme_dark', String(isDarkMode));
@@ -11084,9 +11420,7 @@ const handleTestPrinter = useCallback(
     }
   };
 
-  const handleToggleTheme = useCallback(() => {
-    setIsDarkMode((prev) => !prev);
-  }, []);
+
 
   const handleClearLocalData = useCallback(() => {
     if (typeof window === 'undefined') {
@@ -12193,6 +12527,9 @@ const handleTestPrinter = useCallback(
     }
   }, [authUser, handleLogout]);
 
+
+
+
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -12241,13 +12578,18 @@ const handleTestPrinter = useCallback(
     );
   }
 
+
+
   return (
     <div
       className={`app-canvas theme-nebula min-h-screen overflow-x-hidden pb-24 sm:pb-16 ${
         isDarkMode ? 'text-slate-100' : 'text-slate-900'
       }`}
     >
-      <style>{`${LIGHT_MODE_STYLES}${DARK_MODE_STYLES}`}</style>
+      <style>{activeThemeStyles}</style>
+
+
+
       <div className="ambient-layer">
         <div className="ambient-orb blue" style={{ width: '42vw', height: '42vw', top: '-12vh', left: '-8vw' }} />
         <div className="ambient-orb pink" style={{ width: '36vw', height: '36vw', bottom: '-10vh', right: '4vw' }} />
@@ -12700,6 +13042,7 @@ const handleTestPrinter = useCallback(
                   departments={departmentOptions}
                   locations={locationOptions}
                   jobTitles={jobTitleSuggestionOptions}
+                  isDarkMode={isDarkMode}
                   onSearchChange={(value) => {
                     setEmployeeSearch(value);
                     setEmployeePage(1);
@@ -13015,7 +13358,11 @@ const handleTestPrinter = useCallback(
                     {vendorProfiles.slice(0, 4).map((vendor) => (
                       <a
                         key={`vendor-mosaic-${vendor.id}`}
-                        className="relative block h-36 overflow-hidden rounded-3xl border border-white/15 bg-white/5 backdrop-blur transition hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(0,0,0,0.35)] hover:border-cyan-200/60"
+                        className={`relative block h-36 overflow-hidden rounded-3xl border backdrop-blur transition hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(0,0,0,0.35)] ${
+                          isDarkMode
+                            ? 'border-white/15 bg-white/5 hover:border-cyan-200/60'
+                            : 'border-slate-200 bg-white/70 hover:border-cyan-300/70 shadow-sm'
+                        }`}
                         href={
                           vendor.contact?.url ||
                           (vendor.id === 'brother'
@@ -13031,11 +13378,27 @@ const handleTestPrinter = useCallback(
                         target="_blank"
                         rel="noreferrer"
                       >
-                        <img src={vendor.image} alt={`${vendor.name} collage`} className="absolute inset-0 h-full w-full object-cover opacity-70" loading="lazy" />
-                        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-900/50 to-blue-900/65" />
-                        <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-cyan-400/30 blur-3xl" />
-                        <p className="absolute bottom-4 left-4 text-lg font-semibold text-cyan-100 leading-tight drop-shadow-sm">
-                          {vendor.name}
+                        <img
+                          src={vendor.image}
+                          alt={`${vendor.name} collage`}
+                          className={`absolute inset-0 h-full w-full object-cover ${isDarkMode ? 'opacity-85' : 'opacity-100'}`}
+                          loading="lazy"
+                        />
+                        <div
+                          className={`absolute inset-0 ${
+                            isDarkMode
+                              ? 'bg-gradient-to-br from-slate-950/70 via-slate-900/40 to-blue-900/55'
+                              : 'bg-gradient-to-br from-slate-900/16 via-slate-900/10 to-blue-800/14'
+                          }`}
+                        />
+                        <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-cyan-300/30 blur-3xl" />
+                        <p
+                          className={`absolute bottom-3 left-3 right-3 inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-base font-bold leading-tight shadow-lg backdrop-blur ${
+                            isDarkMode ? 'bg-black/50 text-white' : 'bg-white/0 text-slate-900'
+                          }`}
+                          style={{ textShadow: isDarkMode ? '0 4px 12px rgba(0,0,0,0.45)' : '0 3px 10px rgba(255,255,255,0.65)' }}
+                        >
+                          <span className="truncate">{vendor.name}</span>
                         </p>
                       </a>
                     ))}
@@ -13045,28 +13408,51 @@ const handleTestPrinter = useCallback(
             </div>
 
             <section className="mb-8 grid gap-6 lg:grid-cols-[2fr,1fr]">
-              <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Coverage pulses</p>
+              <div
+                className={`rounded-3xl border p-6 shadow-sm ${
+                  isDarkMode
+                    ? 'border-slate-800 bg-slate-900/70 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.45)]'
+                    : 'border-slate-100 bg-white text-slate-900 shadow-[0_18px_50px_rgba(15,23,42,0.06)]'
+                }`}
+              >
+                <p className={`text-[11px] font-semibold uppercase tracking-[0.35rem] ${isDarkMode ? 'text-slate-300' : 'text-slate-500'}`}>Coverage pulses</p>
                 <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {printerCoverageStats.map((stat) => (
-                    <div key={stat.title} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
-                      <p className="text-xs uppercase tracking-widest text-slate-400">{stat.title}</p>
+                    <div
+                      key={stat.title}
+                      className={`rounded-2xl border p-4 transition-shadow ${
+                        isDarkMode
+                          ? 'border-slate-800/80 bg-slate-900/70 text-slate-100 shadow-inner shadow-slate-950/40'
+                          : 'border-slate-200 bg-slate-50 text-slate-900 shadow-inner shadow-slate-100'
+                      }`}
+                    >
+                      <p className={`text-xs uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{stat.title}</p>
                       <p className="mt-2 text-2xl font-semibold">{stat.count}</p>
-                      <p className="text-xs text-slate-500">{stat.note}</p>
+                      <p className={`text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{stat.note}</p>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.35rem] text-slate-400">Procurement quick hits</p>
-                <p className="mt-2 text-sm text-slate-600">Spin up orders or support tickets from the curated set below.</p>
+              <div
+                className={`rounded-3xl border p-6 shadow-sm ${
+                  isDarkMode
+                    ? 'border-slate-800 bg-slate-900/70 text-slate-100 shadow-[0_20px_60px_rgba(0,0,0,0.45)]'
+                    : 'border-slate-100 bg-white text-slate-900 shadow-[0_18px_50px_rgba(15,23,42,0.06)]'
+                }`}
+              >
+                <p className={`text-[11px] font-semibold uppercase tracking-[0.35rem] ${isDarkMode ? 'text-slate-300' : 'text-slate-500'}`}>Procurement quick hits</p>
+                <p className={`mt-2 text-sm ${isDarkMode ? 'text-slate-200' : 'text-slate-600'}`}>Spin up orders or support tickets from the curated set below.</p>
                 <div className="mt-4 flex flex-col gap-3">
                   {vendorQuickActions.map((action) => (
                     <button
                       key={`vendor-qa-${action.title}`}
                       type="button"
                       onClick={action.onAction}
-                      className="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:text-blue-600"
+                      className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${
+                        isDarkMode
+                          ? 'border-slate-800 bg-slate-900/50 text-slate-100 hover:border-blue-400/60 hover:text-blue-200'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:text-blue-600'
+                      }`}
                     >
                       <span>{action.title}</span>
                       <ExternalLink className="h-4 w-4" />
@@ -13201,7 +13587,7 @@ const handleTestPrinter = useCallback(
 
             <section className="grid gap-6 md:grid-cols-2">
               {vendorProfiles.map((vendor) => (
-                <VendorCard key={vendor.id} vendor={vendor} />
+                <VendorCard key={vendor.id} vendor={vendor} isDarkMode={isDarkMode} />
               ))}
             </section>
           </div>
@@ -14328,6 +14714,7 @@ const handleTestPrinter = useCallback(
           departmentSuggestionOptions={departmentSuggestionOptions}
           locationSuggestionOptions={locationSuggestionOptions}
           jobTitleSuggestionOptions={jobTitleSuggestionOptions}
+          isDarkMode={isDarkMode}
         />
       )}
       {actionState && (
@@ -14379,7 +14766,14 @@ const handleTestPrinter = useCallback(
         />
       )}
       {photoLightbox && <PhotoLightbox photo={photoLightbox} onClose={() => setPhotoLightbox(null)} />}
-      {printerForm && <PrinterFormModal printer={printerForm} onSubmit={handleSavePrinter} onCancel={() => setPrinterForm(null)} />}
+      {printerForm && (
+        <PrinterFormModal
+          printer={printerForm}
+          onSubmit={handleSavePrinter}
+          onCancel={() => setPrinterForm(null)}
+          isDarkMode={isDarkMode}
+        />
+      )}
       {flashMessage && (
         <div className="fixed bottom-6 right-6 z-50 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-lg">
           {flashMessage}
