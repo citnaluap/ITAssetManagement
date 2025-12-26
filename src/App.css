@@ -95,6 +95,7 @@
   }
   .experience-grid__nav,
   .experience-grid__insights {
+    position: -webkit-sticky;
     position: sticky;
     top: 2rem;
   }
@@ -102,8 +103,8 @@
 
 .navigation-rail {
   box-shadow: var(--shadow-xl);
-  backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
   border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
@@ -202,7 +203,10 @@ html.theme-dark .overview-actions-grid .space-y-4 > * {
 .command-header::before {
   content: '';
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.15), transparent 55%),
     radial-gradient(circle at 80% 0%, rgba(147, 51, 234, 0.12), transparent 45%);
   opacity: 0.8;
@@ -215,11 +219,13 @@ html.theme-dark .overview-actions-grid .space-y-4 > * {
 }
 
 .experience-sidebar {
+  position: -webkit-sticky;
   position: sticky;
   top: 2rem;
 }
 
 .decision-rail {
+  position: -webkit-sticky;
   position: sticky;
   top: 2rem;
 }
@@ -445,7 +451,7 @@ html.theme-dark .employee-badge:hover {
   font-weight: 700;
   color: #6366f1;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   margin-top: 0.5rem;
 }
 
@@ -1169,6 +1175,148 @@ html.theme-dark .badge-warning:hover {
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
+/* Capacity badge emphasis */
+.badge-success {
+  background: rgba(16, 185, 129, 0.18);
+  color: #047857;
+  border-color: rgba(16, 185, 129, 0.45);
+}
+
+.badge-warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #92400e;
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.badge-danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #b91c1c;
+  border-color: rgba(239, 68, 68, 0.55);
+}
+
+html.theme-dark .badge-success {
+  background: rgba(16, 185, 129, 0.26);
+  color: #bbf7d0;
+  border-color: rgba(34, 197, 94, 0.6);
+}
+
+html.theme-dark .badge-warning {
+  background: rgba(245, 158, 11, 0.3);
+  color: #ffedd5;
+  border-color: rgba(245, 158, 11, 0.65);
+}
+
+html.theme-dark .badge-danger {
+  background: rgba(239, 68, 68, 0.28);
+  color: #fecaca;
+  border-color: rgba(239, 68, 68, 0.7);
+}
+
+.command-bar__shell {
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.command-bar__hint {
+  background: #f1f5f9;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+html.theme-dark .command-bar__hint {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.command-palette {
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(59, 130, 246, 0.08);
+}
+
+.section-nav {
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.section-nav__chip {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+html.theme-dark .section-nav__chip {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.quick-filter-chip {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+html.theme-dark .quick-filter-chip {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.table-row-hover:hover {
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.1);
+  transform: translateY(-1px);
+}
+html.theme-dark .table-row-hover:hover {
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+}
+
+.action-chip {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+html.theme-dark .action-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+}
+
+.capacity-badge {
+  border-width: 2px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.capacity-badge.badge-success {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #065f46;
+  border-color: #22c55e;
+}
+
+.capacity-badge.badge-warning {
+  background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+  color: #9a3412;
+  border-color: #f59e0b;
+}
+
+.capacity-badge.badge-danger {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+  border-color: #ef4444;
+}
+
+html.theme-dark .capacity-badge {
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+html.theme-dark .capacity-badge.badge-success {
+  background: linear-gradient(135deg, rgba(22, 163, 74, 0.45), rgba(16, 185, 129, 0.3));
+  color: #dcfce7;
+  border-color: rgba(34, 197, 94, 0.85);
+}
+
+html.theme-dark .capacity-badge.badge-warning {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.5), rgba(245, 158, 11, 0.32));
+  color: #ffedd5;
+  border-color: rgba(245, 158, 11, 0.85);
+}
+
+html.theme-dark .capacity-badge.badge-danger {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.5), rgba(239, 68, 68, 0.32));
+  color: #fee2e2;
+  border-color: rgba(239, 68, 68, 0.9);
+}
+
 /* ==================== Tooltip Enhancement ==================== */
 [title] {
   position: relative;
@@ -1247,6 +1395,48 @@ html.theme-dark .badge-warning:hover {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
+}
+
+/* ==================== Card Title Case ==================== */
+.rounded-3xl .text-2xl.font-bold,
+.rounded-3xl .text-2xl.font-semibold,
+.rounded-3xl .text-3xl.font-bold,
+.rounded-3xl .text-3xl.font-semibold,
+.glass-card .text-2xl.font-bold,
+.glass-card .text-2xl.font-semibold,
+.glass-card .text-3xl.font-bold,
+.glass-card .text-3xl.font-semibold {
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em;
+}
+
+.card-title {
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em;
+}
+
+.uppercase {
+  letter-spacing: 0.06em !important;
+}
+
+/* ==================== Rhythm & Canvas ==================== */
+.app-canvas {
+  position: relative;
+  isolation: isolate;
+}
+
+.experience-main {
+  --stack-rhythm: 0.25rem;
+}
+
+.rhythm-stack > * + * {
+  margin-top: var(--stack-rhythm);
+}
+
+@media (min-width: 768px) {
+  .experience-main {
+    --stack-rhythm: 0.5rem;
+  }
 }
 
 /* ==================== Responsive Utilities ==================== */

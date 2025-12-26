@@ -3334,7 +3334,7 @@ const CommandHeader = ({
   return (
   <header className={`command-header relative mb-8 rounded-[32px] p-6 shadow-[0_30px_80px_rgba(5,8,25,0.15)] backdrop-blur ${headerToneClass}`}>
     <div className="grid gap-4 lg:grid-cols-[1.6fr,1fr]">
-      <div className="relative flex flex-col justify-between gap-6">
+      <div className="flex flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4" />
           <div className="flex items-center gap-2">
@@ -3356,15 +3356,41 @@ const CommandHeader = ({
             </button>
           </div>
         </div>
-        <div className="pointer-events-none absolute left-1/2 -top-[126px] -translate-x-1/2 overflow-visible">
+        <div
+          className="relative -mt-6 flex h-[7.5rem] items-center justify-center"
+          style={{ overflow: 'visible' }}
+        >
+          <div
+            className="pointer-events-none absolute inset-x-0 -top-10 h-32"
+            style={{
+              background: isDarkMode
+                ? 'radial-gradient(120% 120% at 50% 20%, rgba(59,130,246,0.18), rgba(37,99,235,0.1), transparent 70%)'
+                : 'radial-gradient(120% 120% at 50% 20%, rgba(59,130,246,0.14), rgba(37,99,235,0.08), transparent 70%)',
+              mixBlendMode: isDarkMode ? 'screen' : 'multiply',
+              filter: 'blur(10px)',
+            }}
+          />
+          <div
+            className="pointer-events-none absolute left-1/2 top-0 h-32 w-64 -translate-x-1/2 -translate-y-8 rounded-full"
+            style={{
+              background: isDarkMode
+                ? 'radial-gradient(circle at 50% 40%, rgba(56, 189, 248, 0.35), rgba(59, 130, 246, 0.15), transparent 70%)'
+                : 'radial-gradient(circle at 50% 40%, rgba(59, 130, 246, 0.25), rgba(56, 189, 248, 0.18), transparent 70%)',
+              filter: 'blur(24px)',
+            }}
+          />
           <img
             src={isDarkMode ? DarkModeLogo : LightModeLogo}
             alt="IT Asset Control Studio logo"
-            className="h-40 w-auto origin-top scale-[2.548584] object-contain"
+            className="pointer-events-none absolute top-0 h-40 w-auto object-contain"
             style={{
+              left: '50%',
+              top: '-196px',
+              transform: 'translateX(-50%) scale(3.2)',
+              transformOrigin: 'center top',
               filter: isDarkMode
-                ? 'drop-shadow(0 8px 22px rgba(56, 189, 248, 0.35)) drop-shadow(0 6px 14px rgba(0, 0, 0, 0.4))'
-                : 'drop-shadow(0 6px 16px rgba(15, 23, 42, 0.2))',
+                ? 'drop-shadow(0 12px 30px rgba(56, 189, 248, 0.45)) drop-shadow(0 6px 20px rgba(0, 0, 0, 0.4))'
+                : 'drop-shadow(0 10px 26px rgba(37, 99, 235, 0.28)) drop-shadow(0 6px 16px rgba(15, 23, 42, 0.18))',
             }}
           />
         </div>
@@ -3442,6 +3468,7 @@ const CommandHeader = ({
   </header>
   );
 };
+
 
 const DeviceSpotlightCard = ({ title, stats = [], stat, description, image, meta, onStatClick, isDarkMode = false }) => {
   const displayStats = stats.length ? stats : stat ? [{ label: stat }] : [];
