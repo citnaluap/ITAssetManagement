@@ -3357,7 +3357,7 @@ const CommandHeader = ({
           </div>
         </div>
         <div
-          className="relative -mt-6 flex h-[7.5rem] items-center justify-center"
+          className="relative -mt-6 flex h-[7.5rem] items-center justify-center pointer-events-none"
           style={{ overflow: 'visible' }}
         >
           <div
@@ -3382,16 +3382,7 @@ const CommandHeader = ({
           <img
             src={isDarkMode ? DarkModeLogo : LightModeLogo}
             alt="IT Asset Control Studio logo"
-            className="pointer-events-none absolute top-0 h-40 w-auto object-contain"
-            style={{
-              left: '50%',
-              top: '-196px',
-              transform: 'translateX(-50%) scale(3.2)',
-              transformOrigin: 'center top',
-              filter: isDarkMode
-                ? 'drop-shadow(0 12px 30px rgba(56, 189, 248, 0.45)) drop-shadow(0 6px 20px rgba(0, 0, 0, 0.4))'
-                : 'drop-shadow(0 10px 26px rgba(37, 99, 235, 0.28)) drop-shadow(0 6px 16px rgba(15, 23, 42, 0.18))',
-            }}
+            className={`command-logo ${isDarkMode ? 'command-logo--dark' : 'command-logo--light'}`}
           />
         </div>
         <div className="grid gap-3 md:grid-cols-3">
