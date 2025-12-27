@@ -77,6 +77,18 @@ const DARK_MODE_STYLES = `
     text-shadow: 0 0 6px rgba(56, 189, 248, 0.65), 0 0 14px rgba(56, 189, 248, 0.35);
   }
 
+  /* Make lucide icons readable on dark surfaces */
+  html.theme-dark .lucide {
+    stroke: currentColor !important;
+    filter: drop-shadow(0 0 6px rgba(5, 8, 20, 0.45));
+  }
+  html.theme-dark .lucide:not([class*="text-"]),
+  html.theme-dark .lucide.text-slate-500,
+  html.theme-dark .lucide.text-slate-600,
+  html.theme-dark .lucide.text-slate-700 {
+    color: #e7edff !important;
+  }
+
   /* Global dark canvas */
   html.theme-dark .app-canvas {
     background: radial-gradient(circle at 20% 20%, rgba(59,130,246,0.18), transparent 28%),
@@ -160,20 +172,15 @@ const DARK_MODE_STYLES = `
       linear-gradient(160deg, #f3f4f6 0%, #e0e7ff 45%, #ede9fe 100%); /* slate-indigo light */
     color: #312e81;
   }
-  html.theme-dark .bg-white,
-    html.theme-light .bg-white,
-    html.theme-light .bg-white/50,
-    html.theme-light .bg-white/60,
-    html.theme-light .bg-white/70,
-    html.theme-light .bg-white/80,
-    html.theme-light .bg-white/90 {
-      background: linear-gradient(135deg, #f3f4f6 0%, #ede9fe 100%) !important; /* slate-indigo light */
-      border: 1px solid #6366f1 !important; /* indigo */
-      box-shadow: 0 2px 12px rgba(59, 130, 246, 0.08), 0 0 0 1px rgba(192, 132, 252, 0.04) !important; /* blue/purple */
-      backdrop-filter: blur(20px) saturate(180%) !important;
-      -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-      transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base) !important;
-    }
+  html.theme-dark .bg-white {
+    background: linear-gradient(145deg, #0b1021 0%, #0f172a 48%, #111f38 100%) !important; /* deep slate-indigo */
+    color: #e7edff !important;
+    border: 1px solid #1f2f52 !important;
+    box-shadow: 0 14px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(99, 102, 241, 0.2) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base) !important;
+  }
   html.theme-dark .bg-white\\/50,
   html.theme-dark .bg-white\\/60,
   html.theme-dark .bg-white\\/70,
@@ -250,19 +257,8 @@ const DARK_MODE_STYLES = `
     overflow-x: clip !important;
   }
   html.theme-dark .glass-card {
-      html.theme-light .glass-card {
-        background: linear-gradient(145deg, rgba(236, 233, 254, 0.96), rgba(224, 231, 255, 0.92)) !important; /* indigo/slate light */
-        box-shadow:
-          0 16px 40px rgba(59, 130, 246, 0.08),
-          0 4px 18px rgba(192, 132, 252, 0.06),
-          0 0 0 1px rgba(236, 72, 153, 0.05) !important; /* pink accent */
-        border: 1px solid #6366f1 !important;
-        backdrop-filter: blur(24px) saturate(200%) !important;
-        -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
-        transition: all var(--transition-base) !important;
-        will-change: transform, box-shadow !important;
-      }
     background: linear-gradient(145deg, rgba(49, 46, 129, 0.96), rgba(30, 41, 59, 0.92)) !important; /* indigo/slate */
+    color: #e7edff !important;
     box-shadow:
       0 16px 40px rgba(59, 130, 246, 0.18),
       0 4px 18px rgba(192, 132, 252, 0.12),
@@ -3427,18 +3423,36 @@ const sortLoaners = (collection) =>
   };
 };
 
-const CardShell = ({ title, icon: Icon, action, children }) => (
-  <div className="glass-card hover-lift rounded-3xl border border-slate-100 bg-white p-6 shadow-lg transition-all duration-300">
-    <div className="mb-4 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        {Icon && <div className="rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 p-2.5 shadow-inner"><Icon className="h-5 w-5 text-blue-600" /></div>}
-        <p className="text-sm font-bold text-slate-900 tracking-tight">{title}</p>
+const CardShell = ({ title, icon: Icon, action, children, isDarkMode = false }) => {
+  const shellClass = `glass-card hover-lift rounded-3xl p-6 transition-all duration-300 ${
+    isDarkMode
+      ? 'border border-white/12 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-50 shadow-[0_20px_70px_rgba(0,0,0,0.6)]'
+      : 'border border-slate-100 bg-white text-slate-900 shadow-lg'
+  }`;
+  const iconWrapperClass = `rounded-xl p-2.5 shadow-inner ${
+    isDarkMode
+      ? 'bg-gradient-to-br from-slate-800 to-indigo-900 text-sky-200'
+      : 'bg-gradient-to-br from-blue-50 to-purple-50 text-blue-600'
+  }`;
+  const titleClass = `text-sm font-bold tracking-tight ${isDarkMode ? 'text-slate-50' : 'text-slate-900'}`;
+
+  return (
+    <div className={shellClass}>
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {Icon && (
+            <div className={iconWrapperClass}>
+              <Icon className="h-5 w-5" />
+            </div>
+          )}
+          <p className={titleClass}>{title}</p>
+        </div>
+        {action}
       </div>
-      {action}
+      {children}
     </div>
-    {children}
-  </div>
-);
+  );
+};
 
 const CommandHeader = ({
   onAdd,
@@ -4053,10 +4067,12 @@ const SoftwareSuiteCard = ({ suite, onEdit, onDelete, onSeatsClick }) => {
   const { status, delta } = getLicenseHealth(suite.seats, suite.used);
   const badgeStyle =
     status === 'Overused'
-      ? 'badge badge-danger'
+      ? 'capacity-badge badge-danger'
       : status === 'At capacity'
-        ? 'badge badge-warning'
-        : 'badge badge-success';
+        ? 'capacity-badge badge-warning'
+        : 'capacity-badge badge-success';
+  const statusLabel =
+    status === 'Overused' ? 'Over limit' : status === 'At capacity' ? 'At capacity' : 'Healthy';
   const spareLabel = delta < 0 ? `${Math.abs(delta)} seats over` : `${delta} seats free`;
   const perSeat = suite.seats ? Math.round((suite.cost || 0) / suite.seats) : 0;
   const accentFrom = suite.accent?.from || '#0f172a';
@@ -4130,7 +4146,7 @@ const SoftwareSuiteCard = ({ suite, onEdit, onDelete, onSeatsClick }) => {
       <div className="flex flex-1 flex-col justify-between p-6">
         <div>
           <div className="flex items-center justify-between text-sm">
-            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${badgeStyle}`}>{status}</span>
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${badgeStyle}`}>{statusLabel}</span>
             <p className="text-xs uppercase tracking-[0.35rem] text-slate-400">{suite.deployment}</p>
           </div>
 
@@ -5896,8 +5912,8 @@ const LoanerCoverageReport = ({ data, onExport }) => {
   );
 };
 
-const DepreciationForecastTable = ({ forecast = [] }) => (
-  <CardShell title="Depreciation forecast" icon={TrendingDown}>
+const DepreciationForecastTable = ({ forecast = [], isDarkMode = false }) => (
+  <CardShell title="Depreciation forecast" icon={TrendingDown} isDarkMode={isDarkMode}>
     {forecast.length === 0 ? (
       <p className="text-sm text-slate-500">No cost data available to project depreciation.</p>
     ) : (
@@ -6274,7 +6290,7 @@ const AssetTable = ({
   );
 };
 
-const LicenseUsage = ({ licenses }) => {
+const LicenseUsage = ({ licenses, isDarkMode = false }) => {
   const usage = useMemo(
     () =>
       licenses.map((license) => ({
@@ -6286,7 +6302,7 @@ const LicenseUsage = ({ licenses }) => {
   );
 
   return (
-    <CardShell title="License usage" icon={Key}>
+    <CardShell title="License usage" icon={Key} isDarkMode={isDarkMode}>
       <div className="h-60">
         <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
           <BarChart data={usage} margin={{ top: 8, right: 8, bottom: 0, left: -10 }}>
@@ -6304,8 +6320,8 @@ const LicenseUsage = ({ licenses }) => {
   );
 };
 
-const ActivityPanel = ({ history, lookupAsset }) => (
-  <CardShell title="Check-in/out activity" icon={History}>
+const ActivityPanel = ({ history, lookupAsset, isDarkMode = false }) => (
+  <CardShell title="Check-in/out activity" icon={History} isDarkMode={isDarkMode}>
     {history.length === 0 ? (
       <p className="text-sm text-slate-500">No check-in/out activity yet.</p>
     ) : (
@@ -12862,7 +12878,7 @@ const handleTestPrinter = useCallback(
             </section>
 
             <section className="grid gap-6">
-              <ActivityPanel history={recentHistory} lookupAsset={getAssetName} />
+              <ActivityPanel history={recentHistory} lookupAsset={getAssetName} isDarkMode={isDarkMode} />
             </section>
 
             <section id="qr-tools-overview" className="mb-8">
@@ -13293,11 +13309,11 @@ const handleTestPrinter = useCallback(
             </section>
 
             <section className="mb-8">
-              <DepreciationForecastTable forecast={depreciationForecast} />
+              <DepreciationForecastTable forecast={depreciationForecast} isDarkMode={isDarkMode} />
             </section>
 
             <section className="mb-8 grid gap-6 xl:grid-cols-[1.6fr,1fr]">
-              <CardShell title="Report catalog" icon={Download}>
+              <CardShell title="Report catalog" icon={Download} isDarkMode={isDarkMode}>
                 <div className="grid gap-4">
                   {reportCatalog.map((report) => (
                     <div key={report.title} className="flex flex-wrap items-center justify-between rounded-2xl border border-slate-100 p-4">
@@ -14517,7 +14533,7 @@ const handleTestPrinter = useCallback(
             </section>
 
             <section className="mb-8">
-              <LicenseUsage licenses={licenseBuckets} />
+              <LicenseUsage licenses={licenseBuckets} isDarkMode={isDarkMode} />
             </section>
 
             <section id="software-renewal-overview" className="mb-8">
