@@ -454,19 +454,6 @@ html.theme-dark code {
   100% { transform: translate3d(-12px, 6px, 0) scale(0.98); }
 }
 
-.glass-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(250, 252, 255, 0.95));
-  box-shadow:
-    0 40px 100px rgba(99, 102, 241, 0.12),
-    0 20px 40px rgba(236, 72, 153, 0.08),
-    0 10px 20px rgba(59, 130, 246, 0.06),
-    inset 0 2px 0 rgba(255, 255, 255, 0.9),
-    inset 0 0 80px rgba(139, 92, 246, 0.04);
-  -webkit-backdrop-filter: blur(30px) saturate(220%);
-  backdrop-filter: blur(30px) saturate(220%);
-  border: 2px solid;
-  border-image: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.2), rgba(59, 130, 246, 0.25)) 1;
-}
 
 .hover-lift {
   transition: transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1), 
